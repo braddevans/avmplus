@@ -84,19 +84,19 @@ def gen(prefix,inputfiles,outputdir,srcdir=os.getcwd(),ns=''):
     # we must do in order for the exact gc script to open it.
     oldpy = sys.version_info < (2,6)
     if oldpy and platform.system() == 'Windows':
-		print "Error: exactgc script requirets newer python on windows."
-		exit(1)
-		
+        print "Error: exactgc script requirets newer python on windows."
+        exit(1)
+        
     if oldpy:
-		tmpfile = tempfile.NamedTemporaryFile()
-	else:
-	    tmpfile = tempfile.NamedTemporaryFile(delete = False)
-	    
-	tmpfile.write(filelist)
-	
-	# close deletes in old world
-	if not oldpy:
-		tmpfile.close()
+        tmpfile = tempfile.NamedTemporaryFile()
+    else:
+        tmpfile = tempfile.NamedTemporaryFile(delete = False)
+        
+    tmpfile.write(filelist)
+    
+    # close deletes in old world
+    if not oldpy:
+        tmpfile.close()
     else:
         tmpfile.flush()
 
