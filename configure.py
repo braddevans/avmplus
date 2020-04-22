@@ -22,6 +22,7 @@
 #
 #****************************************************************************
 
+from __future__ import print_function
 import os
 import os.path
 import sys
@@ -86,7 +87,7 @@ def _setSDKParams(sdk_version, os_ver, xcode_version):
         if xcode_version is None:
             xcode_version = '7'        
     else:
-        print'Unknown SDK version -> %s. Expected values are 104u, 105, 106, 107, 108, 109 or 1010.' % sdk_version
+        print('Unknown SDK version -> %s. Expected values are 104u, 105, 106, 107, 108, 109 or 1010.' % sdk_version)
         sys.exit(2)
 
     sdk_prefix = None
@@ -107,7 +108,7 @@ def _setSDKParams(sdk_version, os_ver, xcode_version):
 
     sdk_path = sdk_prefix + sdk_number + ".sdk"
     if not os.path.exists(sdk_path):
-        print'Could not find %s' % sdk_path
+        print('Could not find %s' % sdk_path)
         sys.exit(2)
     else:
         return os_ver,sdk_path
@@ -140,20 +141,20 @@ def _setGCCVersionedFlags(FLAGS, MAJOR_VERSION, MINOR_VERSION, current_cpu, clan
 def getLlvmFlags(llvm_config_flags, llvm_dir):
     "given an installed llvm build (aka llvm sdk), exec llvm-config --flags to get the -I (or ld, or cpp, etc) flags to use to compile llvm code"
     if not os.path.exists(llvm_dir):
-        print 'llvm value %s does not exist' % llvm_dir
+        print('llvm value %s does not exist' % llvm_dir)
         return None
     if not os.path.isdir(llvm_dir):
-        print 'llvm value %s not a directory' % llvm_dir
+        print('llvm value %s not a directory' % llvm_dir)
         return None
     llvm_bin_dir = os.path.join(llvm_dir, "bin")
     if not os.path.exists(llvm_bin_dir):
-        print 'are you sure %s is a llvm installed "sdk"? Cannot find %s' % (llvm_dir, llvm_bin_dir)
+        print('are you sure %s is a llvm installed "sdk"? Cannot find %s' % (llvm_dir, llvm_bin_dir))
         return None
     # llvm-config is a clever tool installed by llvm that knows paths to libs and includes
     # and other stuff that helps users 
     llvm_config = os.path.join(llvm_bin_dir, "llvm-config") 
     if not os.path.isfile(llvm_config):
-        print 'are you sure %s is a llvm installed "sdk"? Cannot find %s' % (llvm_dir, llvm_config)
+        print('are you sure %s is a llvm installed "sdk"? Cannot find %s' % (llvm_dir, llvm_config))
         return None
     else:
         llvm_config_cmd = llvm_config + " " + llvm_config_flags
@@ -162,7 +163,7 @@ def getLlvmFlags(llvm_config_flags, llvm_dir):
         cxxflags = llvm_config_out.strip()
         #how to find out exit code from process library??
         if not cxxflags.startswith("-") and not cxxflags.startswith("/") and not llvm_config_flags.startswith("--libs"):
-            print  "'%s' looks like an incorrect llvm-config command because output doesn't start with - %s" % (llvm_config_cmd, llvm_config_out)
+            print("'%s' looks like an incorrect llvm-config command because output doesn't start with - %s" % (llvm_config_cmd, llvm_config_out))
             return None
         return  llvm_config_out
 
@@ -214,33 +215,33 @@ llvm_dir = o.getStringArg("llvm")
 if llvm_dir :      
     llvm_cpp_flags = getLlvmFlags("--cppflags", llvm_dir)
     if llvm_cpp_flags == None :
-        print "running llvm-config --cppflags to obtain C preprocessor flags from %s has failed." % llvm_dir
+        print("running llvm-config --cppflags to obtain C preprocessor flags from %s has failed." % llvm_dir)
         sys.exit(2)
     else:
         #release llvm-config include -UNDEBUG though it doesn't need to.. and it clashes with our NDEBUG
-        print "configure.py removing -UNDEBUG from llvm-config --cppflags output"
+        print("configure.py removing -UNDEBUG from llvm-config --cppflags output")
         llvm_cpp_flags = llvm_cpp_flags.replace(" -UNDEBUG", "")
         
     llvm_cxx_flags = getLlvmFlags("--cxxflags", llvm_dir)
     #print llvm_cxx_flags
     if llvm_cxx_flags == None :
-        print "running llvm-config --cxxflags to obtain compiler flags from %s has failed." % llvm_dir
+        print("running llvm-config --cxxflags to obtain compiler flags from %s has failed." % llvm_dir)
         sys.exit(2)
     else:
         #release llvm-config include -UNDEBUG though it doesn't need to.. and it clashes with our NDEBUG
-        print "configure.py removing -UNDEBUG from llvm-config --cxxflags output"
+        print("configure.py removing -UNDEBUG from llvm-config --cxxflags output")
         llvm_cxx_flags = llvm_cxx_flags.replace(" -UNDEBUG", "")
         
     llvm_ld_flags = getLlvmFlags("--ldflags", llvm_dir)
     #print llvm_ld_flags
     if llvm_ld_flags == None :
-        print "running llvm-config --ldflags to obtain compiler flags from %s has failed." % llvm_dir
+        print("running llvm-config --ldflags to obtain compiler flags from %s has failed." % llvm_dir)
         sys.exit(2)
     #TODO: llvm-config shouldn't need the specialized components.
     llvm_libs_flags = getLlvmFlags("--libs all-targets codegen ipo ipa bitwriter", llvm_dir)
     #print llvm_libs_flags
     if llvm_libs_flags == None :
-        print "running llvm-config --libs to obtain list of llvm libs from %s has failed." % llvm_dir
+        print("running llvm-config --libs to obtain list of llvm libs from %s has failed." % llvm_dir)
         sys.exit(2)
         
     config.subst("ENABLE_LLVM", 1)
