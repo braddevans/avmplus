@@ -123,16 +123,16 @@ def _setGCCVersionedFlags(FLAGS, MAJOR_VERSION, MINOR_VERSION, current_cpu, clan
         elif (MAJOR_VERSION == 4 and MINOR_VERSION <= 2): # 4.0 - 4.2
             # Bugzilla 654996: -Werror for gcc prior to 4.3 can _usually_ be
             # turned on; see core/manifest.mk for Interpreter.cpp workaround.
-            FLAGS += "-Wstrict-aliasing=0 -Werror "
+            FLAGS += "-Wstrict-aliasing=0 -Wno-narrowing "
         elif (MAJOR_VERSION == 4 and MINOR_VERSION == 4): # 4.4
-            FLAGS += "-Werror -Wempty-body -Wno-logical-op -Wmissing-field-initializers -Wstrict-aliasing=0 -Wno-array-bounds -Wno-clobbered -Wstrict-overflow=0 -funit-at-a-time  "
+            FLAGS += "-Wno-narrowing -Wempty-body -Wno-logical-op -Wmissing-field-initializers -Wstrict-aliasing=0 -Wno-array-bounds -Wno-clobbered -Wstrict-overflow=0 -funit-at-a-time  "
         elif (MAJOR_VERSION >= 5 and clang_compiler): # clang 5.0 and above, TODO - Fix these warnings and reduce the flags.
             FLAGS += "-Wno-undef -Wno-unused-macros -Wno-documentation -Wno-c++11-extensions -Wno-sign-conversion -Wno-unused-parameter -Wno-unused-variable -Wno-sign-compare "
             FLAGS += "-Wno-shadow -Wno-cast-align -Wno-compare-distinct-pointer-types -Wno-null-conversion -Wno-invalid-offsetof -Wno-non-literal-null-conversion "
             FLAGS += "-Wno-padded -Wno-global-constructors -Wno-missing-prototypes -Wno-missing-variable-declarations -Wno-exit-time-destructors -Wno-format-nonliteral -Wno-unused-private-field "
             FLAGS += "-Wmissing-field-initializers -Wno-array-bounds -Wstrict-overflow=0 -funit-at-a-time  "
         else: # gcc 4.5 or later
-            FLAGS += "-Werror -Wempty-body -Wno-logical-op -Wmissing-field-initializers -Wstrict-aliasing=3 -Wno-array-bounds -Wno-clobbered -Wstrict-overflow=0 -funit-at-a-time  "
+            FLAGS += "-Wno-narrowing -Wempty-body -Wno-logical-op -Wmissing-field-initializers -Wstrict-aliasing=3 -Wno-array-bounds -Wno-clobbered -Wstrict-overflow=0 -funit-at-a-time  "
             if (MAJOR_VERSION == 4 and MINOR_VERSION == 6): # 4.6
                 FLAGS += "-Wno-psabi -Wno-unused-variable -Wno-unused-but-set-variable "
 
