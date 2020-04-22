@@ -4,6 +4,7 @@ from __future__ import print_function
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from builtins import object
 import os
 import sys
 import build.process
@@ -63,9 +64,9 @@ def _configSub(ostest, cputest, options):
         cpu = 'sparc'
     elif re.search('arm', cputest):
         if options.getBoolArg("arm-thumb",False):
-          cpu = 'thumb2'
+            cpu = 'thumb2'
         else:
-          cpu = 'arm'
+            cpu = 'arm'
     elif re.search('thumb2', cputest):
         cpu = 'thumb2'
     elif re.search('mips', cputest):
@@ -77,9 +78,9 @@ def _configSub(ostest, cputest, options):
 
     return (os, cpu)
 
-class Configuration:
+class Configuration(object):
     def __init__(self, topsrcdir, options=None, sourcefile=None, objdir=None,
-                 optimize=True, debug=False):
+                optimize=True, debug=False):
         self._topsrcdir = topsrcdir
         if objdir:
             self._objdir = objdir
@@ -187,30 +188,29 @@ class Configuration:
                 'OUTOPTION' : '-Fo',
                 'LIBPATH'   : '-LIBPATH:'
                 })
-	    if self._target[1] == "thumb2":
-                    self._acvars.update({'LDFLAGS' : '-NODEFAULTLIB:"oldnames.lib"'})
-                    if sys.platform.startswith('cygwin'):
-                        self._acvars.update({'ASM' : '$(topsrcdir)/build/cygwin-wrapper.sh armasm.exe -nologo'})
-                    else:
-                        self._acvars.update({'ASM' : 'armasm.exe -nologo'})
-
-            if self._target[1] == "arm":
-                self._acvars.update({'LDFLAGS' : '-NODEFAULTLIB:"oldnames.lib" -ENTRY:"mainWCRTStartup"'})
-                if sys.platform.startswith('cygwin'):
-                    self._acvars.update({'ASM' : '$(topsrcdir)/build/cygwin-wrapper.sh armasm.exe -nologo -arch 5T'})
-                else:
-                    self._acvars.update({'ASM' : 'armasm.exe -nologo -arch 5T'})
-
-            if self._target[1] == "x86_64":
-                if sys.platform.startswith('cygwin'):
-                   self._acvars.update({'MASM' : '$(topsrcdir)/build/cygwin-wrapper.sh ml64.exe -nologo -c '})
-                else:
-                   self._acvars.update({'MASM' : 'ml64.exe -nologo -c '})
-
+        if self._target[1] == "thumb2":
+            self._acvars.update({'LDFLAGS' : '-NODEFAULTLIB:"oldnames.lib"'})
             if sys.platform.startswith('cygwin'):
-                self._acvars.update({'CXX'          : '$(topsrcdir)/build/cygwin-wrapper.sh cl.exe -nologo'})
-                self._acvars.update({'CC'           : '$(topsrcdir)/build/cygwin-wrapper.sh cl.exe -nologo'})
+                self._acvars.update({'ASM' : '$(topsrcdir)/build/cygwin-wrapper.sh armasm.exe -nologo'})
+            else:
+                self._acvars.update({'ASM' : 'armasm.exe -nologo'})
 
+        if self._target[1] == "arm":
+            self._acvars.update({'LDFLAGS' : '-NODEFAULTLIB:"oldnames.lib" -ENTRY:"mainWCRTStartup"'})
+            if sys.platform.startswith('cygwin'):
+                self._acvars.update({'ASM' : '$(topsrcdir)/build/cygwin-wrapper.sh armasm.exe -nologo -arch 5T'})
+            else:
+                self._acvars.update({'ASM' : 'armasm.exe -nologo -arch 5T'})
+
+        if self._target[1] == "x86_64":
+            if sys.platform.startswith('cygwin'):
+                self._acvars.update({'MASM' : '$(topsrcdir)/build/cygwin-wrapper.sh ml64.exe -nologo -c '})
+            else:
+                self._acvars.update({'MASM' : 'ml64.exe -nologo -c '})
+
+        if sys.platform.startswith('cygwin'):
+            self._acvars.update({'CXX'          : '$(topsrcdir)/build/cygwin-wrapper.sh cl.exe -nologo'})
+            self._acvars.update({'CC'           : '$(topsrcdir)/build/cygwin-wrapper.sh cl.exe -nologo'})
         # Hackery! Make assumptions that we want to build with GCC 3.3 on MacPPC
         # and GCC4 on MacIntel
         elif self._target[0] == 'darwin':
@@ -375,10 +375,10 @@ Possible values are:
         outpath = self._objdir + "/" + makefile
 
         contents = ''
-        for (k,v) in self._acvars.iteritems():
+        for (k,v) in self._acvars.items():
             if type(v) == dict: # not all _acvars are added with self.subst
                 contents += '%s%s%s\n' % (k, '=' if v['recursive'] else ':=',
-                                          v['value'])
+                                        v['value'])
             else:
                 contents += '%s=%s\n' % (k,v)
 

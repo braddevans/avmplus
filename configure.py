@@ -689,7 +689,7 @@ else: # all other platforms
 
 # Append MMGC_DEFINES to APP_CPPFLAGS
 APP_CPPFLAGS += ''.join(val is None and ('-D%s ' % var) or ('-D%s=%s ' % (var, val))
-                        for (var, val) in MMGC_DEFINES.iteritems())
+                        for (var, val) in MMGC_DEFINES.items())
 
 config.subst("APP_CPPFLAGS", APP_CPPFLAGS)
 config.subst("APP_CXXFLAGS", APP_CXXFLAGS)

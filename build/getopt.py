@@ -3,6 +3,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from builtins import object
 import sys
 import re
 
@@ -17,7 +18,7 @@ _sdk = re.compile("^--mac-sdk=(.*)$")
 _xcode = re.compile("^--mac-xcode=(.*)$")
 _arm_arch = re.compile("^--arm-arch=(.*)$")
 
-class Options:
+class Options(object):
     def __init__(self, argv = sys.argv):
         self._args = {}
         self.target = None
@@ -142,7 +143,7 @@ class Options:
 
     def getHelp(self):
         ret = ''
-        for opt,default in sorted(self._allargs.iteritems()):
+        for opt,default in sorted(self._allargs.items()):
             if default == True:
                 ret += "%-35s [=enabled]\n" % ("--enable-%s" % opt)
             else:
@@ -162,4 +163,4 @@ class Options:
         if not self.ignore_unknown_flags:
             if len(self._args):
                 raise Exception("Unrecognized command line parameters: " +
-                                ", ".join(self._args.keys()))
+                                ", ".join(list(self._args.keys())))

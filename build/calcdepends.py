@@ -6,10 +6,11 @@
 
 
 from __future__ import print_function
+from builtins import object
 import os, sys, re
 from stat import *
 
-class StatCache:
+class StatCache(object):
     def __init__(self):
         self._dict = {}
 
@@ -81,7 +82,7 @@ def rebuildsNeeded(files, outfile, verbose, quiet):
 
     newrebuilds = []
 
-    for (objfile, depfile) in files.items():
+    for (objfile, depfile) in list(files.items()):
         rebuild = True
 
         try:
