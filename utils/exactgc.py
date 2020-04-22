@@ -16,6 +16,7 @@
 # inputfiles = string of list of files, can contain wildcards
 # outputdir = where output files go
 
+from __future__ import print_function
 import os
 import shutil
 import sys
@@ -44,7 +45,7 @@ utilsdir = platform_filename(os.path.dirname(__file__))
 def gen(prefix,inputfiles,outputdir,srcdir=os.getcwd(),ns=''):
     avm = os.environ.get('AVM')
     if avm == None:
-        print "ERROR: AVM environment variable must point to avm executable"
+        print("ERROR: AVM environment variable must point to avm executable")
         exit(1)
 
     asfile = utilsdir + "/exactgc.as"
@@ -54,13 +55,13 @@ def gen(prefix,inputfiles,outputdir,srcdir=os.getcwd(),ns=''):
     if not os.path.exists(abcfile) or (os.path.getmtime(abcfile) < os.path.getmtime(asfile) and os.access(abcfile, os.W_OK)):
         classpath = os.environ.get('ASC')
         if classpath == None:
-            print "ERROR: ASC environment variable must point to asc.jar"
+            print("ERROR: ASC environment variable must point to asc.jar")
             exit(1)
         print("Compiling exactgc script...")
 
         java_home = os.environ.get('JAVA_HOME')
         if java_home == None:
-            print "warning: no JAVA_HOME set; inferring executable is 'java' and on system path."
+            print("warning: no JAVA_HOME set; inferring executable is 'java' and on system path.")
             java_bin = 'java'
         else:
             java_bin = os.path.join(java_home, "bin", "java")
@@ -84,7 +85,7 @@ def gen(prefix,inputfiles,outputdir,srcdir=os.getcwd(),ns=''):
     # we must do in order for the exact gc script to open it.
     oldpy = sys.version_info < (2,6)
     if oldpy and platform.system() == 'Windows':
-        print "Error: exactgc script requirets newer python on windows."
+        print("Error: exactgc script requirets newer python on windows.")
         exit(1)
         
     if oldpy:
@@ -114,13 +115,13 @@ def gen(prefix,inputfiles,outputdir,srcdir=os.getcwd(),ns=''):
         
     success = True
     if ret != 0:
-        print "Invoking avmshell on exactgc script failed with command:", exactgccmd
+        print("Invoking avmshell on exactgc script failed with command:", exactgccmd)
         success = False
 
     tmpfile.close()
 
     if not os.path.exists(prefix+'-tracers.hh'):
-        print "Error: failed to generate tracers"
+        print("Error: failed to generate tracers")
         success = False
     elif not os.path.exists(outputdir):
         os.makedirs(outputdir)
