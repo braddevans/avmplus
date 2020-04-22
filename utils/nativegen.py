@@ -77,6 +77,7 @@
 #
 # For more information about GC see the documentation in utils/exactgc.as.
 
+from __future__ import print_function
 import optparse, struct, os, sys, StringIO
 from optparse import OptionParser
 from struct import *
@@ -880,7 +881,7 @@ class Traits:
         self.slots = []
         self.tmethods = []
         self.name = name
-        if BMAP.has_key(str(name)):
+        if str(name) in BMAP:
             self.ctype = BMAP[str(name)]
 
     def __str__(self):
@@ -1091,9 +1092,9 @@ class Abc:
                     if m.metadata != None:
                         for md in m.metadata:
                             if md.name == "native":
-                                if md.attrs.has_key("script"):
+                                if "script" in md.attrs:
                                     raise Error("native(script) is no longer supported; please use a native(\"function-name\") instead: " + str(m.name))
-                                if len(md.attrs) != 1 or not md.attrs.has_key(""):
+                                if len(md.attrs) != 1 or "" not in md.attrs:
                                     raise Error("native(\"function-name\") is the only form supported here" + str(m.name))
                                 if not m.isNative():
                                     raise Error("native(\"function-name\") can only be used on native functions" + str(m.name))
@@ -1343,11 +1344,11 @@ class Abc:
         return QName(name.nsset[0].stripVersion(), name.name)
 
     def qname(self, name):
-        if (not self.nameToQName.has_key(id(name))):
+        if (id(name) not in self.nameToQName):
             try:
                 result = self.__qname(name)
             except:
-                print dir(name)
+                print(dir(name))
                 raise
             self.qnameToName[id(result)] = name
             self.nameToQName[id(name)] = result
@@ -2236,7 +2237,7 @@ class AbcThunkGen:
 
     def emitConstructObjectDeclaration(self, out, t, args):
         ret_typedef = TYPEMAP_RETTYPE_GCREF[t.itraits.ctype](t.itraits)
-        arglist = ', '.join(map(lambda (argt, arg_typedef, argname): "%s %s" % (arg_typedef, argname), args[1:]))
+        arglist = ', '.join(map(lambda argt_arg_typedef_argname4: "%s %s" % (argt_arg_typedef_argname4[1], argt_arg_typedef_argname4[2]), args[1:]))
         out.println("%s constructObject(%s);" % (ret_typedef, arglist))
 
     def emitMethodWrappers(self, out, t):
@@ -2250,7 +2251,7 @@ class AbcThunkGen:
             fqcppname = t.itraits.fqcppname()
             ret_typedef = TYPEMAP_RETTYPE_GCREF[ctype](t.itraits)
             for i in range(0, t.itraits.init.optional_count+1):
-                arglist = ', '.join(map(lambda (argt, arg_typedef, argname): "%s %s" % (arg_typedef, argname), args[1:]))
+                arglist = ', '.join(map(lambda argt_arg_typedef_argname2: "%s %s" % (argt_arg_typedef_argname2[1], argt_arg_typedef_argname2[2]), args[1:]))
                 # "inline" rather than "REALLY_INLINE" -- it's not essential to inline
                 # this, so let the compiler decide to deinline if it so chooses
                 out.println("inline %s constructObject(%s)" % (ret_typedef, arglist))
@@ -2263,7 +2264,7 @@ class AbcThunkGen:
                 if needcore:
                     # explicitly cast to AvmCore* because it might be an only-forward-declared subclass
                     out.println("avmplus::AvmCore* const core = ((avmplus::AvmCore*)(this->core()));")
-                arglist = ', '.join(map(lambda (argt, arg_typedef, argname): TYPEMAP_TO_ATOM[argt.ctype](argname), args))
+                arglist = ', '.join(map(lambda argt_arg_typedef_argname3: TYPEMAP_TO_ATOM[argt_arg_typedef_argname3[0].ctype](argt_arg_typedef_argname3[2]), args))
                 out.println("avmplus::Atom args[%d] = { %s };" % (len(args), arglist))
                 if t.construct == "native":
                     out.println("avmplus::Atom const result = this->construct_native(%s::createInstanceProc, %d, args);" % (t.fqcppname(), len(args)-1))
@@ -2375,7 +2376,7 @@ class AbcThunkGen:
                     ret_ctype = CTYPE_VOID
                 ret_typedef = TYPEMAP_RETTYPE_GCREF[ret_ctype](ret_traits)
                 for i in range(0, mi.optional_count+1):
-                    arglist = ', '.join(map(lambda (argt, arg_typedef, argname): "%s %s" % (arg_typedef, argname), args[1:]))
+                    arglist = ', '.join(map(lambda argt_arg_typedef_argname: "%s %s" % (argt_arg_typedef_argname[1], argt_arg_typedef_argname[2]), args[1:]))
                     # "inline" rather than "REALLY_INLINE" -- it's not essential to inline
                     # this, so let the compiler decide to deinline if it so chooses
 
@@ -2396,7 +2397,7 @@ class AbcThunkGen:
                     if needcore:
                         # explicitly cast to AvmCore* because it might be an only-forward-declared subclass
                         out.println("avmplus::AvmCore* const core = ((avmplus::AvmCore*)(this->core()));")
-                    arglist = ', '.join(map(lambda (argt, arg_typedef, argname): TYPEMAP_TO_ATOM[argt.ctype](argname), args))
+                    arglist = ', '.join(map(lambda argt_arg_typedef_argname1: TYPEMAP_TO_ATOM[argt_arg_typedef_argname1[0].ctype](argt_arg_typedef_argname1[2]), args))
                     argc = len(args)-1
                     if t.is_interface:
                         # for interfaces, must look up by name. we could probably improve this 
@@ -2983,18 +2984,18 @@ class AbcThunkGen:
             self.lookup_traits["void"] = UNDEFINED
             for a in self.abcs:
                 for t in a.scripts:
-                    if self.lookup_traits.has_key(str(t)):
+                    if str(t) in self.lookup_traits:
                         raise Error("duplicate name found: " + str(t))
                     self.lookup_traits[str(t)] = t
                 for t in a.classes:
-                    if self.lookup_traits.has_key(str(t)):
+                    if str(t) in self.lookup_traits:
                         raise Error("duplicate name found: " + str(t))
                     self.lookup_traits[str(t)] = t
                 for t in a.instances:
-                    if self.lookup_traits.has_key(str(t)):
+                    if str(t) in self.lookup_traits:
                         raise Error("duplicate name found: " + str(t))
                     self.lookup_traits[str(t)] = t
-        if not self.lookup_traits.has_key(name):
+        if name not in self.lookup_traits:
             raise Error("name not found: " + name)
         return self.lookup_traits[name]
 
@@ -3065,11 +3066,11 @@ class AbcThunkGen:
                 n = "__protected__::" + mi.name.name
             else:
                 n = str(mi.name)
-            assert mi.override == t.tmethods_name_map[mi.kind].has_key(n)
+            assert mi.override == (n in t.tmethods_name_map[mi.kind])
             if mi.override:
                 mi.vtable_index = getset_ids[n]
             else:
-                if getset_ids.has_key(n):
+                if n in getset_ids:
                     assert mi.kind in [TRAIT_Getter, TRAIT_Setter]
                     mi.vtable_index = getset_ids[n]
                 else:

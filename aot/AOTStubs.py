@@ -5,6 +5,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import print_function
 import sys
 import os
 import pprint
@@ -26,8 +27,8 @@ def runProcess(p, msg, ignoreErrors = False):
     if not ignoreErrors:
         if not p.returncode == 0:
             if stderrdata:
-                print stderrdata
-            print msg
+                print(stderrdata)
+            print(msg)
             sys.exit(1)
     return (stdoutdata, stderrdata)
 
@@ -35,7 +36,7 @@ def createProcess(exe, args, verbose = False):
     cmdargs = [exe] + args
     
     if verbose:
-        print "running: " + " ".join(cmdargs)
+        print("running: " + " ".join(cmdargs))
     
     return subprocess.Popen(cmdargs, executable=exe, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -93,7 +94,7 @@ def updateStubOrder(fn):
             stuborder[n] += int(bits[1])
         except KeyError:
             stuborder[n] = int(bits[1])
-    print "# Found %d stubs in %s" % (count, fn)
+    print("# Found %d stubs in %s" % (count, fn))
             
 def updateStubOrdering(files):
     global stuborder
@@ -103,7 +104,7 @@ def updateStubOrdering(files):
         stuborder = pickle.load(f)
         f.close()
     else:
-        print "No stub ordering file found: '%s'" % os.path.abspath(pickleFile)
+        print("No stub ordering file found: '%s'" % os.path.abspath(pickleFile))
     
     if len(files) > 0:
         for fn in files:
@@ -117,7 +118,7 @@ def dumpStubOrderInfo(files):
     updateStubOrdering(files)
     
     for (s,c) in stuborder.iteritems():
-        print "%s | %d" % (s, c)
+        print("%s | %d" % (s, c))
 
 def getStubSortOrder(stub):
     global stuborder
@@ -165,10 +166,10 @@ def genCPPFiles(stubs, filenum):
         hfile = "AOTStubs-%05d.cpp" % filenum
         hfile = open(hfile, "w")
     
-        print >>hfile, standardHeader
-        print >>hfile, "#include \"AOTStubs.h\""
+        print(standardHeader, file=hfile)
+        print("#include \"AOTStubs.h\"", file=hfile)
         for x in xs:
-            print >>hfile, (x[1])
+            print((x[1]), file=hfile)
         hfile.close()
 
         filenum += 1

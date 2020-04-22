@@ -1,3 +1,4 @@
+from __future__ import print_function
 # -*- Mode: Python; indent-tabs-mode: nil -*-
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,14 +11,14 @@ import re
 
 def writeFileIfChanged(path, contents):
     """Write some contents to a file. Avoids modifying the file timestamp if the file contents already match."""
-    print "Generating " + path + "...",
+    print("Generating " + path + "...", end=' ')
     try:
         outf = open(path, "r")
         oldcontents = outf.read()
         outf.close()
 
         if oldcontents == contents:
-            print "not changed"
+            print("not changed")
             return
     except IOError:
         pass
@@ -25,7 +26,7 @@ def writeFileIfChanged(path, contents):
     outf = open(path, "w")
     outf.write(contents)
     outf.close()
-    print
+    print()
 
 # Figure out TARGET and CPU, a la config.guess
 # Do cross-compilation in the future, which will require HOST_OS and perhaps

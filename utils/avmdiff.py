@@ -10,6 +10,7 @@
 # vi: set ts=4 sw=4 expandtab:
 
 # python modules
+from __future__ import print_function
 import random, os, time, signal, getopt, sys, subprocess, difflib, re, platform
 from getopt import getopt
 from sys import argv, exit, stderr
@@ -230,7 +231,7 @@ def test(vmlist, avmshell_args, test_args):
     stat0, out0 = e0
     if len(results) != 1:
         # results not all the same.  print the outliers as diffs against the majority
-        print(avmshell_args, test_args, 'FAILED! diff')
+        print((avmshell_args, test_args, 'FAILED! diff'))
         for e in results:
             if e != e0:
                 out0 = out0 + (describe(e0)+'\n',)
@@ -239,7 +240,7 @@ def test(vmlist, avmshell_args, test_args):
         return 1
     elif stat0 < 0:
         # everyone crashed the same way
-        print(avmshell_args, test_args, 'FAILED!', describe(e0))
+        print((avmshell_args, test_args, 'FAILED!', describe(e0)))
         printlines(out0)
         return stat0
     if quiet:
