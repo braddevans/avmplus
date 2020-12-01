@@ -15,12 +15,12 @@ import sys
 # note: we allow reflexivity but don't ensure it.
 def closure(d):
   def close(k):
-    vals = set(d[k] if k in d.keys() else [])
+    vals = set(d[k] if k in list(d.keys()) else [])
     for v in vals.copy():
       if v != k:
         vals |= close(v)
     return vals
-  return dict(zip(d.keys(), [close(k) for k in d.keys()]))
+  return dict(list(zip(list(d.keys()), [close(k) for k in list(d.keys())])))
 
 # -----------------------------------------------------
 #
@@ -484,7 +484,7 @@ def getRep(d, add = False):
     return shape_rep_overrides[d.shape]
   else:
     # NOTE: make it if it's not there, if add flag is set
-    if not(d.shape in reps.keys()):
+    if not(d.shape in list(reps.keys())):
       shapeinfo = RepInfo("Shape_%s" % '_'.join(map(str, d.shape)), d.shape)
       if add:
           replist.append(shapeinfo)
@@ -547,7 +547,7 @@ def splitSig(sig):
 
 # indexes where list items pass pred
 def where(pred, li):
-  return filter(pred, range(0, len(li)))
+  return list(filter(pred, list(range(0, len(li)))))
 
 # return sublist built from elements at given indexes
 def sublist(li, ixs):
@@ -558,7 +558,7 @@ def sublist(li, ixs):
 
 # number of list items that pass pred
 def count(pred, li):
-  return len(filter(pred, li))
+  return len(list(filter(pred, li)))
 
 # occurences of effect_type in type list
 def effectCount(types):
@@ -822,7 +822,7 @@ class Template(Prototype):
     argsig, retsig = self.dumpSigItems()
     spaces = ' ' * indent
     labeldumps = ''.join(['\n  ' + spaces + label.dump()
-      for label in self.labels.values()])
+      for label in list(self.labels.values())])
     bodydump = '\n  '.join([spaces + dumpItem(instr) for instr in self.body])
     return '%s: %s -> %s\n  %s%s' % (self.name, argsig, retsig, bodydump, labeldumps)
 
@@ -869,7 +869,7 @@ class Call:
   # type propagation function, we call that instead
   #
   def calcTypes(self):
-    if self.base.name in calctypes_handlers.keys():
+    if self.base.name in list(calctypes_handlers.keys()):
       return calctypes_handlers[self.base.name](self)
     else:
       return self.base.rettypes
@@ -1023,7 +1023,7 @@ class LocalDefs:
     self.expr = expr
     if expr.kind == 'Call':
       self.names = lhs
-      self.defs = dict(zip(lhs, [Selector(expr, i) for i in range(0, len(lhs))]))
+      self.defs = dict(list(zip(lhs, [Selector(expr, i) for i in range(0, len(lhs))])))
     else:
       self.names = [lhs]
       self.defs = { lhs : expr }
@@ -1261,7 +1261,7 @@ def genBindings(tem, expr, lhs = None):
     instr = genValueBinding(tem, expr, lhs)
 
   # note: template locals are added here
-  for n, v in instr.defs.items():
+  for n, v in list(instr.defs.items()):
     tem.locals[n] = v
 
   setCurItem(savecuritem)
@@ -1619,7 +1619,7 @@ def processTem(tem, defmap, stack):
     # print '<<< %s\n' % tem.dump()
     
   except ParseError as e:
-    print 'parse error: %s' % e.message()
+    print('parse error: %s' % e.message())
     sys.exit(1)
 
 # create a map from a list of defs, check for dupes
@@ -1635,7 +1635,7 @@ def toMap(defs):
 # process list of defs into a finished map.
 def process(defs):
   defmap = toMap(defs)
-  for d in defmap.values(): 
+  for d in list(defmap.values()): 
     if d.isTemplate() and not d.done:
       processTem(d, defmap, [])
 

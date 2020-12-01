@@ -125,7 +125,7 @@ def _gcc_mangle(name, ret_type, param_types, attributes, typedefs):
         return 'S'+base36(i-1)+'_'
     subs.append(subst)
     if _printMangleSubstitutions:
-      print subs
+      print(subs)
     return nm
 
   # Each namespace prefix is encoded and substitutions are performed
@@ -492,11 +492,11 @@ def getAvmMangleTypedefs(arch):
 if __name__ == "__main__":
     _printMangleSubstitutions = True
     for ms in mangleSchemes:
-      print ms.mangle("foo", "void", ["MethodFrame*", "Traits*"] , mangle_typedefs_32)
-      print ms.mangle("halfmoon::Stubs::do_abc_getprop", "int", ["MethodFrame*", "const Multiname*", "int"] , mangle_typedefs_32)
-      print ms.mangle("halfmoon::Stubs::do_abc_getprop", "void", ["MethodFrame*", "Multiname const*", "int"] , mangle_typedefs_32)
-      print ms.mangle("halfmoon::Stubs::do_abc_getprop", "void", ["MethodFrame*", "Multiname* const", "int"] , mangle_typedefs_32)
+      print(ms.mangle("foo", "void", ["MethodFrame*", "Traits*"] , mangle_typedefs_32))
+      print(ms.mangle("halfmoon::Stubs::do_abc_getprop", "int", ["MethodFrame*", "const Multiname*", "int"] , mangle_typedefs_32))
+      print(ms.mangle("halfmoon::Stubs::do_abc_getprop", "void", ["MethodFrame*", "Multiname const*", "int"] , mangle_typedefs_32))
+      print(ms.mangle("halfmoon::Stubs::do_abc_getprop", "void", ["MethodFrame*", "Multiname* const", "int"] , mangle_typedefs_32))
       # halfmoon::Stubs::do_concat_strings(avmplus::MethodFrame*, avmplus::String*, avmplus::String*)
       # S_        S0_                      S1_      S2_       S3_          S4_  S5_
-      print ms.mangle("halfmoon::Stubs::do_concat_strings", "void", ["MethodFrame*", "String*", "String*"] , mangle_typedefs_32)
+      print(ms.mangle("halfmoon::Stubs::do_concat_strings", "void", ["MethodFrame*", "String*", "String*"] , mangle_typedefs_32))
 
