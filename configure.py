@@ -16,7 +16,7 @@
 # https://zerowing.corp.adobe.com/display/FlashPlayer/android+tamarin+shell+support
 #
 # Before building edit the /android-public/android-vars.sh script
-# and check that the ANDROIDTOP variable is set correctly. Then run the script 
+# and check that the ANDROIDTOP variable is set correctly. Then run the script
 # before invoking configure.py:
 #        . /android-public/android-vars.sh
 #
@@ -26,10 +26,11 @@ from __future__ import print_function
 import os
 import os.path
 import sys
-import build.process
-import re
 import string
 import subprocess
+import re
+import build.process
+
 
 thisdir = os.path.dirname(os.path.abspath(__file__))
 
@@ -85,26 +86,26 @@ def _setSDKParams(sdk_version, os_ver, xcode_version):
     elif sdk_version == '1011':
         os_ver,sdk_number = '10.11','10.11'
         if xcode_version is None:
-            xcode_version = '7'        
+            xcode_version = '7'
     else:
         print('Unknown SDK version -> %s. Expected values are 104u, 105, 106, 107, 108, 109 or 1010.' % sdk_version)
         sys.exit(2)
 
     sdk_prefix = None
     if xcode_version is not None:
-       xcode_major_version = xcode_version.split(".")[0]
-       if int(xcode_major_version) >= 4:
-           #matz: post xcode 4.5 can install xcode anyplace
-           #hence may  need to use xcode-select to find right install of xcode
-           sdk_prefix = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX"
-           if not os.path.exists(sdk_prefix):
-               p = subprocess.Popen('xcode-select -print-path', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-               pth = p.stdout.read().strip()
-               #print "xcode-select --print-path says", pth.strip()
-               sdk_prefix = pth.strip() + "/Platforms/MacOSX.platform/Developer/SDKs/MacOSX"
+        xcode_major_version = xcode_version.split(".")[0]
+        if int(xcode_major_version) >= 4:
+            #matz: post xcode 4.5 can install xcode anyplace
+            #hence may  need to use xcode-select to find right install of xcode
+            sdk_prefix = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX"
+            if not os.path.exists(sdk_prefix):
+                p = subprocess.Popen('xcode-select -print-path', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                pth = p.stdout.read().strip()
+                #print "xcode-select --print-path says", pth.strip()
+                sdk_prefix = pth.strip() + "/Platforms/MacOSX.platform/Developer/SDKs/MacOSX"
 
     if sdk_prefix is None:
-       sdk_prefix = "/Developer/SDKs/MacOSX"
+        sdk_prefix = "/Developer/SDKs/MacOSX"
 
     sdk_path = sdk_prefix + sdk_number + ".sdk"
     if not os.path.exists(sdk_path):
@@ -151,26 +152,24 @@ def getLlvmFlags(llvm_config_flags, llvm_dir):
         print('are you sure %s is a llvm installed "sdk"? Cannot find %s' % (llvm_dir, llvm_bin_dir))
         return None
     # llvm-config is a clever tool installed by llvm that knows paths to libs and includes
-    # and other stuff that helps users 
-    llvm_config = os.path.join(llvm_bin_dir, "llvm-config") 
+    # and other stuff that helps users
+    llvm_config = os.path.join(llvm_bin_dir, "llvm-config")
     if not os.path.isfile(llvm_config):
         print('are you sure %s is a llvm installed "sdk"? Cannot find %s' % (llvm_dir, llvm_config))
         return None
-    else:
-        llvm_config_cmd = llvm_config + " " + llvm_config_flags
-        p = subprocess.Popen(llvm_config_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        llvm_config_out = p.stdout.read()
-        cxxflags = llvm_config_out.strip()
-        #how to find out exit code from process library??
-        if not cxxflags.startswith("-") and not cxxflags.startswith("/") and not llvm_config_flags.startswith("--libs"):
-            print("'%s' looks like an incorrect llvm-config command because output doesn't start with - %s" % (llvm_config_cmd, llvm_config_out))
-            return None
-        return  llvm_config_out
+    llvm_config_cmd = llvm_config + " " + llvm_config_flags
+    p = subprocess.Popen(llvm_config_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    llvm_config_out = p.stdout.read()
+    cxxflags = llvm_config_out.strip()
+    #how to find out exit code from process library??
+    if not cxxflags.startswith("-") and not cxxflags.startswith("/") and not llvm_config_flags.startswith("--libs"):
+        print("'%s' looks like an incorrect llvm-config command because output doesn't start with - %s" % (llvm_config_cmd, llvm_config_out))
+        return None
+    return llvm_config_out
 
 o = build.getopt.Options()
 
-config = Configuration(thisdir, options = o,
-                       sourcefile = 'core/avmplus.h')
+config = Configuration(thisdir, options = o, sourcefile = 'core/avmplus.h')
 
 the_os, cpu = config.getTarget()
 
@@ -196,7 +195,7 @@ if buildTamarin:
     config.subst("ENABLE_TAMARIN", 1)
 
 buildShell = o.getBoolArg("shell", True)
-if (buildShell):
+if buildShell:
     config.subst("ENABLE_SHELL", 1)
 
 buildAot = o.peekBoolArg("aot", False)
@@ -210,11 +209,10 @@ if o.peekBoolArg("halfmoon-aot-compiler", False):
     config.subst("ENABLE_HALFMOON_AOT_COMPILER", 1)
 
 # imitating the clang configure script, we accept --enable-llvm=dir which points at the build output of the llvm build we want to use.
-#    
 llvm_dir = o.getStringArg("llvm")
-if llvm_dir :      
+if llvm_dir:      
     llvm_cpp_flags = getLlvmFlags("--cppflags", llvm_dir)
-    if llvm_cpp_flags == None :
+    if llvm_cpp_flags == None:
         print("running llvm-config --cppflags to obtain C preprocessor flags from %s has failed." % llvm_dir)
         sys.exit(2)
     else:
@@ -224,7 +222,7 @@ if llvm_dir :
         
     llvm_cxx_flags = getLlvmFlags("--cxxflags", llvm_dir)
     #print llvm_cxx_flags
-    if llvm_cxx_flags == None :
+    if llvm_cxx_flags == None:
         print("running llvm-config --cxxflags to obtain compiler flags from %s has failed." % llvm_dir)
         sys.exit(2)
     else:
@@ -234,13 +232,13 @@ if llvm_dir :
         
     llvm_ld_flags = getLlvmFlags("--ldflags", llvm_dir)
     #print llvm_ld_flags
-    if llvm_ld_flags == None :
+    if llvm_ld_flags == None:
         print("running llvm-config --ldflags to obtain compiler flags from %s has failed." % llvm_dir)
         sys.exit(2)
     #TODO: llvm-config shouldn't need the specialized components.
     llvm_libs_flags = getLlvmFlags("--libs all-targets codegen ipo ipa bitwriter", llvm_dir)
     #print llvm_libs_flags
-    if llvm_libs_flags == None :
+    if llvm_libs_flags == None:
         print("running llvm-config --libs to obtain list of llvm libs from %s has failed." % llvm_dir)
         sys.exit(2)
         
@@ -323,7 +321,7 @@ if 'VALGRIND_HOME' in os.environ:
 APP_CPPFLAGS += '-I' + valinc + ' '
 
 # builtinBuildFlags() must be called first, featureSettings() will clear the features!
-config.subst("BUILTIN_BUILDFLAGS",build.avmfeatures.builtinBuildFlags(o));
+config.subst("BUILTIN_BUILDFLAGS",build.avmfeatures.builtinBuildFlags(o))
 # See build/avmfeatures.py for the code that processes switches for
 # standard feature names.
 APP_CPPFLAGS += build.avmfeatures.featureSettings(o)
@@ -366,7 +364,7 @@ if config.getCompiler() == 'GCC':
             ANDROID_SDK = os.environ['ANDROID_SDK']
         except:
             print('\nANDROID_ variables not found in environment\nPlease run /android-public/android-vars.sh')
-            exit(0)
+            sys.exit(0)
 
         ANDROID_INCLUDES = "-I$(topsrcdir)/other-licenses/zlib "\
                            "-I$(ANDROID_NDK)/platforms/%s/arch-arm/usr/include "\
@@ -407,7 +405,7 @@ if config.getCompiler() == 'GCC':
 
         BASE_M_FLAGS = "-mlong-calls -mthumb-interwork "
 
-        if arm_arch == "armv7-a" or arm_arch == None:
+        if arm_arch == "armv7-a" or arm_arch is None:
             BASE_CXX_FLAGS = "%s -march=armv7-a -mtune=cortex-a8 -mfloat-abi=softfp -mno-thumb -fno-section-anchors -D__ARM_ARCH__=7 " \
                         "-DARMV6_ASSEMBLY " % BASE_M_FLAGS
             APP_CXXFLAGS += BASE_CXX_FLAGS
@@ -442,12 +440,12 @@ if config.getCompiler() == 'GCC':
     if cpu == 'sh4':
         APP_CXXFLAGS += "-mieee -Wno-cast-align "
 
-    if cpu == 'arm' or cpu == 'thumb2':
+    if cpu in ('arm', 'thumb2'):
         APP_CXXFLAGS += "-Wno-cast-align "
         APP_CFLAGS += "-Wno-cast-align "
 
-    FLOAT_ABI = None;
-    EXTRA_CFLAGS = "";
+    FLOAT_ABI = None
+    EXTRA_CFLAGS = ""
     if arm_fpu:
         FLOAT_ABI = "-mfloat-abi=softfp "
         EXTRA_CFLAGS = "-mfpu=vfp -march=%s " % arm_arch # compile to use hardware fpu
@@ -455,20 +453,20 @@ if config.getCompiler() == 'GCC':
         FLOAT_ABI = "-mfloat-abi=hard -march=%s " % arm_arch # compile to use neon vfp
         AVMSHELL_LDFLAGS += "-static "
     if arm_neon:
-        if FLOAT_ABI == None:
+        if FLOAT_ABI is None:
             FLOAT_ABI = "-mfloat-abi=softfp "
         EXTRA_CFLAGS = "-mfpu=neon -march=%s -DTARGET_NEON " % arm_arch # compile to use neon vfp
     if arm_thumb:
         EXTRA_CFLAGS += "-mthumb -DTARGET_THUMB2 "
-    if arm_thumb != False and arm_arch == "armv7-a":
-        EXTRA_CFLAGS += "-mtune=cortex-a8 "
+        if arm_arch == "armv7-a":
+            EXTRA_CFLAGS += "-mtune=cortex-a8 "
     #if arm_arch:
         #OPT_CXXFLAGS += "-march=%s " % arm_arch
         #DEBUG_CXXFLAGS += "-march=%s " % arm_arch
-    if EXTRA_CFLAGS != None:
+    if EXTRA_CFLAGS is not None:
         APP_CXXFLAGS += EXTRA_CFLAGS
         APP_CFLAGS += EXTRA_CFLAGS
-    if FLOAT_ABI != None:
+    if FLOAT_ABI is not None:
         APP_CXXFLAGS += FLOAT_ABI
         APP_CFLAGS += FLOAT_ABI
         AVMSHELL_LDFLAGS += FLOAT_ABI
@@ -549,7 +547,7 @@ if the_os == "darwin":
     os_ver = p.stdout.read()
     parts = os_ver.split('.')
     os_ver = parts[0] + '.' + parts[1]
-	
+
     AVMSHELL_LDFLAGS += " -exported_symbols_list $(topsrcdir)/platform/mac/avmshell/exports.exp"
     MMGC_DEFINES.update({'TARGET_API_MAC_CARBON': 1,
                          'DARWIN': 1,
@@ -575,7 +573,7 @@ if the_os == "darwin":
         APP_CFLAGS += "-arch x86_64 "
         OS_LDFLAGS += "-arch x86_64 "
 
-elif the_os == "windows" or the_os == "cygwin":
+elif the_os in ("windows", "cygwin"):
     MMGC_DEFINES.update({'WIN32': None,
                          '_CRT_SECURE_NO_DEPRECATE': None})
     OS_LDFLAGS += "-MAP "
@@ -677,10 +675,9 @@ if o.help:
 # This is NOT supported on windows/cygwin due to cygwin-wrapper.sh
 # not passing the string correctly to cl.exe
 AVMPLUS_DESC = o.getStringArg('desc') or ''
-if the_os == "windows" or the_os == "cygwin":
+if the_os in ("windows", "cygwin"):
     if AVMPLUS_DESC:
-        print('AVMPLUS_DESC is not supported on windows via cygwin make.'
-              '  Ignoring description.')
+        print('AVMPLUS_DESC is not supported on windows via cygwin make. Ignoring description.')
 else: # all other platforms
     # place in Makefile even if the value is empty so
     # it can be updated by hand if desired
