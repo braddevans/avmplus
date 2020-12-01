@@ -77,8 +77,8 @@
 #
 # For more information about GC see the documentation in utils/exactgc.as.
 
-from __future__ import print_function
-import optparse, struct, os, sys, StringIO
+
+import optparse, struct, os, sys, io
 from optparse import OptionParser
 from struct import *
 from os import path
@@ -496,9 +496,9 @@ class Multiname:
         self.nsset = nsset
         self.name = name
     def __str__(self):
-        nsStrings = map(lambda ns: '"' + str(ns).decode("utf8") + '"', self.nsset)
+        nsStrings = ['"' + str(ns).decode("utf8") + '"' for ns in self.nsset]
         stringForNSSet = '[' + ', '.join(nsStrings) + ']'
-        return stringForNSSet + '::' + unicode(self.name.decode("utf8"))
+        return stringForNSSet + '::' + str(self.name.decode("utf8"))
 
 class TypeName:
     name = ""
@@ -622,7 +622,7 @@ class NativeInfo:
 
     def parse_one_nativeinfo(self, attrs, is_vm_builtin):
 
-        for k in attrs.keys():
+        for k in list(attrs.keys()):
             v = attrs[k]
             if (k == "script"):
                 raise Error("native scripts are no longer supported; please use a native class instead and wrap with AS3 code as necessary.")
@@ -684,7 +684,7 @@ class NativeInfo:
         if self.instancebase_name != None:
             raise Error("native(instancebase) may not be specified multiple times for the same class: %s %s" % (self.instancebase_name, name))
         comps = self.fullyQualifiedCPPClassName(name)
-        self.instancebase_name = '::'.join(filter(lambda ns: len(ns) > 0, comps))
+        self.instancebase_name = '::'.join([ns for ns in comps if len(ns) > 0])
 
     def set_construct(self, value, is_vm_builtin):
         if self.construct != None:
@@ -923,7 +923,7 @@ class Traits:
 
     # return the fully qualified cpp name, eg "foo::bar::FooObject"
     def fqcppname(self):
-        return '::'.join(filter(lambda ns: len(ns) > 0, self.cpp_name_comps))
+        return '::'.join([ns for ns in self.cpp_name_comps if len(ns) > 0])
 
     # return the cpp name minus namespaces, eg "FooObject"
     def cppname(self):
@@ -931,7 +931,7 @@ class Traits:
 
     # return the cpp namespace(s), eg "foo::bar"
     def cppns(self):
-        return '::'.join(filter(lambda ns: len(ns) > 0, self.cpp_name_comps[:-1]))
+        return '::'.join([ns for ns in self.cpp_name_comps[:-1] if len(ns) > 0])
 
     # return the complete name if it starts with ::, otherwise just the cppname
     def niname(self):
@@ -1578,13 +1578,12 @@ class AbcThunkGen:
     def emitAOT(self, out, name):
         out.println('#ifdef VMCFG_AOT')
         
-        traits = filter(lambda t: (not (t.itraits != None and t.itraits.is_interface)) and \
+        traits = [t for t in self.abc.classes + self.abc.instances if (not (t.itraits != None and t.itraits.is_interface)) and \
                                     (not t.is_interface) and \
                                     (not t.is_synthetic) and \
                                     (t.fqcppname() != "double") and \
-                                    ((t.ctype == CTYPE_OBJECT) or (t.fqcppname() == BASE_INSTANCE_NAME) or (t.fqcppname() == BASE_CLASS_NAME)), \
-                        self.abc.classes + self.abc.instances)
-        glueClasses = sorted(set(map(lambda t: tuple([t.fqcppname(), t.niname()]), traits)))
+                                    ((t.ctype == CTYPE_OBJECT) or (t.fqcppname() == BASE_INSTANCE_NAME) or (t.fqcppname() == BASE_CLASS_NAME))]
+        glueClasses = sorted(set([tuple([t.fqcppname(), t.niname()]) for t in traits]))
         
         out.println('extern "C" const struct {')
         out.indent += 1
@@ -1628,7 +1627,7 @@ class AbcThunkGen:
         self.forwardDeclareGlueClasses(out)
 
         nativeIDNamespaces = opts.nativeIDNS.split('::')
-        out.println(' '.join(map(lambda ns: 'namespace %s {' % ns, nativeIDNamespaces)))
+        out.println(' '.join(['namespace %s {' % ns for ns in nativeIDNamespaces]))
         out.println('')
 
         out.println('extern const uint32_t '+name+"_abc_class_count;")
@@ -1748,7 +1747,7 @@ class AbcThunkGen:
         out.println('')
         
         rootNS = opts.rootImplNS.split('::')
-        out.println(' '.join(map(lambda ns: 'namespace %s {' % ns, rootNS)))
+        out.println(' '.join(['namespace %s {' % ns for ns in rootNS]))
         out.println('')
 
         self.emitSyntheticClasses(out)
@@ -1778,7 +1777,7 @@ class AbcThunkGen:
             out.println('')
 
         nativeIDNamespaces = opts.nativeIDNS.split('::')
-        out.println(' '.join(map(lambda ns: 'namespace %s {' % ns, nativeIDNamespaces)))
+        out.println(' '.join(['namespace %s {' % ns for ns in nativeIDNamespaces]))
         out.println('')
 
         out.println("const uint32_t "+name+"_abc_class_count = "+str(len(self.abc.classes))+";");
@@ -1940,7 +1939,7 @@ class AbcThunkGen:
                     
 
         for t in frozenset(traitsSet):
-            filteredSlots = filter(lambda s: s is not None, t.slots)
+            filteredSlots = [s for s in t.slots if s is not None]
             for s in filteredSlots:
                 slotTraits = self.lookupTraits(s.type)
                 traitsSet.add(slotTraits)
@@ -1957,10 +1956,10 @@ class AbcThunkGen:
                     if not key in glueClassToTraits:
                         glueClassToTraits[key] = []
                     glueClassToTraits[key].append(t)
-        for (nsStr, glueClasses) in sorted(cppNamespaceToGlueClasses.iteritems()):
+        for (nsStr, glueClasses) in sorted(cppNamespaceToGlueClasses.items()):
             # turn list of namespaces [foo, bar, baz] into "namespace foo { namespace bar { namespace baz {"
             nsList = nsStr.split('::')
-            out_h.println(' '.join(map(lambda ns: 'namespace %s {' % ns, nsList)))
+            out_h.println(' '.join(['namespace %s {' % ns for ns in nsList]))
             out_h.indent += 1
             
             # this can emit the same class multiple times; that's by design,
@@ -2068,7 +2067,7 @@ class AbcThunkGen:
                 self.emitMethodBodiesForTraits(out, c.itraits, visitedGlueClasses)
 
     def sortSlots(self, t):
-        filteredSlots = filter(lambda s: s is not None, t.slots)
+        filteredSlots = [s for s in t.slots if s is not None]
 
         slotsTypeInfo = {}
         for slot in filteredSlots:
@@ -2237,7 +2236,7 @@ class AbcThunkGen:
 
     def emitConstructObjectDeclaration(self, out, t, args):
         ret_typedef = TYPEMAP_RETTYPE_GCREF[t.itraits.ctype](t.itraits)
-        arglist = ', '.join(map(lambda argt_arg_typedef_argname4: "%s %s" % (argt_arg_typedef_argname4[1], argt_arg_typedef_argname4[2]), args[1:]))
+        arglist = ', '.join(["%s %s" % (argt_arg_typedef_argname4[1], argt_arg_typedef_argname4[2]) for argt_arg_typedef_argname4 in args[1:]])
         out.println("%s constructObject(%s);" % (ret_typedef, arglist))
 
     def emitMethodWrappers(self, out, t):
@@ -2251,7 +2250,7 @@ class AbcThunkGen:
             fqcppname = t.itraits.fqcppname()
             ret_typedef = TYPEMAP_RETTYPE_GCREF[ctype](t.itraits)
             for i in range(0, t.itraits.init.optional_count+1):
-                arglist = ', '.join(map(lambda argt_arg_typedef_argname2: "%s %s" % (argt_arg_typedef_argname2[1], argt_arg_typedef_argname2[2]), args[1:]))
+                arglist = ', '.join(["%s %s" % (argt_arg_typedef_argname2[1], argt_arg_typedef_argname2[2]) for argt_arg_typedef_argname2 in args[1:]])
                 # "inline" rather than "REALLY_INLINE" -- it's not essential to inline
                 # this, so let the compiler decide to deinline if it so chooses
                 out.println("inline %s constructObject(%s)" % (ret_typedef, arglist))
@@ -2264,7 +2263,7 @@ class AbcThunkGen:
                 if needcore:
                     # explicitly cast to AvmCore* because it might be an only-forward-declared subclass
                     out.println("avmplus::AvmCore* const core = ((avmplus::AvmCore*)(this->core()));")
-                arglist = ', '.join(map(lambda argt_arg_typedef_argname3: TYPEMAP_TO_ATOM[argt_arg_typedef_argname3[0].ctype](argt_arg_typedef_argname3[2]), args))
+                arglist = ', '.join([TYPEMAP_TO_ATOM[argt_arg_typedef_argname3[0].ctype](argt_arg_typedef_argname3[2]) for argt_arg_typedef_argname3 in args])
                 out.println("avmplus::Atom args[%d] = { %s };" % (len(args), arglist))
                 if t.construct == "native":
                     out.println("avmplus::Atom const result = this->construct_native(%s::createInstanceProc, %d, args);" % (t.fqcppname(), len(args)-1))
@@ -2376,7 +2375,7 @@ class AbcThunkGen:
                     ret_ctype = CTYPE_VOID
                 ret_typedef = TYPEMAP_RETTYPE_GCREF[ret_ctype](ret_traits)
                 for i in range(0, mi.optional_count+1):
-                    arglist = ', '.join(map(lambda argt_arg_typedef_argname: "%s %s" % (argt_arg_typedef_argname[1], argt_arg_typedef_argname[2]), args[1:]))
+                    arglist = ', '.join(["%s %s" % (argt_arg_typedef_argname[1], argt_arg_typedef_argname[2]) for argt_arg_typedef_argname in args[1:]])
                     # "inline" rather than "REALLY_INLINE" -- it's not essential to inline
                     # this, so let the compiler decide to deinline if it so chooses
 
@@ -2397,7 +2396,7 @@ class AbcThunkGen:
                     if needcore:
                         # explicitly cast to AvmCore* because it might be an only-forward-declared subclass
                         out.println("avmplus::AvmCore* const core = ((avmplus::AvmCore*)(this->core()));")
-                    arglist = ', '.join(map(lambda argt_arg_typedef_argname1: TYPEMAP_TO_ATOM[argt_arg_typedef_argname1[0].ctype](argt_arg_typedef_argname1[2]), args))
+                    arglist = ', '.join([TYPEMAP_TO_ATOM[argt_arg_typedef_argname1[0].ctype](argt_arg_typedef_argname1[2]) for argt_arg_typedef_argname1 in args])
                     argc = len(args)-1
                     if t.is_interface:
                         # for interfaces, must look up by name. we could probably improve this 
@@ -3033,7 +3032,7 @@ class AbcThunkGen:
             self.assignMethodIndices(base)
             t.tmethod_index_count = base.tmethod_index_count
             for kind in [TRAIT_Method,TRAIT_Getter,TRAIT_Setter]:
-                for n in base.tmethods_name_map[kind].keys():
+                for n in list(base.tmethods_name_map[kind].keys()):
                     mi = base.tmethods_name_map[kind][n]
                     if not mi.name.ns.isPrivate():
                         t.tmethods_name_map[kind][n] = mi;
@@ -3051,7 +3050,7 @@ class AbcThunkGen:
         # but, they can arrive in any order, so we must be careful.
         getset_ids = {}
         for kind in [TRAIT_Method,TRAIT_Getter,TRAIT_Setter]:
-            for mi in t.tmethods_name_map[kind].values():
+            for mi in list(t.tmethods_name_map[kind].values()):
                 assert(isinstance(mi.name, QName))
                 if mi.name.ns.isProtected():
                     n = "__protected__::" + mi.name.name

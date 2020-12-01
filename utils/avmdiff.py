@@ -10,7 +10,7 @@
 # vi: set ts=4 sw=4 expandtab:
 
 # python modules
-from __future__ import print_function
+
 import random, os, time, signal, getopt, sys, subprocess, difflib, re, platform
 from getopt import getopt
 from sys import argv, exit, stderr

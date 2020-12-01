@@ -16,7 +16,7 @@
 # inputfiles = string of list of files, can contain wildcards
 # outputdir = where output files go
 
-from __future__ import print_function
+
 import os
 import shutil
 import sys
