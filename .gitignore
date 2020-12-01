@@ -2,6 +2,7 @@
 bin/
 bin-debug/
 bin-release/
+objdir/
 
 # Other files and folders
 .settings/

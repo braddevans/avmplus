@@ -2569,7 +2569,7 @@ class AbcThunkGen:
         out.println("{")
         psdkobjectconstructstring = ""
         if str(t.name).find("com.adobe.mediacore") != -1:
-			psdkobjectconstructstring = self.emitPSDKInterfaceStuff(out, t)
+            psdkobjectconstructstring = self.emitPSDKInterfaceStuff(out, t)
         if t.is_gc_exact:
             out.indent += 1
             out.println("GC_DECLARE_EXACT_METHODS")
