@@ -480,7 +480,7 @@ class QName:
     ns = None
     name = ""
     def __init__(self, ns, name):
-        self.ns = ns
+        self.ns = ns.decode('iso-8859-1')
         self.name = name
     def __str__(self):
         if str(self.ns) == "":
