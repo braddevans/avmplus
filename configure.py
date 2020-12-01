@@ -348,7 +348,7 @@ if config.getCompiler() == 'GCC':
         rawver = build.process.run_for_output(['$CXX', '--version'])
     else:
         rawver = build.process.run_for_output(['gcc', '--version'])
-    vre = re.compile(".* ([3-9]\.[0-9]+\.?[0-9]*)[ \n]")
+    vre = re.compile(".* (\d+\.\d+\.?\d*)[ \n]")
     ver = vre.match(rawver).group(1)
     ver_arr = ver.split('.')
     GCC_MAJOR_VERSION = int(ver_arr[0])
