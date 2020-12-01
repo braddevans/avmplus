@@ -456,7 +456,7 @@ class Namespace:
         self.uri = uri
         self.kind = kind
     def __str__(self):
-        return self.uri
+        return self.uri.decode('iso-8859-1')
     def isPublic(self):
         return self.kind in [CONSTANT_Namespace, CONSTANT_PackageNs] and self.uri == ""
     def isInternal(self):
@@ -480,7 +480,7 @@ class QName:
     ns = None
     name = ""
     def __init__(self, ns, name):
-        self.ns = ns.decode('iso-8859-1')
+        self.ns = ns
         self.name = name
     def __str__(self):
         if str(self.ns) == "":
