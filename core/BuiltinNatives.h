@@ -9,7 +9,7 @@
 
 #ifdef VMCFG_FLOAT
 #include "VMPI.h" // We need the definition of float4_t, which is platform-specific.
-#endif 
+#endif
 #include "builtin.h"
 
 #endif

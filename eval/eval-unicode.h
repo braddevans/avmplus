@@ -13,4 +13,5 @@ bool isNonASCIIIdentifierSubsequent(wchar c);
 bool isUnicodeLetter(wchar c);
 bool isUnicodeDigit(wchar c);
 
-}}
+} // namespace RTC
+} // namespace avmplus

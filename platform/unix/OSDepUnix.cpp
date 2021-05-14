@@ -9,48 +9,42 @@
 
 #include "avmplus.h"
 
-namespace avmplus
-{
+namespace avmplus {
 
 #ifdef DEBUGGER
-    struct IntWriteTimerData
-    {
-        uint32_t interval; // in microseconds
-        pthread_t thread;
-        volatile int *addr;
-    };
+struct IntWriteTimerData {
+  uint32_t interval; // in microseconds
+  pthread_t thread;
+  volatile int *addr;
+};
 
-    void *timerThread(void *arg)
-    {
-        IntWriteTimerData *data = (IntWriteTimerData*)arg;
-        volatile int *addr = data->addr;
-        uint32_t interval = data->interval;
-        while(data->addr)
-        {
-            usleep(interval);
-            *addr = 1;
-        }
-        pthread_exit(NULL);
-        return NULL;
-    }
-
-    uintptr_t OSDep::startIntWriteTimer(uint32_t millis, volatile int *addr)
-    {
-        pthread_t p;
-        IntWriteTimerData *data = mmfx_new( IntWriteTimerData() );
-        data->interval = millis*1000;
-        data->addr = addr;
-        pthread_create(&p, NULL, timerThread, data);
-        data->thread = p;
-        return (uintptr_t)data;
-    }
-
-    void OSDep::stopTimer(uintptr_t handle)
-    {
-        IntWriteTimerData *data = (IntWriteTimerData*) handle;
-        data->addr = NULL;
-        pthread_join(data->thread, NULL);
-        mmfx_delete( data );
-    }
-#endif // DEBUGGER
+void *timerThread(void *arg) {
+  IntWriteTimerData *data = (IntWriteTimerData *)arg;
+  volatile int *addr = data->addr;
+  uint32_t interval = data->interval;
+  while (data->addr) {
+    usleep(interval);
+    *addr = 1;
+  }
+  pthread_exit(NULL);
+  return NULL;
 }
+
+uintptr_t OSDep::startIntWriteTimer(uint32_t millis, volatile int *addr) {
+  pthread_t p;
+  IntWriteTimerData *data = mmfx_new(IntWriteTimerData());
+  data->interval = millis * 1000;
+  data->addr = addr;
+  pthread_create(&p, NULL, timerThread, data);
+  data->thread = p;
+  return (uintptr_t)data;
+}
+
+void OSDep::stopTimer(uintptr_t handle) {
+  IntWriteTimerData *data = (IntWriteTimerData *)handle;
+  data->addr = NULL;
+  pthread_join(data->thread, NULL);
+  mmfx_delete(data);
+}
+#endif // DEBUGGER
+} // namespace avmplus

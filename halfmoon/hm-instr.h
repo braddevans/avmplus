@@ -9,36 +9,31 @@
 
 namespace halfmoon {
 
-using avmplus::MethodSignature;  // Used by class DeoptSafepointInstr
+using avmplus::MethodSignature; // Used by class DeoptSafepointInstr
 
 // ------------------------- templates start ---------------------------------
 
 /// A FixedArgInstr has a fixed number of
 /// input uses (aka args) and output defs.
 ///
-template<int USEC, int DEFC>
-class FixedArgInstr : public Instr {
+template <int USEC, int DEFC> class FixedArgInstr : public Instr {
   friend class InfoManager;
   friend class InstrFactory;
 
-  static InstrInfo createInfo(InstrKind kind, const Type** insig,
-                              const Type** outsig, InstrGraph* ir) {
-    return InstrInfo(USEC, DEFC,
-                     offsetof(FixedArgInstr, uses),
-                     offsetof(FixedArgInstr, defs),
-                     kind, insig, outsig, ir);
+  static InstrInfo createInfo(InstrKind kind, const Type **insig,
+                              const Type **outsig, InstrGraph *ir) {
+    return InstrInfo(USEC, DEFC, offsetof(FixedArgInstr, uses),
+                     offsetof(FixedArgInstr, defs), kind, insig, outsig, ir);
   }
 
 public:
-  Use& use(int i) {
-    AvmAssert (i >= 0 && i < USEC);
+  Use &use(int i) {
+    AvmAssert(i >= 0 && i < USEC);
     return uses[i];
   }
 
 protected:
-  FixedArgInstr(const InstrInfo* info) :
-      Instr(info) {
-  }
+  FixedArgInstr(const InstrInfo *info) : Instr(info) {}
 
   Use uses[USEC];
   Def defs[DEFC];
@@ -50,23 +45,18 @@ protected:
 /// Note: FixedArgStmt is parameterized by its
 /// value (i.e., non-effect) use and def counts.
 ///
-template<int VUSEC, int VDEFC>
+template <int VUSEC, int VDEFC>
 class FixedArgStmt : public FixedArgInstr<VUSEC + 1, VDEFC + 1> {
 protected:
-  FixedArgStmt(const InstrInfo* info) :
-      FixedArgInstr<VUSEC + 1, VDEFC + 1>(info) {
-  }
+  FixedArgStmt(const InstrInfo *info)
+      : FixedArgInstr<VUSEC + 1, VDEFC + 1>(info) {}
 
 public:
-  Use& effect_in() {
-    return this->uses[0];
-  }
+  Use &effect_in() { return this->uses[0]; }
 
-  Def* effect_out() {
-    return &this->defs[0];
-  }
+  Def *effect_out() { return &this->defs[0]; }
 
-  Def* value_out() {
+  Def *value_out() {
     AvmAssert(VDEFC >= 1);
     return &this->defs[1];
   }
@@ -80,53 +70,41 @@ public:
 /// custom allocation (see InstrFactory) and
 /// precluding structural extension by subclasses.
 ///
-template<int USEMIN, int DEFC, class BASE>
-class VarArgInstr : public Instr {
+template <int USEMIN, int DEFC, class BASE> class VarArgInstr : public Instr {
   friend class InfoManager;
   friend class InstrFactory;
 
-  static InstrInfo createInfo(InstrKind kind, int argc, const Type** insig,
-                              const Type** outsig, InstrGraph* ir) {
-    return InstrInfo(USEMIN + argc, DEFC,
-                     sizeof(BASE),
-                     offsetof(VarArgInstr, defs),
-                     kind, insig, outsig, ir);
+  static InstrInfo createInfo(InstrKind kind, int argc, const Type **insig,
+                              const Type **outsig, InstrGraph *ir) {
+    return InstrInfo(USEMIN + argc, DEFC, sizeof(BASE),
+                     offsetof(VarArgInstr, defs), kind, insig, outsig, ir);
   }
 
 protected:
-  VarArgInstr(const InstrInfo* info) :
-      Instr(info) {
-  }
+  VarArgInstr(const InstrInfo *info) : Instr(info) {}
 
-  Use* uses() {
-    return (Use*)((intptr_t)this + info->uses_off);
-  }
+  Use *uses() { return (Use *)((intptr_t)this + info->uses_off); }
 
   Def defs[DEFC];
 
 public:
   /// number of variable args
-  int vararg_count() const {
-    return this->info->num_uses - USEMIN;
-  }
+  int vararg_count() const { return this->info->num_uses - USEMIN; }
 
   /// array of variable args, excludes all fixed args
-  Use* varargs() {
-    return &uses()[USEMIN];
-  }
+  Use *varargs() { return &uses()[USEMIN]; }
 
   /// ith variable arg
-  Use& vararg(int i) {
+  Use &vararg(int i) {
     AvmAssert(i >= 0 && i < vararg_count());
     return varargs()[i];
   }
 
-  Use& use(int i) {
-    AvmAssert (i >= 0 && i < info->num_uses);
+  Use &use(int i) {
+    AvmAssert(i >= 0 && i < info->num_uses);
     return uses()[i];
   }
 };
-
 
 /// VarArgStmt is a VarArgInstr with a fixed minimum number
 /// of arguments, whose first input and output are effects,
@@ -134,35 +112,27 @@ public:
 /// parameterized on its fixed minimum number of value args.
 /// the "arg" range of a VarArgStmt maps exactly to VarArgInstr's
 /// "vararg" range.
-template<int ARGMIN>
-class NaryStmt : public VarArgInstr<ARGMIN + 1, 2, class NaryStmt<ARGMIN> > {
+template <int ARGMIN>
+class NaryStmt : public VarArgInstr<ARGMIN + 1, 2, class NaryStmt<ARGMIN>> {
 protected:
-  NaryStmt(const InstrInfo* info) :
-    VarArgInstr<ARGMIN + 1, 2, class NaryStmt<ARGMIN> >(info) {
+  NaryStmt(const InstrInfo *info)
+      : VarArgInstr<ARGMIN + 1, 2, class NaryStmt<ARGMIN>>(info) {
   }
 
-public:
-  Def* effect_out() {
+  public : Def *
+           effect_out() {
     return &this->defs[0];
   }
 
-  Def* value_out() {
-    return &this->defs[1];
-  }
+  Def *value_out() { return &this->defs[1]; }
 
-  Use& effect_in() {
-    return this->uses()[0];
-  }
+  Use &effect_in() { return this->uses()[0]; }
 
-  int arg_count() const {
-    return this->vararg_count();
-  }
+  int arg_count() const { return this->vararg_count(); }
 
-  Use* args() {
-    return this->varargs();
-  }
+  Use *args() { return this->varargs(); }
 
-  Use& arg(int i) {
+  Use &arg(int i) {
     AvmAssert(i >= 0 && i < arg_count());
     return this->args()[i];
   }
@@ -178,36 +148,30 @@ public:
 /// to be congruent with VM calling conventions.  The only difference
 /// between CallStmt and NaryStmt is the definition of the 'arg' range.
 ///
-template<int ARGMIN>
-class CallStmt : public VarArgInstr<ARGMIN + 1, 2, class CallStmt<ARGMIN> > {
+template <int ARGMIN>
+class CallStmt : public VarArgInstr<ARGMIN + 1, 2, class CallStmt<ARGMIN>> {
 protected:
-  CallStmt(const InstrInfo* info) :
-    VarArgInstr<ARGMIN + 1, 2, class CallStmt<ARGMIN> >(info) {
+  CallStmt(const InstrInfo *info)
+      : VarArgInstr<ARGMIN + 1, 2, class CallStmt<ARGMIN>>(info) {
   }
 
-public:
-  Def* effect_out() {
+  public : Def *
+           effect_out() {
     return &this->defs[0];
   }
 
-  Def* value_out() {
-    return &this->defs[1];
-  }
+  Def *value_out() { return &this->defs[1]; }
 
-  Use& effect_in() {
-    return this->uses()[0];
-  }
+  Use &effect_in() { return this->uses()[0]; }
 
-  int arg_count() const {
-    return 1 + this->vararg_count();
-  }
+  int arg_count() const { return 1 + this->vararg_count(); }
 
-  Use* args() {
+  Use *args() {
     AvmAssert(ARGMIN >= 1);
     return this->varargs() - 1;
   }
 
-  Use& arg(int i) {
+  Use &arg(int i) {
     AvmAssert(i >= 0 && i < arg_count());
     return this->args()[i];
   }
@@ -221,8 +185,7 @@ class NaryStmt0 : public NaryStmt<0> {
   friend class InstrFactory;
   friend class Copier;
 
-  NaryStmt0(const InstrInfo* info) : NaryStmt<0>(info) {
-  }
+  NaryStmt0(const InstrInfo *info) : NaryStmt<0>(info) {}
 
 public:
   static const InstrShape shape = NARYSTMT0_SHAPE;
@@ -232,12 +195,11 @@ class NaryStmt1 : public NaryStmt<1> {
   friend class InstrFactory;
   friend class Copier;
 
-  NaryStmt1(const InstrInfo* info) : NaryStmt<1>(info) {
-  }
+  NaryStmt1(const InstrInfo *info) : NaryStmt<1>(info) {}
 
 public:
   // for newfunction
-  Use& info_in() { return uses()[1]; }
+  Use &info_in() { return uses()[1]; }
 
 public:
   static const InstrShape shape = NARYSTMT1_SHAPE;
@@ -247,17 +209,16 @@ class NaryStmt2 : public NaryStmt<2> {
   friend class InstrFactory;
   friend class Copier;
 
-  NaryStmt2(const InstrInfo* info) : NaryStmt<2>(info) {
-  }
+  NaryStmt2(const InstrInfo *info) : NaryStmt<2>(info) {}
 
 public:
   // for findproperty opcodes
-  Use& name_in() { return uses()[1]; }
-  Use& env_in() { return uses()[2]; }
+  Use &name_in() { return uses()[1]; }
+  Use &env_in() { return uses()[2]; }
 
   // for newclass
-  Use& traits_in() { return uses()[1]; }
-  Use& base_in() { return uses()[2]; }
+  Use &traits_in() { return uses()[1]; }
+  Use &base_in() { return uses()[2]; }
 
 public:
   static const InstrShape shape = NARYSTMT2_SHAPE;
@@ -267,14 +228,13 @@ class NaryStmt3 : public NaryStmt<3> {
   friend class InstrFactory;
   friend class Copier;
 
-  NaryStmt3(const InstrInfo* info) : NaryStmt<3>(info) {
-  }
+  NaryStmt3(const InstrInfo *info) : NaryStmt<3>(info) {}
 
 public:
   // for findproperty opcodes
-  Use& name_in() { return uses()[1]; }
-  Use& env_in() { return uses()[2]; }
-  Use& index_in() { return uses()[3]; } // index variable
+  Use &name_in() { return uses()[1]; }
+  Use &env_in() { return uses()[2]; }
+  Use &index_in() { return uses()[3]; } // index variable
 
 public:
   static const InstrShape shape = NARYSTMT3_SHAPE;
@@ -284,13 +244,12 @@ class NaryStmt4 : public NaryStmt<4> {
   friend class InstrFactory;
   friend class Copier;
 
-  NaryStmt4(const InstrInfo* info) : NaryStmt<4>(info) {
-  }
+  NaryStmt4(const InstrInfo *info) : NaryStmt<4>(info) {}
 
 public:
   // for findproperty opcodes
-  Use& name_in() { return uses()[1]; }
-  Use& env_in() { return uses()[2]; }
+  Use &name_in() { return uses()[1]; }
+  Use &env_in() { return uses()[2]; }
 
 public:
   static const InstrShape shape = NARYSTMT4_SHAPE;
@@ -308,16 +267,14 @@ class CallStmt2 : public CallStmt<2> {
   friend class InstrFactory;
   friend class Copier;
 
-  CallStmt2(const InstrInfo* info) :
-      CallStmt<2>(info) {
-  }
+  CallStmt2(const InstrInfo *info) : CallStmt<2>(info) {}
 
 public:
   static const InstrShape shape = CALLSTMT2_SHAPE;
 
   /// input parameter.  What this actually is depends on kind(this).
-  Use& param_in() { return uses()[1]; }
-  Use& object_in() { return uses()[2]; }
+  Use &param_in() { return uses()[1]; }
+  Use &object_in() { return uses()[2]; }
 };
 
 /// CallStmt3 is for instructions that take a name
@@ -327,17 +284,15 @@ class CallStmt3 : public CallStmt<3> {
   friend class InstrFactory;
   friend class Copier;
 
-  CallStmt3(const InstrInfo* info) :
-      CallStmt<3>(info) {
-  }
+  CallStmt3(const InstrInfo *info) : CallStmt<3>(info) {}
 
 public:
   static const InstrShape shape = CALLSTMT3_SHAPE;
 
-  Use& param_in()  { return uses()[1]; }
-  Use& index_in()  { return uses()[2]; } // for -x opcodes
-  Use& ns_in()     { return uses()[2]; } // same as index_in, but for -ns opcodes
-  Use& object_in() { return uses()[3]; } // same as arg(0)
+  Use &param_in() { return uses()[1]; }
+  Use &index_in() { return uses()[2]; } // for -x opcodes
+  Use &ns_in() { return uses()[2]; }    // same as index_in, but for -ns opcodes
+  Use &object_in() { return uses()[3]; } // same as arg(0)
 };
 
 /// CallStmt4 is for instructions that take a name
@@ -348,17 +303,15 @@ class CallStmt4 : public CallStmt<4> {
   friend class InstrFactory;
   friend class Copier;
 
-  CallStmt4(const InstrInfo* info) :
-      CallStmt<4>(info) {
-  }
+  CallStmt4(const InstrInfo *info) : CallStmt<4>(info) {}
 
 public:
   static const InstrShape shape = CALLSTMT4_SHAPE;
 
-  Use& param_in()  { return uses()[1]; }
-  Use& ns_in()     { return uses()[2]; }
-  Use& index_in()  { return uses()[3]; }
-  Use& object_in() { return uses()[4]; } // same as arg(0)
+  Use &param_in() { return uses()[1]; }
+  Use &ns_in() { return uses()[2]; }
+  Use &index_in() { return uses()[3]; }
+  Use &object_in() { return uses()[4]; } // same as arg(0)
 };
 
 /// A ConstantExpr is a 0-input instruction which
@@ -373,25 +326,20 @@ class ConstantExpr : public Instr {
   friend class InstrFactory;
   friend class Copier;
 
-  static InstrInfo createInfo(InstrKind kind, const Type** insig,
-                              const Type** outsig, InstrGraph* ir) {
-    return InstrInfo(0, 1, 0, offsetof(ConstantExpr, def), kind, insig, outsig, ir);
+  static InstrInfo createInfo(InstrKind kind, const Type **insig,
+                              const Type **outsig, InstrGraph *ir) {
+    return InstrInfo(0, 1, 0, offsetof(ConstantExpr, def), kind, insig, outsig,
+                     ir);
   }
 
-  ConstantExpr(const InstrInfo* info) :
-      Instr(info) {
-  }
+  ConstantExpr(const InstrInfo *info) : Instr(info) {}
 
 public:
   static const InstrShape shape = CONSTANTEXPR_SHAPE;
 
-  Def* value() {
-    return &def;
-  }
+  Def *value() { return &def; }
 
-  const Type* type() {
-    return halfmoon::type(def);
-  }
+  const Type *type() { return halfmoon::type(def); }
 
 private:
   Def def;
@@ -405,9 +353,7 @@ class VoidStmt : public FixedArgStmt<0, 0> {
   friend class InstrFactory;
   friend class Copier;
 
-  VoidStmt(const InstrInfo* info) :
-      FixedArgStmt<0, 0>(info) {
-  }
+  VoidStmt(const InstrInfo *info) : FixedArgStmt<0, 0>(info) {}
 
 public:
   static const InstrShape shape = VOIDSTMT_SHAPE;
@@ -421,20 +367,14 @@ class UnaryExpr : public FixedArgInstr<1, 1> {
   friend class InstrFactory;
   friend class Copier;
 
-  UnaryExpr(const InstrInfo* info) :
-      FixedArgInstr<1, 1>(info) {
-  }
+  UnaryExpr(const InstrInfo *info) : FixedArgInstr<1, 1>(info) {}
 
 public:
   static const InstrShape shape = UNARYEXPR_SHAPE;
 
-  Use& value_in() {
-    return this->uses[0];
-  }
+  Use &value_in() { return this->uses[0]; }
 
-  Def* value_out() {
-    return &this->defs[0];
-  }
+  Def *value_out() { return &this->defs[0]; }
 };
 
 /// UnaryStmt has (in addition to effect in/out)
@@ -445,16 +385,12 @@ class UnaryStmt : public FixedArgStmt<1, 1> {
   friend class InstrFactory;
   friend class Copier;
 
-  UnaryStmt(const InstrInfo* info) :
-      FixedArgStmt<1, 1>(info) {
-  }
+  UnaryStmt(const InstrInfo *info) : FixedArgStmt<1, 1>(info) {}
 
 public:
   static const InstrShape shape = UNARYSTMT_SHAPE;
 
-  Use& value_in() {
-    return this->uses[1];
-  }
+  Use &value_in() { return this->uses[1]; }
 };
 
 /// BinaryExpr has two inputs and one output,
@@ -465,24 +401,16 @@ class BinaryExpr : public FixedArgInstr<2, 1> {
   friend class InstrFactory;
   friend class Copier;
 
-  BinaryExpr(const InstrInfo* info) :
-      FixedArgInstr<2, 1>(info) {
-  }
+  BinaryExpr(const InstrInfo *info) : FixedArgInstr<2, 1>(info) {}
 
 public:
   static const InstrShape shape = BINARYEXPR_SHAPE;
 
-  Use& lhs_in() {
-    return this->uses[0];
-  }
+  Use &lhs_in() { return this->uses[0]; }
 
-  Use& rhs_in() {
-    return this->uses[1];
-  }
+  Use &rhs_in() { return this->uses[1]; }
 
-  Def* value_out() {
-    return &this->defs[0];
-  }
+  Def *value_out() { return &this->defs[0]; }
 };
 
 /// BinaryStmt has (in addition to effect in/out)
@@ -493,20 +421,14 @@ class BinaryStmt : public FixedArgStmt<2, 1> {
   friend class InstrFactory;
   friend class Copier;
 
-  BinaryStmt(const InstrInfo* info) :
-    FixedArgStmt<2, 1>(info) {
-  }
+  BinaryStmt(const InstrInfo *info) : FixedArgStmt<2, 1>(info) {}
 
 public:
   static const InstrShape shape = BINARYSTMT_SHAPE;
 
-  Use& lhs_in() {
-    return this->uses[1];
-  }
+  Use &lhs_in() { return this->uses[1]; }
 
-  Use& rhs_in() {
-    return this->uses[2];
-  }
+  Use &rhs_in() { return this->uses[2]; }
 };
 
 /// Hasnext2Stmt is a 2-input, 3-output Statement, used solely for
@@ -517,28 +439,18 @@ class Hasnext2Stmt : public FixedArgStmt<2, 3> {
   friend class InstrFactory;
   friend class Copier;
 
-  Hasnext2Stmt(const InstrInfo* info) :
-    FixedArgStmt<2, 3>(info) {
-  }
+  Hasnext2Stmt(const InstrInfo *info) : FixedArgStmt<2, 3>(info) {}
 
 public:
   static const InstrShape shape = HASNEXT2STMT_SHAPE;
 
-  Use& counter_in() {
-    return this->uses[1];
-  }
+  Use &counter_in() { return this->uses[1]; }
 
-  Use& object_in() {
-    return this->uses[2];
-  }
+  Use &object_in() { return this->uses[2]; }
 
-  Def* counter_out() {
-    return &this->defs[2];
-  }
+  Def *counter_out() { return &this->defs[2]; }
 
-  Def* object_out() {
-    return &this->defs[3];
-  }
+  Def *object_out() { return &this->defs[3]; }
 };
 
 /// A Safepoint instruction represents a specific point in the ABC bytecode
@@ -577,32 +489,26 @@ class SafepointInstr : public VarArgInstr<1, 2, class SafepointInstr> {
   friend class InstrFactory;
   friend class Copier;
 
-  SafepointInstr(const InstrInfo* info) :
-    VarArgInstr<1, 2, class SafepointInstr>(info) {
+  SafepointInstr(const InstrInfo *info)
+      : VarArgInstr<1, 2, class SafepointInstr>(info) {
     AvmAssert(info->uses_off == sizeof(SafepointInstr));
   }
 
-  static const int USEMIN = 1;  // effect in
-  static const int DEFC = 2;    // effect out, state out
+  static const int USEMIN = 1; // effect in
+  static const int DEFC = 2;   // effect out, state out
 
 public:
   static const InstrShape shape = SAFEPOINTINSTR_SHAPE;
 
-  int vpc; // Points into abc bytecode.  fixme: should be uint8_t*.
-  int sp; // points to top of operand stack
+  int vpc;    // Points into abc bytecode.  fixme: should be uint8_t*.
+  int sp;     // points to top of operand stack
   int scopep; // points to top of abc scope stack.
 
-  Def* effect_out() {
-    return &this->defs[0];
-  }
+  Def *effect_out() { return &this->defs[0]; }
 
-  Def* state_out() {
-    return &this->defs[1];
-  }
+  Def *state_out() { return &this->defs[1]; }
 
-  Use& effect_in() {
-    return this->uses()[0];
-  }
+  Use &effect_in() { return this->uses()[0]; }
 };
 
 /// A setlocal instruction updates one element of the abstract "local state"
@@ -615,26 +521,19 @@ class SetlocalInstr : public FixedArgInstr<2, 1> {
   friend class InstrFactory;
   friend class Copier;
 
-  SetlocalInstr(const InstrInfo* info, int index) :
-      FixedArgInstr<2, 1>(info), index(index) {
-  }
+  SetlocalInstr(const InstrInfo *info, int index)
+      : FixedArgInstr<2, 1>(info), index(index) {}
 
 public:
   static const InstrShape shape = SETLOCALINSTR_SHAPE;
 
   int index; // Fixme: should this be a plain ordinal input?
 
-  Use& state_in() {
-    return this->uses[0];
-  }
+  Use &state_in() { return this->uses[0]; }
 
-  Use& value_in() {
-    return this->uses[1];
-  }
+  Use &value_in() { return this->uses[1]; }
 
-  Def* state_out() {
-    return &this->defs[0];
-  }
+  Def *state_out() { return &this->defs[0]; }
 };
 
 /// A getlocal statement returns one element of the abstract "local state"
@@ -642,32 +541,27 @@ public:
 /// input:  kStateIn  (v0, ..., vk,     ... vN),  newval, index (k)
 /// output: kStateOut (v0, ..., newval, ... vN)
 ///
-/// The getlocal instr really should be (Effect Stata Ord -> Effect Atom) but like setlocal,
-/// we encode the index as a constant in the instruction.
-/// Instead, the instr is (Effect Stata Atom -> Effect Atom) The third "Atom" parameter is to simplify
-/// type computations
+/// The getlocal instr really should be (Effect Stata Ord -> Effect Atom) but
+/// like setlocal, we encode the index as a constant in the instruction.
+/// Instead, the instr is (Effect Stata Atom -> Effect Atom) The third "Atom"
+/// parameter is to simplify type computations
 ///
 class GetlocalStmt : public FixedArgStmt<2, 1> {
   friend class InfoManager;
   friend class InstrFactory;
   friend class Copier;
 
-  GetlocalStmt(const InstrInfo* info, int index) :
-      FixedArgStmt<2, 1>(info), index(index) {
-  }
+  GetlocalStmt(const InstrInfo *info, int index)
+      : FixedArgStmt<2, 1>(info), index(index) {}
 
 public:
   static const InstrShape shape = GETLOCALSTMT_SHAPE;
 
   int index; // Fixme: should this be a plain ordinal input?
 
-  Use& state_in() {
-    return this->uses[1];
-  }
+  Use &state_in() { return this->uses[1]; }
 
-  Use& value_in() {
-    return this->uses[2];
-  }
+  Use &value_in() { return this->uses[2]; }
 };
 
 /// DEOPT: New-style safepoint.
@@ -679,27 +573,22 @@ public:
 class DeoptSafepointInstr : public Instr {
   friend class InfoManager;
   friend class InstrFactory;
-  friend class Copier;          // Need custom copier due to custom fields.
+  friend class Copier; // Need custom copier due to custom fields.
 
-  static const int USEMIN = 1;  // effect in
-  static const int DEFC = 1;    // effect out
+  static const int USEMIN = 1; // effect in
+  static const int DEFC = 1;   // effect out
 
-  static InstrInfo createInfo(InstrKind kind, int argc, const Type** insig,
-                              const Type** outsig, InstrGraph* ir) {
-    return InstrInfo(USEMIN + argc, DEFC,
-                     sizeof(DeoptSafepointInstr),
-                     offsetof(DeoptSafepointInstr, defs),
-                     kind, insig, outsig, ir);
+  static InstrInfo createInfo(InstrKind kind, int argc, const Type **insig,
+                              const Type **outsig, InstrGraph *ir) {
+    return InstrInfo(USEMIN + argc, DEFC, sizeof(DeoptSafepointInstr),
+                     offsetof(DeoptSafepointInstr, defs), kind, insig, outsig,
+                     ir);
   }
 
 protected:
-    DeoptSafepointInstr(const InstrInfo* info) :
-      Instr(info) {
-  }
+  DeoptSafepointInstr(const InstrInfo *info) : Instr(info) {}
 
-  Use* uses() {
-    return (Use*)(this + 1);
-  }
+  Use *uses() { return (Use *)(this + 1); }
 
   Def defs[DEFC];
 
@@ -713,37 +602,29 @@ public:
   // Only applicable to call safepoints.
   int vlen;
   int nargs;
-  SlotStorageType rtype;  // result type if function call
+  SlotStorageType rtype; // result type if function call
   // Only applicable to inline safepoints.
-  MethodInfo* minfo;
+  MethodInfo *minfo;
 
-  Def* effect_out() {
-    return &this->defs[0];
-  }
+  Def *effect_out() { return &this->defs[0]; }
 
-  Use& effect_in() {
-    return this->uses()[0];
-  }
+  Use &effect_in() { return this->uses()[0]; }
 
-   // number of captured variables
-  int values_count() const {
-    return this->info->num_uses - USEMIN;
-  }
+  // number of captured variables
+  int values_count() const { return this->info->num_uses - USEMIN; }
 
   // array of captured variables
-  Use* values_in() {
-    return &uses()[USEMIN];
-  }
+  Use *values_in() { return &uses()[USEMIN]; }
 
   // ith captured variable
   // sequence does not include scopes above scopep or operands above sp
-  Use& value_in(int i) {
+  Use &value_in(int i) {
     AvmAssert(i >= 0 && i < values_count());
     return values_in()[i];
   }
 
-  Use& use(int i) {
-    AvmAssert (i >= 0 && i < info->num_uses);
+  Use &use(int i) {
+    AvmAssert(i >= 0 && i < info->num_uses);
     return uses()[i];
   }
 };
@@ -756,60 +637,46 @@ class DeoptFinishInstr : public FixedArgStmt<0, 0> {
 public:
   static const InstrShape shape = DEOPTFINISHINSTR_SHAPE;
 
-  DeoptSafepointInstr* safepoint;
+  DeoptSafepointInstr *safepoint;
 
-  DeoptFinishInstr(const InstrInfo* info) :
-    FixedArgStmt<0, 0>(info) {
-  }
+  DeoptFinishInstr(const InstrInfo *info) : FixedArgStmt<0, 0>(info) {}
 };
-
 
 class DeoptFinishCallInstr : public FixedArgStmt<1, 0> {
   friend class InfoManager;
   friend class InstrFactory;
   friend class Copier;
 
-  DeoptFinishCallInstr(const InstrInfo* info) :
-      FixedArgStmt<1, 0>(info) {
-  }
+  DeoptFinishCallInstr(const InstrInfo *info) : FixedArgStmt<1, 0>(info) {}
 
 public:
   static const InstrShape shape = DEOPTFINISHCALLINSTR_SHAPE;
 
-  DeoptSafepointInstr* safepoint;
+  DeoptSafepointInstr *safepoint;
 
-  Use& value_in() {
-    return this->uses[1];
-  }
+  Use &value_in() { return this->uses[1]; }
 };
-
 
 class DebugInstr : public FixedArgStmt<1, 0> {
   friend class InfoManager;
   friend class InstrFactory;
   friend class Copier;
 
-  DebugInstr(const InstrInfo* info) :
-      FixedArgStmt<1, 0>(info) {
-  }
+  DebugInstr(const InstrInfo *info) : FixedArgStmt<1, 0>(info) {}
 
 public:
   static const InstrShape shape = DEBUGINSTR_SHAPE;
 
-  Use& value_in() {
-    return this->uses[1];
-  }
+  Use &value_in() { return this->uses[1]; }
 };
 
 class DebugInstr2 : public FixedArgStmt<2, 0> {
   friend class InfoManager;
   friend class InstrFactory;
   friend class Copier;
-    
-  DebugInstr2(const InstrInfo* info) :
-      FixedArgStmt<2, 0>(info) {
-  }
-    
+
+  DebugInstr2(const InstrInfo *info) : FixedArgStmt<2, 0>(info) {}
+
 public:
   static const InstrShape shape = DEBUGINSTR2_SHAPE;
 };
@@ -831,17 +698,16 @@ public:
 ///
 class BlockStartInstr : public Instr {
 protected:
-  static InstrInfo createInfo(InstrKind kind, const Type** insig,
-                              const Type** outsig, InstrGraph* ir) {
+  static InstrInfo createInfo(InstrKind kind, const Type **insig,
+                              const Type **outsig, InstrGraph *ir) {
     return InstrInfo(0, -1, 0, -1, kind, insig, outsig, ir);
   }
 
-  BlockStartInstr(const InstrInfo* info, Def* params) :
-    Instr(info), params(params), blockid(-1) {
-  }
+  BlockStartInstr(const InstrInfo *info, Def *params)
+      : Instr(info), params(params), blockid(-1) {}
 
 public:
-  Def* params; // block parameters
+  Def *params; // block parameters
   int blockid;
 };
 
@@ -852,9 +718,8 @@ public:
 ///
 class BlockHeaderInstr : public BlockStartInstr {
 protected:
-  BlockHeaderInstr(const InstrInfo* info, int paramc, Def* params) :
-    BlockStartInstr(info, params), paramc(paramc) {
-  }
+  BlockHeaderInstr(const InstrInfo *info, int paramc, Def *params)
+      : BlockStartInstr(info, params), paramc(paramc) {}
 
 public:
   int paramc; // parameter count
@@ -876,31 +741,31 @@ public:
 ///
 
 class ExceptionEdge {
- public:
-  ExceptionEdge(BlockStartInstr* f, CatchBlockInstr* t): from(InstrGraph::blockEnd(f)), to(t), next_exception(NULL), prev_exception(NULL) {}
+public:
+  ExceptionEdge(BlockStartInstr *f, CatchBlockInstr *t)
+      : from(InstrGraph::blockEnd(f)), to(t), next_exception(NULL),
+        prev_exception(NULL) {}
 
-  BlockEndInstr* from;
-  CatchBlockInstr* to;
+  BlockEndInstr *from;
+  CatchBlockInstr *to;
   ExceptionEdge *next_exception, *prev_exception;
 };
 
 class BlockEndInstr : public Instr {
 protected:
-  static InstrInfo createInfo(InstrKind kind, const Type** insig,
-                              const Type** outsig, InstrGraph* ir) {
+  static InstrInfo createInfo(InstrKind kind, const Type **insig,
+                              const Type **outsig, InstrGraph *ir) {
     return InstrInfo(-1, 0, -1, 0, kind, insig, outsig, ir);
   }
 
-  BlockEndInstr(const InstrInfo* info, Use* args) :
-    Instr(info), args(args), catch_blocks(NULL) {
-  }
+  BlockEndInstr(const InstrInfo *info, Use *args)
+      : Instr(info), args(args), catch_blocks(NULL) {}
 
 public:
-  Use* args; // arguments for successor
+  Use *args; // arguments for successor
 
-  SeqBuilder<ExceptionEdge*>* catch_blocks;
+  SeqBuilder<ExceptionEdge *> *catch_blocks;
 };
-
 
 /// A BlockFooterInstr ends a block that is a unique
 /// predecessor - i.e., none of its successors has any
@@ -909,18 +774,15 @@ public:
 ///
 class BlockFooterInstr : public BlockEndInstr {
 protected:
-  BlockFooterInstr(const InstrInfo* info, int argc, Use* args) :
-    BlockEndInstr(info, args), argc(argc) {
-  }
+  BlockFooterInstr(const InstrInfo *info, int argc, Use *args)
+      : BlockEndInstr(info, args), argc(argc) {}
 
 public:
   int argc; // argument count
 
-  int vararg_count() const {
-    return argc;
-  }
+  int vararg_count() const { return argc; }
 
-  Use& vararg(int i) {
+  Use &vararg(int i) {
     AvmAssert((i >= 0) & (i < argc));
     return args[i];
   }
@@ -939,10 +801,8 @@ class StartInstr : public BlockHeaderInstr {
   friend class InstrFactory;
   friend class Copier;
 
-  StartInstr(const InstrInfo* info, int paramc, bool rest, Def* params) :
-      BlockHeaderInstr(info, paramc, params),
-      rest(rest) {
-  }
+  StartInstr(const InstrInfo *info, int paramc, bool rest, Def *params)
+      : BlockHeaderInstr(info, paramc, params), rest(rest) {}
 
 public:
   static const InstrShape shape = STARTINSTR_SHAPE;
@@ -955,26 +815,20 @@ public:
   bool rest;
 
   /** Number of parameters, not counting effect */
-  int data_param_count() const {
-    return paramc - 1;
-  }
+  int data_param_count() const { return paramc - 1; }
 
   /** get data param i */
-  Def* data_param(int i) {
+  Def *data_param(int i) {
     AvmAssert(i >= 0 && i < data_param_count());
     return &params[1 + i];
   }
 
-  Def* effect_out() {
-    return &params[0];
-  }
+  Def *effect_out() { return &params[0]; }
 
-  bool has_rest() const {
-    return rest;
-  }
+  bool has_rest() const { return rest; }
 
   /** get the rest array parameter */
-  Def* rest_out() {
+  Def *rest_out() {
     AvmAssert(has_rest());
     return &params[paramc - 1];
   }
@@ -990,9 +844,8 @@ class StopInstr : public BlockFooterInstr {
   friend class InstrFactory;
   friend class Copier;
 
-  StopInstr(const InstrInfo* info, int argc, Use* args) :
-      BlockFooterInstr(info, argc, args) {
-  }
+  StopInstr(const InstrInfo *info, int argc, Use *args)
+      : BlockFooterInstr(info, argc, args) {}
 
 public:
   static const InstrShape shape = STOPINSTR_SHAPE;
@@ -1000,12 +853,12 @@ public:
   /// convenience method, for use in conventional,
   /// return-one-value-from-effectful-code contexts.
   /// note AvmAssert.
-  Use& value_in() {
+  Use &value_in() {
     AvmAssert(argc == 2);
     return args[1];
   }
 
-  Use& use(int i) {
+  Use &use(int i) {
     AvmAssert(i >= 0 && i < argc);
     return args[i];
   }
@@ -1019,16 +872,14 @@ class LabelInstr : public BlockHeaderInstr {
   friend class InstrFactory;
   friend class Copier;
 
-
 protected:
-  LabelInstr(const InstrInfo* info, int paramc, Def* params) :
-      BlockHeaderInstr(info, paramc, params), preds(0) {
-  }
+  LabelInstr(const InstrInfo *info, int paramc, Def *params)
+      : BlockHeaderInstr(info, paramc, params), preds(0) {}
 
 public:
   static const InstrShape shape = LABELINSTR_SHAPE;
 
-  GotoInstr* preds; // list of incoming gotos
+  GotoInstr *preds; // list of incoming gotos
 };
 
 /// GotoInstr ends a block with an unconditional jump to
@@ -1044,14 +895,13 @@ class GotoInstr : public BlockEndInstr {
   friend class InstrFactory;
   friend class Copier;
 
-  GotoInstr(const InstrInfo* info, Use* args) :
-    BlockEndInstr(info, args), target(0), next_goto(0), prev_goto(0) {
-  }
+  GotoInstr(const InstrInfo *info, Use *args)
+      : BlockEndInstr(info, args), target(0), next_goto(0), prev_goto(0) {}
 
 public:
   static const InstrShape shape = GOTOINSTR_SHAPE;
 
-  LabelInstr* target;
+  LabelInstr *target;
   GotoInstr *next_goto, *prev_goto;
 };
 
@@ -1070,13 +920,11 @@ class ArmInstr : public BlockStartInstr {
   /// Note: info arg is optional due to
   /// array init in CondInstr ctor.
   /// InstrFactory fills it in.
-  ArmInstr(const InstrInfo* info = NULL) :
-      BlockStartInstr(info, 0), owner(0) {
-  }
+  ArmInstr(const InstrInfo *info = NULL) : BlockStartInstr(info, 0), owner(0) {}
 
 public:
   static const InstrShape shape = ARMINSTR_SHAPE;
-  CondInstr* owner;
+  CondInstr *owner;
   int arm_pos; // Which of owner's arm is this.
 };
 
@@ -1095,28 +943,23 @@ public:
 ///
 class CondInstr : public BlockFooterInstr {
 protected:
-  static InstrInfo createInfo(InstrKind kind, const Type** insig,
-                              const Type** outsig, InstrGraph* ir) {
+  static InstrInfo createInfo(InstrKind kind, const Type **insig,
+                              const Type **outsig, InstrGraph *ir) {
     return InstrInfo(-1, 0, -1, 0, kind, insig, outsig, ir);
   }
 
   // Note: initialization of args/uses left to InstrFactory
-  CondInstr(const InstrInfo* info, int armc) :
-      BlockFooterInstr(info, 0, NULL), uses(NULL), arms(0), armc(armc) {
-  }
+  CondInstr(const InstrInfo *info, int armc)
+      : BlockFooterInstr(info, 0, NULL), uses(NULL), arms(0), armc(armc) {}
 
 public:
-  Use* uses; // selector plus args. NOTE: args == &uses[1]
-  ArmInstr** arms; // array of wholly-owned arms
-  int armc; // arm count
+  Use *uses;       // selector plus args. NOTE: args == &uses[1]
+  ArmInstr **arms; // array of wholly-owned arms
+  int armc;        // arm count
 
-  Use& selector() {
-    return uses[0];
-  }
+  Use &selector() { return uses[0]; }
 
-  Use& arg(int i) {
-    return uses[i + 1];
-  }
+  Use &arg(int i) { return uses[i + 1]; }
 };
 
 /// IfInstr ends a block with a conditional branch
@@ -1127,28 +970,18 @@ class IfInstr : public CondInstr {
   friend class InstrFactory;
   friend class Copier;
 
-  IfInstr(const InstrInfo* info) :
-    CondInstr(info, 2) {
-  }
+  IfInstr(const InstrInfo *info) : CondInstr(info, 2) {}
 
 public:
   static const InstrShape shape = IFINSTR_SHAPE;
 
-  Use& cond() {
-    return selector();
-  }
+  Use &cond() { return selector(); }
 
-  ArmInstr* arm(bool b) {
-    return b ? true_arm() : false_arm();
-  }
+  ArmInstr *arm(bool b) { return b ? true_arm() : false_arm(); }
 
-  ArmInstr* false_arm() {
-    return arms[0];
-  }
+  ArmInstr *false_arm() { return arms[0]; }
 
-  ArmInstr* true_arm() {
-    return arms[1];
-  }
+  ArmInstr *true_arm() { return arms[1]; }
 };
 
 /// SwitchInstr ends a block with a conditional branch
@@ -1159,33 +992,24 @@ class SwitchInstr : public CondInstr {
   friend class InstrFactory;
   friend class Copier;
 
-  SwitchInstr(const InstrInfo* info, int num_cases) :
-      CondInstr(info, num_cases + 1) {
-  }
+  SwitchInstr(const InstrInfo *info, int num_cases)
+      : CondInstr(info, num_cases + 1) {}
 
 public:
   static const InstrShape shape = SWITCHINSTR_SHAPE;
 
-  int num_cases() {
-    return armc - 1;
-  }
+  int num_cases() { return armc - 1; }
 
-  bool is_case(int i) {
-    return i >= 0 && i < num_cases();
-  }
+  bool is_case(int i) { return i >= 0 && i < num_cases(); }
 
-  ArmInstr* arm(int i) {
-    return is_case(i) ? case_arm(i) : default_arm();
-  }
+  ArmInstr *arm(int i) { return is_case(i) ? case_arm(i) : default_arm(); }
 
-  ArmInstr* case_arm(int i) {
+  ArmInstr *case_arm(int i) {
     AvmAssert(is_case(i));
     return arms[i];
   }
 
-  ArmInstr* default_arm() {
-    return arms[num_cases()];
-  }
+  ArmInstr *default_arm() { return arms[num_cases()]; }
 };
 
 /// A CatchBlockInstr begins the initial block of a catch block. Legal
@@ -1198,70 +1022,64 @@ class CatchBlockInstr : public LabelInstr {
   friend class InstrFactory;
   friend class Copier;
 
-  CatchBlockInstr(const InstrInfo* info, int paramc, Def* params) :
-    LabelInstr(info, paramc, params), catch_preds(NULL) {
-  }
+  CatchBlockInstr(const InstrInfo *info, int paramc, Def *params)
+      : LabelInstr(info, paramc, params), catch_preds(NULL) {}
 
 public:
   static const InstrShape shape = CATCHBLOCKINSTR_SHAPE;
 
   /** Number of parameters, not counting effect */
-  int data_param_count() const {
-    return paramc - 1;
-  }
+  int data_param_count() const { return paramc - 1; }
 
   /** get data param i */
-  Def* data_param(int i) {
+  Def *data_param(int i) {
     AvmAssert(i >= 0 && i < data_param_count());
     return &params[1 + i];
   }
 
-  Def* effect_out() {
-    return &params[0];
-  }
+  Def *effect_out() { return &params[0]; }
 
   int vpc;
-  ExceptionEdge* catch_preds;
+  ExceptionEdge *catch_preds;
 
   inline void printCatchPreds();
 };
 
-class CatchBlockRange: public SeqRange<ExceptionEdge*> {
- public:
-  explicit CatchBlockRange(BlockStartInstr* block): SeqRange<ExceptionEdge*>(*InstrGraph::blockEnd(block)->catch_blocks) {}
-  explicit CatchBlockRange(BlockEndInstr* block): SeqRange<ExceptionEdge*>(*block->catch_blocks) {}
+class CatchBlockRange : public SeqRange<ExceptionEdge *> {
+public:
+  explicit CatchBlockRange(BlockStartInstr *block)
+      : SeqRange<ExceptionEdge *>(*InstrGraph::blockEnd(block)->catch_blocks) {}
+  explicit CatchBlockRange(BlockEndInstr *block)
+      : SeqRange<ExceptionEdge *>(*block->catch_blocks) {}
 
-  CatchBlockInstr* front() const {
-    return SeqRange<ExceptionEdge*>::front()->to;
+  CatchBlockInstr *front() const {
+    return SeqRange<ExceptionEdge *>::front()->to;
   }
-  CatchBlockInstr* popFront() {
-    CatchBlockInstr* t = front();
-    SeqRange<ExceptionEdge*>::popFront();
+  CatchBlockInstr *popFront() {
+    CatchBlockInstr *t = front();
+    SeqRange<ExceptionEdge *>::popFront();
     return t;
   }
 };
 
-
 class ExceptionEdgeRange {
 public:
-  explicit ExceptionEdgeRange(CatchBlockInstr* catch_block) {
-    ExceptionEdge* p = catch_block->catch_preds;
+  explicit ExceptionEdgeRange(CatchBlockInstr *catch_block) {
+    ExceptionEdge *p = catch_block->catch_preds;
     front_ = p;
     back_ = p ? p->prev_exception : 0;
   }
 
-  bool empty() const {
-    return !front_;
-  }
+  bool empty() const { return !front_; }
 
-  ExceptionEdge* front() const {
+  ExceptionEdge *front() const {
     AvmAssert(!empty());
     return front_;
   }
 
-  ExceptionEdge* popFront() {
-    ExceptionEdge* t = front();
-    ExceptionEdge* F = front_;
+  ExceptionEdge *popFront() {
+    ExceptionEdge *t = front();
+    ExceptionEdge *F = front_;
     front_ = (F == back_) ? (back_ = 0) : F->next_exception;
     return t;
   }
@@ -1281,7 +1099,7 @@ inline void CatchBlockInstr::printCatchPreds() {
 
 /// true if this goto is the only predecessor of its target.
 ///
-inline bool isAlone(GotoInstr* go) {
+inline bool isAlone(GotoInstr *go) {
   AvmAssert(go->target != NULL);
   // Don't allow start block to merge into main block
   return go->next_goto == go && kind(InstrGraph::blockStart(go)) != HR_start;
@@ -1292,24 +1110,17 @@ inline bool isAlone(GotoInstr* go) {
 ///
 class ArmParamRange {
 public:
-  ArmParamRange(CondInstr* instr, int pos) :
-    arms(instr->arms, instr->armc), pos(pos) {
-  }
+  ArmParamRange(CondInstr *instr, int pos)
+      : arms(instr->arms, instr->armc), pos(pos) {}
 
-  bool empty() const {
-    return arms.empty();
-  }
+  bool empty() const { return arms.empty(); }
 
-  Def& front() const {
-    return arms.front()->params[pos];
-  }
+  Def &front() const { return arms.front()->params[pos]; }
 
-  void popFront() {
-    arms.popFront();
-  }
+  void popFront() { arms.popFront(); }
 
 private:
-  ArrayRange<ArmInstr*> arms;
+  ArrayRange<ArmInstr *> arms;
   const int pos;
 };
 
@@ -1317,24 +1128,22 @@ private:
 ///
 class PredRange {
 public:
-  explicit PredRange(LabelInstr* label) {
-    GotoInstr* p = label->preds;
+  explicit PredRange(LabelInstr *label) {
+    GotoInstr *p = label->preds;
     front_ = p;
     back_ = p ? p->prev_goto : 0;
   }
 
-  bool empty() const {
-    return !front_;
-  }
+  bool empty() const { return !front_; }
 
-  GotoInstr* front() const {
+  GotoInstr *front() const {
     AvmAssert(!empty());
     return front_;
   }
 
-  GotoInstr* popFront() {
+  GotoInstr *popFront() {
     AvmAssert(!empty());
-    GotoInstr* F = front_;
+    GotoInstr *F = front_;
     front_ = (F == back_) ? (back_ = 0) : F->next_goto;
     return F;
   }
@@ -1347,21 +1156,13 @@ private:
 ///
 class LabelArgRange {
 public:
-  LabelArgRange(LabelInstr* label, int k) :
-      r(label), k(k) {
-  }
+  LabelArgRange(LabelInstr *label, int k) : r(label), k(k) {}
 
-  bool empty() const {
-    return r.empty();
-  }
+  bool empty() const { return r.empty(); }
 
-  Use& front() const {
-    return r.front()->args[k];
-  }
+  Use &front() const { return r.front()->args[k]; }
 
-  void popFront() {
-    r.popFront();
-  }
+  void popFront() { r.popFront(); }
 
 private:
   PredRange r;

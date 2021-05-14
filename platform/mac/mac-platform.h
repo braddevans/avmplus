@@ -7,33 +7,33 @@
 #ifndef __avmplus_mac_platform__
 #define __avmplus_mac_platform__
 
-#define VMPI_memcpy					::memcpy
-#define VMPI_memset					::memset
-#define VMPI_memcmp					::memcmp
-#define VMPI_memmove				::memmove
-#define VMPI_memchr					::memchr
-#define VMPI_strcmp					::strcmp
-// As VMPI_strcat(i.e strcat_s) in Windows takes 3 arguments, 
+#define VMPI_memcpy ::memcpy
+#define VMPI_memset ::memset
+#define VMPI_memcmp ::memcmp
+#define VMPI_memmove ::memmove
+#define VMPI_memchr ::memchr
+#define VMPI_strcmp ::strcmp
+// As VMPI_strcat(i.e strcat_s) in Windows takes 3 arguments,
 // VMPI_strcat in Mac has also been changed to take 3 arguments
-#define VMPI_strcat(d, n, s)        ::strcat(d, s)
-#define VMPI_strchr					::strchr
-#define VMPI_strrchr				::strrchr
-#define VMPI_strcpy					::strcpy
-#define VMPI_strlen					::strlen
-#define VMPI_strncat				::strncat
-#define VMPI_strncmp				::strncmp
-// As VMPI_strncpy(i.e strncpy_s) in Windows takes 4 arguments, 
+#define VMPI_strcat(d, n, s) ::strcat(d, s)
+#define VMPI_strchr ::strchr
+#define VMPI_strrchr ::strrchr
+#define VMPI_strcpy ::strcpy
+#define VMPI_strlen ::strlen
+#define VMPI_strncat ::strncat
+#define VMPI_strncmp ::strncmp
+// As VMPI_strncpy(i.e strncpy_s) in Windows takes 4 arguments,
 // VMPI_strncpy in Mac has also been changed to take 4 arguments
-#define VMPI_strncpy(d, nd, s, ns)  ::strncpy(d, s, ns)
-#define VMPI_strtol					::strtol
-#define VMPI_strstr					::strstr
+#define VMPI_strncpy(d, nd, s, ns) ::strncpy(d, s, ns)
+#define VMPI_strtol ::strtol
+#define VMPI_strstr ::strstr
 
-#define VMPI_sprintf				::sprintf
-#define VMPI_snprintf				::snprintf
-#define VMPI_vsnprintf				::vsnprintf
-#define VMPI_sscanf					::sscanf
+#define VMPI_sprintf ::sprintf
+#define VMPI_snprintf ::snprintf
+#define VMPI_vsnprintf ::vsnprintf
+#define VMPI_sscanf ::sscanf
 
-#define VMPI_atoi   ::atoi
+#define VMPI_atoi ::atoi
 #define VMPI_tolower ::tolower
 #define VMPI_islower ::islower
 #define VMPI_toupper ::toupper
@@ -47,8 +47,8 @@
 #define VMPI_ispunct ::ispunct
 #define VMPI_iscntrl ::iscntrl
 #define VMPI_isalpha ::isalpha
-#define VMPI_abort   ::abort
-#define VMPI_exit    ::exit
+#define VMPI_abort ::abort
+#define VMPI_exit ::exit
 
 // Set up a jmp_buf suitable for VMPI_longjmpNoUnwind.
 // Use the routine version with an underscore to avoid system calls
@@ -62,36 +62,36 @@
 // to query the signal mask.
 #define VMPI_longjmpNoUnwind ::_longjmp
 
+#include <math.h>
+#include <stdarg.h>
 #include <stddef.h>
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
-#include <math.h>
+#include <string.h>
 
 #include <ctype.h>
 #include <limits.h>
 
-#include <inttypes.h>
 #include <alloca.h>
+#include <inttypes.h>
 
 // Bug 645878: must guard the include to avoid breaking AIR_IOS.
 #if defined(AVMPLUS_MAC_CARBON) || defined(AVMPLUS_PPC)
-    #include <CoreServices/CoreServices.h>   // for MakeDataExecutable
+#include <CoreServices/CoreServices.h> // for MakeDataExecutable
 #endif
 
-#include <mach/mach.h>                   // for vm_protect()
 #include <AvailabilityMacros.h>
+#include <mach/mach.h> // for vm_protect()
 
-#include <sys/mman.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <sys/mman.h>
 
-#include <unistd.h>
-#include <pthread.h>
-#include <new>
 #include <libkern/OSAtomic.h>
+#include <new>
+#include <pthread.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include <sys/sysctl.h>
 
@@ -103,181 +103,167 @@ typedef void *maddr_ptr;
 typedef pthread_t vmpi_thread_t;
 
 #ifdef AVMPLUS_MAC_CARBON
-    /**
-     * On Mac Carbon, if you compile with Altivec support,
-     * setjmp is redirected to __vec_setjmp and longjmp is redirected
-     * to __vec_longjmp.  These routines do not gracefully degrade if
-     * the CPU does not have Altivec... they just crash.
-     *
-     * We don't need Altivec support in the places where exceptions
-     * are thrown and caught, so this code forces the setjmp/longjmp
-     * implementation to be the old school, non-Altivec versions.
-     */
-    typedef long *jmp_buf[70];
-    extern "C"
-    {
-        int __setjmp(jmp_buf jmpbuf);
-        void longjmp(jmp_buf jmpbuf, int value);
-    }
+/**
+ * On Mac Carbon, if you compile with Altivec support,
+ * setjmp is redirected to __vec_setjmp and longjmp is redirected
+ * to __vec_longjmp.  These routines do not gracefully degrade if
+ * the CPU does not have Altivec... they just crash.
+ *
+ * We don't need Altivec support in the places where exceptions
+ * are thrown and caught, so this code forces the setjmp/longjmp
+ * implementation to be the old school, non-Altivec versions.
+ */
+typedef long *jmp_buf[70];
+extern "C" {
+int __setjmp(jmp_buf jmpbuf);
+void longjmp(jmp_buf jmpbuf, int value);
+}
 
-    #define setjmp __setjmp
+#define setjmp __setjmp
 #else
-    #include <setjmp.h>
+#include <setjmp.h>
 #endif
 
 #ifdef __GNUC__
 // don't force inlining when debugging, just causes pain.
-#  ifdef DEBUG
-#    define REALLY_INLINE inline
-#  else
-#    define REALLY_INLINE inline __attribute__((always_inline))
-#  endif
+#ifdef DEBUG
+#define REALLY_INLINE inline
+#else
+#define REALLY_INLINE inline __attribute__((always_inline))
+#endif
 
 // Bug 569361.  See notes for NO_INLINE in VMPI.h
-#  define NO_INLINE __attribute__((noinline))
+#define NO_INLINE __attribute__((noinline))
 
 // only define FASTCALL for x86-32; other gcc versions will spew warnings
-#  ifdef AVMPLUS_IA32
-#    ifndef VMCFG_AOT // Doesn't work with llvm compiler (need a better symbol for this, but don't know one)
-#      define FASTCALL __attribute__((fastcall))
-#    endif
-#  endif
+#ifdef AVMPLUS_IA32
+#ifndef VMCFG_AOT // Doesn't work with llvm compiler (need a better symbol for
+                  // this, but don't know one)
+#define FASTCALL __attribute__((fastcall))
+#endif
+#endif
 #endif // __GNUC__
 
 #if defined(__GNUC__)
-    #define AVMPLUS_ALIGN8(type) type __attribute__ ((aligned (8)))
-    #define AVMPLUS_ALIGN16(type) type __attribute__ ((aligned (16)))
+#define AVMPLUS_ALIGN8(type) type __attribute__((aligned(8)))
+#define AVMPLUS_ALIGN16(type) type __attribute__((aligned(16)))
 #else
-    #error "Unrecognized compiler"
+#error "Unrecognized compiler"
 #endif
 
 // "verify" is a Mac thing, it gets in the way of our code
-// FIXME: should clean up our code, as this #undef will leak into the AVM embedder's code
+// FIXME: should clean up our code, as this #undef will leak into the AVM
+// embedder's code
 
 #undef verify
 
 /**
-* Type defintion for an opaque data type representing platform-defined spin lock
-* @see VMPI_lockInit(), VMPI_lockAcquire()
-*/
-struct vmpi_spin_lock_t
-{
-    volatile OSSpinLock lock;
+ * Type defintion for an opaque data type representing platform-defined spin
+ * lock
+ * @see VMPI_lockInit(), VMPI_lockAcquire()
+ */
+struct vmpi_spin_lock_t {
+  volatile OSSpinLock lock;
 #ifdef DEBUG
-    pthread_t ownerThread;
+  pthread_t ownerThread;
 #endif
 };
 
-REALLY_INLINE void VMPI_lockInit(vmpi_spin_lock_t* lock)
-{
-    lock->lock = OS_SPINLOCK_INIT;
+REALLY_INLINE void VMPI_lockInit(vmpi_spin_lock_t *lock) {
+  lock->lock = OS_SPINLOCK_INIT;
 #ifdef DEBUG
-    lock->ownerThread = NULL;
+  lock->ownerThread = NULL;
 #endif
 }
 
-REALLY_INLINE void VMPI_lockDestroy(vmpi_spin_lock_t* lock)
-{
-    lock->lock = OS_SPINLOCK_INIT;
+REALLY_INLINE void VMPI_lockDestroy(vmpi_spin_lock_t *lock) {
+  lock->lock = OS_SPINLOCK_INIT;
 #ifdef DEBUG
-    lock->ownerThread = NULL;
+  lock->ownerThread = NULL;
 #endif
 }
 
-REALLY_INLINE bool VMPI_lockAcquire(vmpi_spin_lock_t* lock)
-{
+REALLY_INLINE bool VMPI_lockAcquire(vmpi_spin_lock_t *lock) {
 #ifdef DEBUG
-    if(!::OSSpinLockTry((volatile OSSpinLock*)&lock->lock)) {
-        // deadlock assert
-        assert(lock->ownerThread != pthread_self());
-        ::OSSpinLockLock((volatile OSSpinLock*)&lock->lock);
-    }
-    lock->ownerThread = pthread_self();
+  if (!::OSSpinLockTry((volatile OSSpinLock *)&lock->lock)) {
+    // deadlock assert
+    assert(lock->ownerThread != pthread_self());
+    ::OSSpinLockLock((volatile OSSpinLock *)&lock->lock);
+  }
+  lock->ownerThread = pthread_self();
 #else
-    ::OSSpinLockLock((OSSpinLock*)&lock->lock);
+  ::OSSpinLockLock((OSSpinLock *)&lock->lock);
+#endif
+  return true;
+}
+
+REALLY_INLINE bool VMPI_lockRelease(vmpi_spin_lock_t *lock) {
+#ifdef DEBUG
+  lock->ownerThread = NULL;
+#endif
+  ::OSSpinLockUnlock((volatile OSSpinLock *)&lock->lock);
+  return true;
+}
+
+REALLY_INLINE bool VMPI_lockTestAndAcquire(vmpi_spin_lock_t *lock) {
+  if (::OSSpinLockTry((volatile OSSpinLock *)&lock->lock)) {
+#ifdef DEBUG
+    assert(lock->ownerThread == NULL);
+    lock->ownerThread = pthread_self();
 #endif
     return true;
+  }
+  return false;
 }
 
-REALLY_INLINE bool VMPI_lockRelease(vmpi_spin_lock_t* lock)
-{
-#ifdef DEBUG
-    lock->ownerThread = NULL;
-#endif
-    ::OSSpinLockUnlock((volatile OSSpinLock*)&lock->lock);
-    return true;
+REALLY_INLINE int32_t
+VMPI_atomicIncAndGet32WithBarrier(volatile int32_t *value) {
+  return OSAtomicIncrement32Barrier(value);
 }
 
-REALLY_INLINE bool VMPI_lockTestAndAcquire(vmpi_spin_lock_t* lock)
-{
-    if(::OSSpinLockTry((volatile OSSpinLock*)&lock->lock))
-    {
-#ifdef DEBUG
-        assert(lock->ownerThread == NULL);
-        lock->ownerThread = pthread_self();
-#endif
-        return true;
-    }
-    return false;
+REALLY_INLINE int32_t VMPI_atomicIncAndGet32(volatile int32_t *value) {
+  return OSAtomicIncrement32(value);
 }
 
-REALLY_INLINE int32_t VMPI_atomicIncAndGet32WithBarrier(volatile int32_t* value)
-{
-    return OSAtomicIncrement32Barrier(value);
+REALLY_INLINE int32_t
+VMPI_atomicDecAndGet32WithBarrier(volatile int32_t *value) {
+  return OSAtomicDecrement32Barrier(value);
 }
 
-REALLY_INLINE int32_t VMPI_atomicIncAndGet32(volatile int32_t* value)
-{
-    return OSAtomicIncrement32(value);
+REALLY_INLINE int32_t VMPI_atomicDecAndGet32(volatile int32_t *value) {
+  return OSAtomicDecrement32(value);
 }
 
-REALLY_INLINE int32_t VMPI_atomicDecAndGet32WithBarrier(volatile int32_t* value)
-{
-    return OSAtomicDecrement32Barrier(value);
+REALLY_INLINE bool VMPI_compareAndSwap32(int32_t oldValue, int32_t newValue,
+                                         volatile int32_t *address) {
+  return OSAtomicCompareAndSwap32(oldValue, newValue, address);
 }
 
-REALLY_INLINE int32_t VMPI_atomicDecAndGet32(volatile int32_t* value)
-{
-    return OSAtomicDecrement32(value);
+REALLY_INLINE bool VMPI_compareAndSwap32WithBarrier(int32_t oldValue,
+                                                    int32_t newValue,
+                                                    volatile int32_t *address) {
+  return OSAtomicCompareAndSwap32Barrier(oldValue, newValue, address);
 }
 
-REALLY_INLINE bool VMPI_compareAndSwap32(int32_t oldValue, int32_t newValue, volatile int32_t* address)
-{
-    return OSAtomicCompareAndSwap32(oldValue, newValue, address);
+REALLY_INLINE void VMPI_memoryBarrier() { OSMemoryBarrier(); }
+
+REALLY_INLINE int VMPI_processorQtyAtBoot() {
+  size_t len = 0;
+  int num = 0;
+  int mib[] = {CTL_HW, HW_NCPU};
+  sysctl(mib, 2, NULL, &len, NULL, 0);
+  sysctl(mib, 2, &num, &len, NULL, 0);
+  // May be unreliable, but we know we have at least one processor
+  return num < 1 ? 1 : num;
 }
 
-REALLY_INLINE bool VMPI_compareAndSwap32WithBarrier(int32_t oldValue, int32_t newValue, volatile int32_t* address)
-{
-    return OSAtomicCompareAndSwap32Barrier(oldValue, newValue, address);
-}
-
-REALLY_INLINE void VMPI_memoryBarrier()
-{
-    OSMemoryBarrier();
-}
-
-REALLY_INLINE int VMPI_processorQtyAtBoot()
-{
-    size_t len = 0;
-    int num = 0;
-    int mib[] = {CTL_HW, HW_NCPU};
-    sysctl(mib, 2, NULL, &len, NULL, 0);
-    sysctl(mib, 2, &num, &len, NULL, 0);
-    // May be unreliable, but we know we have at least one processor
-    return num < 1 ? 1 : num;
-}
-
-REALLY_INLINE void VMPI_spinloopPause()
-{
+REALLY_INLINE void VMPI_spinloopPause() {
 #ifdef AVMPLUS_IA32
-    __asm__("pause");
+  __asm__("pause");
 #endif
 }
 
-REALLY_INLINE vmpi_thread_t VMPI_nullThread()
-{
-    return NULL;
-}
+REALLY_INLINE vmpi_thread_t VMPI_nullThread() { return NULL; }
 
 #include "../VMPI/ThreadsPosix-inlines.h"
 

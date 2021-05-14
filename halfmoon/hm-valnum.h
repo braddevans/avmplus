@@ -9,8 +9,8 @@
 
 namespace halfmoon {
 
-void dominatorValueNumbering(Context*, InstrGraph*);
-void globalValueNumbering(Context*, InstrGraph*);
+void dominatorValueNumbering(Context *, InstrGraph *);
+void globalValueNumbering(Context *, InstrGraph *);
 
 } // namespace halfmoon
 #endif // HM_VALNUM_H_

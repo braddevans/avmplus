@@ -7,47 +7,44 @@
 #ifndef __avmshell_FileClass__
 #define __avmshell_FileClass__
 
+namespace avmshell {
+/**
+ * A simple class that has some native methods.
+ * Included as an example for writers of native methods,
+ * and also to provide some useful QA instrumentation.
+ */
+class FileClass : public avmplus::ClassClosure {
+public:
+  FileClass(avmplus::VTable *cvtable);
 
-namespace avmshell
-{
-    /**
-     * A simple class that has some native methods.
-     * Included as an example for writers of native methods,
-     * and also to provide some useful QA instrumentation.
-     */
-    class FileClass : public avmplus::ClassClosure
-    {
-    public:
-        FileClass(avmplus::VTable* cvtable);
+  /**
+   * Implementation of File.exists
+   * AS usage: exists = File.exists(filename);
+   * Tests whether file "filename" exists.
+   */
+  bool exists(avmplus::Stringp filename);
 
-        /**
-         * Implementation of File.exists
-         * AS usage: exists = File.exists(filename);
-         * Tests whether file "filename" exists.
-         */
-        bool exists(avmplus::Stringp filename);
+  /**
+   * Implementation of File.read
+   * AS usage: data = File.read(filename);
+   * Reads the file "filename" into memory and returns
+   * it as a string
+   */
+  avmplus::Stringp read(avmplus::Stringp filename);
 
-        /**
-         * Implementation of File.read
-         * AS usage: data = File.read(filename);
-         * Reads the file "filename" into memory and returns
-         * it as a string
-         */
-        avmplus::Stringp read(avmplus::Stringp filename);
+  /**
+   * Implementation of File.write
+   * AS usage: File.write(filename, data);
+   * Writes the text "data" to the file "filename"
+   */
+  void write(avmplus::Stringp filename, avmplus::Stringp data);
 
-        /**
-         * Implementation of File.write
-         * AS usage: File.write(filename, data);
-         * Writes the text "data" to the file "filename"
-         */
-        void write(avmplus::Stringp filename, avmplus::Stringp data);
+  avmplus::ByteArrayObject *readByteArray(avmplus::Stringp filename);
+  bool writeByteArray(avmplus::Stringp filename,
+                      avmplus::ByteArrayObject *bytes);
 
-        avmplus::ByteArrayObject* readByteArray(avmplus::Stringp filename);
-        bool writeByteArray(avmplus::Stringp filename, avmplus::ByteArrayObject* bytes);
-
-
-        DECLARE_SLOTS_FileClass;
-    };
-}
+  DECLARE_SLOTS_FileClass;
+};
+} // namespace avmshell
 
 #endif /* __avmshell_FileClass__ */

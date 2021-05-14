@@ -11,55 +11,53 @@
 #error "This file is only for use with avmshell"
 #endif
 
-namespace avmplus
-{
-    class GC_AS3_EXACT(DomainObject, ScriptObject)
-    {
-        friend class DomainClass;
-    protected:
-        DomainObject(VTable *vtable, ScriptObject *delegate);
-    public:
+namespace avmplus {
+class GC_AS3_EXACT(DomainObject, ScriptObject) {
+  friend class DomainClass;
 
-        void init(DomainObject *base);
-        Atom loadBytes(ByteArrayObject* bytes, uint32_t swfVersion);
-        ClassClosure* getClass(Stringp name);
-        // AS3 declaration requires these are ByteArrayObject
-        ByteArrayObject* get_domainMemory() const;
-        void set_domainMemory(ByteArrayObject* mem);
+protected:
+  DomainObject(VTable *vtable, ScriptObject *delegate);
 
-    private:
-        ScriptObject* finddef(const Multiname& multiname, DomainEnv* domainEnv);
+public:
+  void init(DomainObject *base);
+  Atom loadBytes(ByteArrayObject *bytes, uint32_t swfVersion);
+  ClassClosure *getClass(Stringp name);
+  // AS3 declaration requires these are ByteArrayObject
+  ByteArrayObject *get_domainMemory() const;
+  void set_domainMemory(ByteArrayObject *mem);
 
-    // ------------------------ DATA SECTION BEGIN
-        GC_DATA_BEGIN(DomainObject)
+private:
+  ScriptObject *finddef(const Multiname &multiname, DomainEnv *domainEnv);
 
-    public:
-        GCMember<DomainEnv> GC_POINTER(domainEnv);
-        GCMember<Toplevel>  GC_POINTER(domainToplevel);
-        
-        GC_DATA_END(DomainObject)
+  // ------------------------ DATA SECTION BEGIN
+  GC_DATA_BEGIN(DomainObject)
 
-    private:
-        DECLARE_SLOTS_DomainObject;
-    // ------------------------ DATA SECTION END
-    };
+public:
+  GCMember<DomainEnv> GC_POINTER(domainEnv);
+  GCMember<Toplevel> GC_POINTER(domainToplevel);
 
-    class GC_AS3_EXACT(DomainClass, ClassClosure)
-    {
-    protected:
-        DomainClass(VTable* cvtable);
-        
-    public:
-        DomainObject* get_currentDomain();
-        int get_MIN_DOMAIN_MEMORY_LENGTH();
+  GC_DATA_END(DomainObject)
 
-    // ------------------------ DATA SECTION BEGIN
-        GC_NO_DATA(DomainClass)
+private:
+  DECLARE_SLOTS_DomainObject;
+  // ------------------------ DATA SECTION END
+};
 
-    private:
-        DECLARE_SLOTS_DomainClass;
-    // ------------------------ DATA SECTION END
-    };
-}
+class GC_AS3_EXACT(DomainClass, ClassClosure) {
+protected:
+  DomainClass(VTable *cvtable);
+
+public:
+  DomainObject *get_currentDomain();
+  int get_MIN_DOMAIN_MEMORY_LENGTH();
+
+  // ------------------------ DATA SECTION BEGIN
+  GC_NO_DATA(DomainClass)
+
+private:
+  DECLARE_SLOTS_DomainClass;
+  // ------------------------ DATA SECTION END
+};
+} // namespace avmplus
 
 #endif /* __avmshell_DomainClass__ */

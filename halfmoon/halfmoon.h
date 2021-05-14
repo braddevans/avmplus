@@ -9,41 +9,41 @@ using avmplus::AbcEnv;
 using avmplus::CodegenDriver;
 using avmplus::CodeWriter;
 using avmplus::FrameState;
+using avmplus::GprMethodProc;
 using avmplus::MethodInfo;
 using avmplus::MethodSignaturep;
+using avmplus::PrintWriter;
 using avmplus::Toplevel;
 using avmplus::Traits;
-using avmplus::GprMethodProc;
-using avmplus::PrintWriter;
 using nanojit::Allocator;
 using nanojit::Fragment;
 using nanojit::HashMap;
 
 /// Return true if halfmoon wants to try to compile this method.
 ///
-bool canCompile(MethodInfo*);
+bool canCompile(MethodInfo *);
 bool isProfilerEnabled();
 
 class JitManager;
 class AbcGraph;
 class AbcBlock;
 class Lattice;
-class InstrGraph; //TODO: matz_inline_experiment
+class InstrGraph; // TODO: matz_inline_experiment
 class ProfiledInformation;
 class BailoutData;
 class ScopeInfo;
-struct Context; //TODO: matz_inline_experiment
+struct Context; // TODO: matz_inline_experiment
 
 /// I wish I could think of a better name here.  JitWriter is the CodeWriter
 /// interface to the Halfmoon JIT.
 ///
-class JitWriter: public CodeWriter {
+class JitWriter : public CodeWriter {
 public:
   /** construct a JitWriter for a plain compilation session */
-  JitWriter(MethodInfo*, Toplevel* topLevel, AbcEnv *abc_env);
+  JitWriter(MethodInfo *, Toplevel *topLevel, AbcEnv *abc_env);
 
   /** Construct a JitWriter for inlining */
-  JitWriter(MethodInfo*, const Context *calling_context);
+  JitWriter(MethodInfo *, const Context *calling_context);
   virtual ~JitWriter();
 
   /// Return the implementation or NULL if we didn't generate one.
@@ -52,39 +52,48 @@ public:
 
   /// Return the compiled IR, or null if it failed for some reason.
   ///
-  InstrGraph* ir();
+  InstrGraph *ir();
 
   // CodeWriter methods
-  void writePrologue(const FrameState* state, const uint8_t *pc, CodegenDriver*);
-  void write(const FrameState* state, const uint8_t* pc, AbcOpcode opcode, Traits *type);
-  void writeOp1(const FrameState* state, const uint8_t *pc, AbcOpcode opcode, uint32_t opd1, Traits *type);
-  void writeOp2(const FrameState* state, const uint8_t *pc, AbcOpcode opcode, uint32_t opd1, uint32_t opd2, Traits* type);
-  void writeMethodCall(const FrameState* state, const uint8_t *pc, AbcOpcode opcode, MethodInfo*, uintptr_t disp_id, uint32_t argc, Traits* type);
-  void writeNip(const FrameState* state, const uint8_t *pc, uint32_t count);
-  void writeCheckNull(const FrameState* state, uint32_t index);
-  void writeCoerce(const FrameState* state, uint32_t index, Traits *type);
-  void writeEpilogue(const FrameState* state);
-  void writeBlockStart(const FrameState* state);
+  void writePrologue(const FrameState *state, const uint8_t *pc,
+                     CodegenDriver *);
+  void write(const FrameState *state, const uint8_t *pc, AbcOpcode opcode,
+             Traits *type);
+  void writeOp1(const FrameState *state, const uint8_t *pc, AbcOpcode opcode,
+                uint32_t opd1, Traits *type);
+  void writeOp2(const FrameState *state, const uint8_t *pc, AbcOpcode opcode,
+                uint32_t opd1, uint32_t opd2, Traits *type);
+  void writeMethodCall(const FrameState *state, const uint8_t *pc,
+                       AbcOpcode opcode, MethodInfo *, uintptr_t disp_id,
+                       uint32_t argc, Traits *type);
+  void writeNip(const FrameState *state, const uint8_t *pc, uint32_t count);
+  void writeCheckNull(const FrameState *state, uint32_t index);
+  void writeCoerce(const FrameState *state, uint32_t index, Traits *type);
+  void writeEpilogue(const FrameState *state);
+  void writeBlockStart(const FrameState *state);
 
 private:
-  void analyze(AbcOpcode abcop, const uint8_t* pc, const FrameState*);
-  void finishBlock(const uint8_t* nextpc);
-  void newBlock(const uint8_t* pc, const FrameState* state);
-  void startBlock(const FrameState*);
+  void analyze(AbcOpcode abcop, const uint8_t *pc, const FrameState *);
+  void finishBlock(const uint8_t *nextpc);
+  void newBlock(const uint8_t *pc, const FrameState *state);
+  void startBlock(const FrameState *);
 
 public:
-  InstrGraph *ir_;  //TODO: matz_inline_experiment review this comment. (stash graph for inlined callees here)
-  //maybe put callers context here? Then compile callee could set it when compiling for inliner. matz
+  InstrGraph *ir_; // TODO: matz_inline_experiment review this comment. (stash
+                   // graph for inlined callees here)
+  // maybe put callers context here? Then compile callee could set it when
+  // compiling for inliner. matz
 private:
   Allocator alloc_;
-  MethodInfo* method_;
-  PrintWriter& console_;
-  JitManager* jit_mgr_;
-  AbcGraph* abc_;
-  AbcBlock* current_block_;
-  AbcEnv *abc_env_;    //TODO: matz_inline_experiment review this comment. (stash this aside so inliner will have it)
-  Toplevel *toplevel_; //TODO: matz_inline_experiment review this comment.
-  ProfiledInformation* profiled_info_;
+  MethodInfo *method_;
+  PrintWriter &console_;
+  JitManager *jit_mgr_;
+  AbcGraph *abc_;
+  AbcBlock *current_block_;
+  AbcEnv *abc_env_; // TODO: matz_inline_experiment review this comment. (stash
+                    // this aside so inliner will have it)
+  Toplevel *toplevel_; // TODO: matz_inline_experiment review this comment.
+  ProfiledInformation *profiled_info_;
   const Context *calling_context_;
 };
 
@@ -103,6 +112,6 @@ private:
 /// or return false (release).
 ///
 using avmplus::AvmLogControl;
-bool checkLir(Fragment*, AvmLogControl* logc);
+bool checkLir(Fragment *, AvmLogControl *logc);
 
 } // namespace halfmoon

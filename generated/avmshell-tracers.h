@@ -23,4 +23,3 @@
 #define avmshell_RestrictedBaseObject_isExactInterlock 1
 #define avmshell_ShellToplevel_isExactInterlock 1
 #define avmshell_SystemClass_isExactInterlock 1
-

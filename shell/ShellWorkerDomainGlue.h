@@ -7,30 +7,30 @@
 #ifndef __avmplus_ShellWorkerDomainGlue__
 #define __avmplus_ShellWorkerDomainGlue__
 
-
 namespace avmshell {
-    class ShellWorkerDomainClass : public avmplus::ClassClosure
-    {
-        public:
-        ShellWorkerDomainClass(avmplus::VTable* cvtable);
-        
-        private:
-        DECLARE_SLOTS_ShellWorkerDomainClass;
-    };
+class ShellWorkerDomainClass : public avmplus::ClassClosure {
+public:
+  ShellWorkerDomainClass(avmplus::VTable *cvtable);
 
-    class ShellWorkerDomainObject : public avmplus::ScriptObject, public avmplus::WorkerDomainObjectBase<ShellWorkerDomainObject>
-    {
-        friend class ShellWorkerDomainClass;
-        
-        public:
-        ShellWorkerDomainObject(avmplus::VTable* vtable, avmplus::ScriptObject* prototype); 
-        ShellWorkerObject* createWorkerFromByteArrayInternal(avmplus::ByteArrayObject* byteArray);
+private:
+  DECLARE_SLOTS_ShellWorkerDomainClass;
+};
 
-        avmplus::ObjectVectorObject* listWorkers();
+class ShellWorkerDomainObject
+    : public avmplus::ScriptObject,
+      public avmplus::WorkerDomainObjectBase<ShellWorkerDomainObject> {
+  friend class ShellWorkerDomainClass;
 
-        private:
-        DECLARE_SLOTS_ShellWorkerDomainObject;
-    };
-}
+public:
+  ShellWorkerDomainObject(avmplus::VTable *vtable,
+                          avmplus::ScriptObject *prototype);
+  ShellWorkerObject *
+  createWorkerFromByteArrayInternal(avmplus::ByteArrayObject *byteArray);
+
+  avmplus::ObjectVectorObject *listWorkers();
+
+private:
+  DECLARE_SLOTS_ShellWorkerDomainObject;
+};
+} // namespace avmshell
 #endif /* __avmplus_ShellWorkerDomainGlue__ */
-

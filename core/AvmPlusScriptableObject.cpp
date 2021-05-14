@@ -4,24 +4,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
-
-
 #include "avmplus.h"
 
 using namespace MMgc;
 
-namespace avmplus
-{
+namespace avmplus {
 #ifdef DEBUGGER
-    AvmPlusScriptableObject::AvmPlusScriptableObject(SamplerObjectType sot)
-    {
-        // Report the object allocation to the current memory sampler.
-        IMemorySampler *memSampler = getSampler();
-        if (memSampler)
-        {
-            memSampler->recordNewObjectAllocation(this, sot);
-        }
-    }
-#endif
+AvmPlusScriptableObject::AvmPlusScriptableObject(SamplerObjectType sot) {
+  // Report the object allocation to the current memory sampler.
+  IMemorySampler *memSampler = getSampler();
+  if (memSampler) {
+    memSampler->recordNewObjectAllocation(this, sot);
+  }
 }
+#endif
+} // namespace avmplus

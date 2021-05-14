@@ -10,52 +10,52 @@
 #include <e32std.h>
 
 /*
-* A simple "first pick" allocator.
-* Uses a map where each bit points to a 4k chunk.
-* It returns always the first free chunk in the map:
-* the chunk that was previously freed or the next free chunk from where previous chunk was allocated from.
-*/
+ * A simple "first pick" allocator.
+ * Uses a map where each bit points to a 4k chunk.
+ * It returns always the first free chunk in the map:
+ * the chunk that was previously freed or the next free chunk from where
+ * previous chunk was allocated from.
+ */
 
-class SymbianJITHeap
-{
+class SymbianJITHeap {
 public:
+  SymbianJITHeap();
+  ~SymbianJITHeap();
 
-    SymbianJITHeap();
-    ~SymbianJITHeap();
+  bool IsInitialized();
+  TInt GetNumAllocs();
 
-    bool IsInitialized();
-    TInt GetNumAllocs();
-
-    void* Alloc();
-    void Free(void* ptr);
+  void *Alloc();
+  void Free(void *ptr);
 
 private:
+  enum {
+    kMaxBitLookup = 256,
+    kBitsInTUint = 32,
+    kPageSize = 4096,
+    kMaxHeapSize =
+        kPageSize * 16384, // 64Mb, should be enough for Symbian for now
+    kHeapAdjustSize =
+        kPageSize *
+        8, // it is likely to be cheaper to not adjust after each allocation
+    kMaxMap = kMaxHeapSize / kPageSize /
+              kBitsInTUint // kMaxMap is 512 when kMaxHeapSize is 64Mb
+  };
 
-    enum
-    {
-        kMaxBitLookup = 256,
-        kBitsInTUint = 32,
-        kPageSize = 4096,
-        kMaxHeapSize = kPageSize*16384, // 64Mb, should be enough for Symbian for now
-        kHeapAdjustSize  = kPageSize*8, // it is likely to be cheaper to not adjust after each allocation
-        kMaxMap = kMaxHeapSize / kPageSize / kBitsInTUint // kMaxMap is 512 when kMaxHeapSize is 64Mb
-    };
+  void SetupBitLookup();
+  int GetEmptyBit(int arrayPos);
+  void ClearBit(int mapPos);
+  void SetBit(int mapPos);
+  int GetEmptyChunkIndex();
+  void SetEmptyChunkIndex(int index);
 
-    void SetupBitLookup();
-    int GetEmptyBit(int arrayPos);
-    void ClearBit(int mapPos);
-    void SetBit(int mapPos);
-    int GetEmptyChunkIndex();
-    void SetEmptyChunkIndex(int index);
-
-    TInt m_previousFree;
-    TInt m_currentMaxMem;
-    TUint m_map[kMaxMap];
-    TUint8 m_bitLookup[kMaxBitLookup];
-    RChunk m_chunk;
-    TUint m_startAddr;
-    TInt m_numAllocs;
+  TInt m_previousFree;
+  TInt m_currentMaxMem;
+  TUint m_map[kMaxMap];
+  TUint8 m_bitLookup[kMaxBitLookup];
+  RChunk m_chunk;
+  TUint m_startAddr;
+  TInt m_numAllocs;
 };
-
 
 #endif __SymbianJITHeap__

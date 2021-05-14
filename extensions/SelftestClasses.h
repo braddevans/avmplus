@@ -6,19 +6,16 @@
 
 class MyObject {
 public:
-    int i;
+  int i;
 };
 class MyGCObject : public MMgc::GCObject {
 public:
-    int i;
-    MyGCObject *child;
-    MyGCObject() {
-        child=NULL;
-    }
+  int i;
+  MyGCObject *child;
+  MyGCObject() { child = NULL; }
 };
 class MyGCLargeObject : public MMgc::GCObject {
 public:
-    char array[MMgc::GCHeap::kBlockSize];
-    MyGCLargeObject() {}  
+  char array[MMgc::GCHeap::kBlockSize];
+  MyGCLargeObject() {}
 };
-

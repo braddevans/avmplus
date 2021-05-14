@@ -17,9 +17,9 @@
 #ifdef VMCFG_HALFMOON
 
 // Include internal headers next.
-#include "profiler-types.h"
-#include "profiler-methodprofile.h"  
+#include "profiler-methodprofile.h"
 #include "profiler-profiledstate.h"
+#include "profiler-types.h"
 
 #endif // VMCFG_HALFMOON
 

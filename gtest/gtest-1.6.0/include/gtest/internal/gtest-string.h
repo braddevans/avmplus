@@ -43,11 +43,11 @@
 
 #ifdef __BORLANDC__
 // string.h is not guaranteed to provide strcpy on C++ Builder.
-# include <mem.h>
+#include <mem.h>
 #endif
 
-#include <string.h>
 #include "gtest/internal/gtest-port.h"
+#include <string.h>
 
 #include <string>
 
@@ -79,7 +79,7 @@ namespace internal {
 // In order to make the representation efficient, the d'tor of String
 // is not virtual.  Therefore DO NOT INHERIT FROM String.
 class GTEST_API_ String {
- public:
+public:
   // Static utility methods
 
   // Returns the input enclosed in double quotes if it's not NULL;
@@ -89,7 +89,7 @@ class GTEST_API_ String {
   // This is useful for printing a C string in the syntax of a literal.
   //
   // Known issue: escape sequences are not handled yet.
-  static String ShowCStringQuoted(const char* c_str);
+  static String ShowCStringQuoted(const char *c_str);
 
   // Clones a 0-terminated C string, allocating memory using new.  The
   // caller is responsible for deleting the return value using
@@ -98,7 +98,7 @@ class GTEST_API_ String {
   //
   // This is different from strdup() in string.h, which allocates
   // memory using malloc().
-  static const char* CloneCString(const char* c_str);
+  static const char *CloneCString(const char *c_str);
 
 #if GTEST_OS_WINDOWS_MOBILE
   // Windows CE does not have the 'ANSI' versions of Win32 APIs. To be
@@ -113,7 +113,7 @@ class GTEST_API_ String {
   // The wide string is created using the ANSI codepage (CP_ACP) to
   // match the behaviour of the ANSI versions of Win32 calls and the
   // C runtime.
-  static LPCWSTR AnsiToUtf16(const char* c_str);
+  static LPCWSTR AnsiToUtf16(const char *c_str);
 
   // Creates an ANSI string from the given wide string, allocating
   // memory using new. The caller is responsible for deleting the return
@@ -123,7 +123,7 @@ class GTEST_API_ String {
   // The returned string is created using the ANSI codepage (CP_ACP) to
   // match the behaviour of the ANSI versions of Win32 calls and the
   // C runtime.
-  static const char* Utf16ToAnsi(LPCWSTR utf16_str);
+  static const char *Utf16ToAnsi(LPCWSTR utf16_str);
 #endif
 
   // Compares two C strings.  Returns true iff they have the same content.
@@ -131,17 +131,17 @@ class GTEST_API_ String {
   // Unlike strcmp(), this function can handle NULL argument(s).  A
   // NULL C string is considered different to any non-NULL C string,
   // including the empty string.
-  static bool CStringEquals(const char* lhs, const char* rhs);
+  static bool CStringEquals(const char *lhs, const char *rhs);
 
   // Converts a wide C string to a String using the UTF-8 encoding.
   // NULL will be converted to "(null)".  If an error occurred during
   // the conversion, "(failed to convert from wide string)" is
   // returned.
-  static String ShowWideCString(const wchar_t* wide_c_str);
+  static String ShowWideCString(const wchar_t *wide_c_str);
 
   // Similar to ShowWideCString(), except that this function encloses
   // the converted string in double quotes.
-  static String ShowWideCStringQuoted(const wchar_t* wide_c_str);
+  static String ShowWideCStringQuoted(const wchar_t *wide_c_str);
 
   // Compares two wide C strings.  Returns true iff they have the same
   // content.
@@ -149,7 +149,7 @@ class GTEST_API_ String {
   // Unlike wcscmp(), this function can handle NULL argument(s).  A
   // NULL C string is considered different to any non-NULL C string,
   // including the empty string.
-  static bool WideCStringEquals(const wchar_t* lhs, const wchar_t* rhs);
+  static bool WideCStringEquals(const wchar_t *lhs, const wchar_t *rhs);
 
   // Compares two C strings, ignoring case.  Returns true iff they
   // have the same content.
@@ -157,8 +157,7 @@ class GTEST_API_ String {
   // Unlike strcasecmp(), this function can handle NULL argument(s).
   // A NULL C string is considered different to any non-NULL C string,
   // including the empty string.
-  static bool CaseInsensitiveCStringEquals(const char* lhs,
-                                           const char* rhs);
+  static bool CaseInsensitiveCStringEquals(const char *lhs, const char *rhs);
 
   // Compares two wide C strings, ignoring case.  Returns true iff they
   // have the same content.
@@ -172,8 +171,8 @@ class GTEST_API_ String {
   // which compares according to LC_CTYPE category of the current locale.
   // On MacOS X, it uses towlower, which also uses LC_CTYPE category of the
   // current locale.
-  static bool CaseInsensitiveWideCStringEquals(const wchar_t* lhs,
-                                               const wchar_t* rhs);
+  static bool CaseInsensitiveWideCStringEquals(const wchar_t *lhs,
+                                               const wchar_t *rhs);
 
   // Formats a list of arguments to a String, using the same format
   // spec string as for printf.
@@ -184,7 +183,7 @@ class GTEST_API_ String {
   // The result is limited to 4096 characters (including the tailing
   // 0).  If 4096 characters are not enough to format the input,
   // "<buffer exceeded>" is returned.
-  static String Format(const char* format, ...);
+  static String Format(const char *format, ...);
 
   // C'tors
 
@@ -192,7 +191,7 @@ class GTEST_API_ String {
   String() : c_str_(NULL), length_(0) {}
 
   // Constructs a String by cloning a 0-terminated C string.
-  String(const char* a_c_str) {  // NOLINT
+  String(const char *a_c_str) { // NOLINT
     if (a_c_str == NULL) {
       c_str_ = NULL;
       length_ = 0;
@@ -205,13 +204,13 @@ class GTEST_API_ String {
   // buffer.  E.g. String("hello", 3) creates the string "hel",
   // String("a\0bcd", 4) creates "a\0bc", String(NULL, 0) creates "",
   // and String(NULL, 1) results in access violation.
-  String(const char* buffer, size_t a_length) {
+  String(const char *buffer, size_t a_length) {
     ConstructNonNull(buffer, a_length);
   }
 
   // The copy c'tor creates a new copy of the string.  The two
   // String objects do not share content.
-  String(const String& str) : c_str_(NULL), length_(0) { *this = str; }
+  String(const String &str) : c_str_(NULL), length_(0) { *this = str; }
 
   // D'tor.  String is intended to be a final class, so the d'tor
   // doesn't need to be virtual.
@@ -223,19 +222,17 @@ class GTEST_API_ String {
   // Converting a ::std::string or ::string containing an embedded NUL
   // character to a String will result in the prefix up to the first
   // NUL character.
-  String(const ::std::string& str) {
+  String(const ::std::string &str) {
     ConstructNonNull(str.c_str(), str.length());
   }
 
   operator ::std::string() const { return ::std::string(c_str(), length()); }
 
 #if GTEST_HAS_GLOBAL_STRING
-  String(const ::string& str) {
-    ConstructNonNull(str.c_str(), str.length());
-  }
+  String(const ::string &str) { ConstructNonNull(str.c_str(), str.length()); }
 
   operator ::string() const { return ::string(c_str(), length()); }
-#endif  // GTEST_HAS_GLOBAL_STRING
+#endif // GTEST_HAS_GLOBAL_STRING
 
   // Returns true iff this is an empty string (i.e. "").
   bool empty() const { return (c_str() != NULL) && (length() == 0); }
@@ -243,27 +240,27 @@ class GTEST_API_ String {
   // Compares this with another String.
   // Returns < 0 if this is less than rhs, 0 if this is equal to rhs, or > 0
   // if this is greater than rhs.
-  int Compare(const String& rhs) const;
+  int Compare(const String &rhs) const;
 
   // Returns true iff this String equals the given C string.  A NULL
   // string and a non-NULL string are considered not equal.
-  bool operator==(const char* a_c_str) const { return Compare(a_c_str) == 0; }
+  bool operator==(const char *a_c_str) const { return Compare(a_c_str) == 0; }
 
   // Returns true iff this String is less than the given String.  A
   // NULL string is considered less than "".
-  bool operator<(const String& rhs) const { return Compare(rhs) < 0; }
+  bool operator<(const String &rhs) const { return Compare(rhs) < 0; }
 
   // Returns true iff this String doesn't equal the given C string.  A NULL
   // string and a non-NULL string are considered not equal.
-  bool operator!=(const char* a_c_str) const { return !(*this == a_c_str); }
+  bool operator!=(const char *a_c_str) const { return !(*this == a_c_str); }
 
   // Returns true iff this String ends with the given suffix.  *Any*
   // String is considered to end with a NULL or empty suffix.
-  bool EndsWith(const char* suffix) const;
+  bool EndsWith(const char *suffix) const;
 
   // Returns true iff this String ends with the given suffix, not considering
   // case. Any String is considered to end with a NULL or empty suffix.
-  bool EndsWithCaseInsensitive(const char* suffix) const;
+  bool EndsWithCaseInsensitive(const char *suffix) const;
 
   // Returns the length of the encapsulated string, or 0 if the
   // string is NULL.
@@ -272,15 +269,15 @@ class GTEST_API_ String {
   // Gets the 0-terminated C string this String object represents.
   // The String object still owns the string.  Therefore the caller
   // should NOT delete the return value.
-  const char* c_str() const { return c_str_; }
+  const char *c_str() const { return c_str_; }
 
   // Assigns a C string to this object.  Self-assignment works.
-  const String& operator=(const char* a_c_str) {
+  const String &operator=(const char *a_c_str) {
     return *this = String(a_c_str);
   }
 
   // Assigns a String object to this object.  Self-assignment works.
-  const String& operator=(const String& rhs) {
+  const String &operator=(const String &rhs) {
     if (this != &rhs) {
       delete[] c_str_;
       if (rhs.c_str() == NULL) {
@@ -294,30 +291,30 @@ class GTEST_API_ String {
     return *this;
   }
 
- private:
+private:
   // Constructs a non-NULL String from the given content.  This
   // function can only be called when c_str_ has not been allocated.
   // ConstructNonNull(NULL, 0) results in an empty string ("").
   // ConstructNonNull(NULL, non_zero) is undefined behavior.
-  void ConstructNonNull(const char* buffer, size_t a_length) {
-    char* const str = new char[a_length + 1];
+  void ConstructNonNull(const char *buffer, size_t a_length) {
+    char *const str = new char[a_length + 1];
     memcpy(str, buffer, a_length);
     str[a_length] = '\0';
     c_str_ = str;
     length_ = a_length;
   }
 
-  const char* c_str_;
+  const char *c_str_;
   size_t length_;
-};  // class String
+}; // class String
 
 // Streams a String to an ostream.  Each '\0' character in the String
 // is replaced with "\\0".
-inline ::std::ostream& operator<<(::std::ostream& os, const String& str) {
+inline ::std::ostream &operator<<(::std::ostream &os, const String &str) {
   if (str.c_str() == NULL) {
     os << "(null)";
   } else {
-    const char* const c_str = str.c_str();
+    const char *const c_str = str.c_str();
     for (size_t i = 0; i != str.length(); i++) {
       if (c_str[i] == '\0') {
         os << "\\0";
@@ -331,7 +328,7 @@ inline ::std::ostream& operator<<(::std::ostream& os, const String& str) {
 
 // Gets the content of the stringstream's buffer as a String.  Each '\0'
 // character in the buffer is replaced with "\\0".
-GTEST_API_ String StringStreamToString(::std::stringstream* stream);
+GTEST_API_ String StringStreamToString(::std::stringstream *stream);
 
 // Converts a streamable value to a String.  A NULL pointer is
 // converted to "(null)".  When the input value is a ::string,
@@ -341,10 +338,9 @@ GTEST_API_ String StringStreamToString(::std::stringstream* stream);
 // Declared here but defined in gtest.h, so that it has access
 // to the definition of the Message class, required by the ARM
 // compiler.
-template <typename T>
-String StreamableToString(const T& streamable);
+template <typename T> String StreamableToString(const T &streamable);
 
-}  // namespace internal
-}  // namespace testing
+} // namespace internal
+} // namespace testing
 
-#endif  // GTEST_INCLUDE_GTEST_INTERNAL_GTEST_STRING_H_
+#endif // GTEST_INCLUDE_GTEST_INTERNAL_GTEST_STRING_H_

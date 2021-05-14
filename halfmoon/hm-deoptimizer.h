@@ -10,14 +10,14 @@
 #include "../core/avmplus.h"
 
 #ifdef VMCFG_HALFMOON
-#include "../core/Deopt.h"     // DeoptContext
+#include "../core/Deopt.h" // DeoptContext
 
 /// From the Google C++ Style Guide.
 /// TODO: Move to a more generally-accessible location.
 
-#define DISALLOW_COPY_AND_ASSIGN(TypeName) \
-  TypeName(const TypeName&);               \
-  void operator=(const TypeName&)
+#define DISALLOW_COPY_AND_ASSIGN(TypeName)                                     \
+  TypeName(const TypeName &);                                                  \
+  void operator=(const TypeName &)
 
 namespace halfmoon {
 
@@ -38,32 +38,29 @@ private:
   friend class HMDeoptDataWriter;
   friend class HMDeoptContext;
 
-  const MethodSignature* signature_;
+  const MethodSignature *signature_;
 
   // Instances are created only by HMDeoptDataWriter.
-  DeoptData(const MethodSignature* sig)
-    : signature_(sig)
-  {}
+  DeoptData(const MethodSignature *sig) : signature_(sig) {}
 
   // This class is the header for a variable-length object.
   // The metadata instruction stream follows.  The instruction
   // stream is examined only by HMDeoptContext.
-  NIns* instructions() {
-    return (NIns*)((uint8_t*)this + sizeof(DeoptData));
-  }
+  NIns *instructions() { return (NIns *)((uint8_t *)this + sizeof(DeoptData)); }
 
   // TODO: We'll probably want to stash a reference to the CodeMgr
   // here, or some way to find the MetaDataAlloc so we can free storage.
   // This can be worked out when we figure out what to do with the
   // code for obsolete translations.  At present, we deallocate both
   // code and metadata only upon JIT failure.
-  
+
   // Instances of DeoptData may not be destroyed in the usual fashion.
   // Instead, use MetaDataAlloc::freeAll().
   ~DeoptData() {}
   DISALLOW_COPY_AND_ASSIGN(DeoptData);
+
 public:
-  Deoptimizer*  createDeoptimizer(MethodInfo* info);
+  Deoptimizer *createDeoptimizer(MethodInfo *info);
 };
 
 enum SafepointKind {
@@ -139,19 +136,18 @@ enum MetaDataOpcode {
 
 class HMDeoptDataWriter : public nanojit::MetaDataWriter {
 public:
-
-  HMDeoptDataWriter(CodeAlloc& md_alloc, Allocator& tmp_alloc,
-                    const MethodSignature* signature, LIns** defs);
+  HMDeoptDataWriter(CodeAlloc &md_alloc, Allocator &tmp_alloc,
+                    const MethodSignature *signature, LIns **defs);
 
   // Callback entry points from assembler.
-  void beginAssembly(Assembler* assm, uint8_t* address);
-  void safepointStart(Assembler* assm, void* payload, uint8_t* address);
-  void safepointEnd(Assembler* assm, void* payload, uint8_t* address);
-  void setNativePc(uint8_t* address);
-  void endAssembly(Assembler* assm, uint8_t* address);
+  void beginAssembly(Assembler *assm, uint8_t *address);
+  void safepointStart(Assembler *assm, void *payload, uint8_t *address);
+  void safepointEnd(Assembler *assm, void *payload, uint8_t *address);
+  void setNativePc(uint8_t *address);
+  void endAssembly(Assembler *assm, uint8_t *address);
 
   // Return pointer to DeoptData object.  Valid only after assembly is complete.
-  DeoptData* finish();
+  DeoptData *finish();
 
   // If the assembly aborts, and we will abandoning the metadata, we need
   // to free up persistent storage allocated for the DeoptData.  The last
@@ -164,63 +160,59 @@ private:
 
   // Allocator for metadata, using discontiguous linked chunks like CodeAlloc.
   // The metadata stays writable at all times, however.
-  CodeAlloc& md_alloc_;
+  CodeAlloc &md_alloc_;
 
   // Bump-pointer arena allocator for temporary storage during assembly.
-  Allocator& tmp_alloc_;
+  Allocator &tmp_alloc_;
 
   // Array of LIns* corresponding to definitions.
-  LIns** def_ins_;
+  LIns **def_ins_;
 
   // List of deopt metadata blocks so far generated.
-  CodeList* data_;
+  CodeList *data_;
 
   // Pointer to next byte to be written.
   // TODO: Fix abuse of NIns*.
-  NIns* mdins_;
+  NIns *mdins_;
 
   // Pointers to start and end of the current chunk.
   // TODO: Fix abuse of NIns*.
-  NIns* start_;
-  NIns* end_;
+  NIns *start_;
+  NIns *end_;
 
-  const MethodSignature* sig_;
-  NIns* mdstart_;
+  const MethodSignature *sig_;
+  NIns *mdstart_;
 
   // Get the LIns* associated with a Def.
   // Cribbed from a private definition in LirEmitter.
-  LIns* def_ins(const Def* d) {
-    return def_ins_[defId(d)];
-  }
+  LIns *def_ins(const Def *d) { return def_ins_[defId(d)]; }
 
   // Get the LIns* associated with a Use.
   // Cribbed from a private definition in LirEmitter.
-  LIns* def_ins(const Use& u) {
-    return def_ins(def(u));
-  }
+  LIns *def_ins(const Use &u) { return def_ins(def(u)); }
 
   // Static method info.
   int frame_size_;
   int stack_base_;
   int scope_base_;
   int n_locals_;
-  
+
   // State model.
   uintptr_t npc_;
-  uint32_t  vpc_;
-  int scopep_;               // TODO: Make this unsigned.
-  int stackp_;               // TODO: Make this unsigned.
-  int* frame_slots_;
-  uint8_t* frame_types_;
+  uint32_t vpc_;
+  int scopep_; // TODO: Make this unsigned.
+  int stackp_; // TODO: Make this unsigned.
+  int *frame_slots_;
+  uint8_t *frame_types_;
 
-  void mdAlloc(NIns*& start, NIns*& end, NIns*& bytep);
+  void mdAlloc(NIns *&start, NIns *&end, NIns *&bytep);
 
   // Ensure that at least 'bytes' bytes are available in the
   // current code chunk.  If not, allocate a new chunk, emit
   // a link to it in the old chunk, and make the new chunk
   // current.
   void ensureSpace(int bytes);
-  
+
   // Write unsigned integer values.
   void writeUInt8(uint8_t value);
   void writeUInt32(uint32_t value);
@@ -243,10 +235,9 @@ private:
   // Return the number of byte needed to encode value in SLEB128.
   int byteCountSLEB128(int32_t value);
 
-  void emitSetSlotIdx(DeoptSafepointInstr* safepoint,
-                      Assembler* assm, int slot, int i);
+  void emitSetSlotIdx(DeoptSafepointInstr *safepoint, Assembler *assm, int slot,
+                      int i);
 };
-
 
 /// Deoptimization context for compiled methods generated by Halfmoon.
 
@@ -258,8 +249,8 @@ private:
   friend class HMHandlerFramePopulator;
   friend class HMReturnFramePopulator;
 
-  DeoptData* deopt_data_;
-  const MethodSignature* signature_;
+  DeoptData *deopt_data_;
+  const MethodSignature *signature_;
 
   int frame_size_;
   int stack_base_;
@@ -268,17 +259,17 @@ private:
 
   SafepointKind kind_;
   uintptr_t npc_;
-  uint32_t  vpc_;
+  uint32_t vpc_;
   int scopep_;
   int stackp_;
-  int* frame_slots_;
-  uint8_t* frame_types_;
+  int *frame_slots_;
+  uint8_t *frame_types_;
   int nargs_;
   int vlen_;
   SlotStorageType rtype_;
-  MethodInfo* minfo_;
+  MethodInfo *minfo_;
 
-  NIns* mdins_;
+  NIns *mdins_;
 
   uint8_t readUInt8();
   uint32_t readUInt32();
@@ -290,74 +281,59 @@ private:
   int32_t readSLEB128();
 
 public:
-
-  HMDeoptContext(DeoptData* data);
+  HMDeoptContext(DeoptData *data);
   ~HMDeoptContext();
 
-  uint8_t* frameBase(MethodFrame* method_frame)
-  {
+  uint8_t *frameBase(MethodFrame *method_frame) {
     //...
     (void)method_frame;
     return 0;
   }
 
-  MethodFrame* methodFrame(uint8_t* frame_base)
-  {
+  MethodFrame *methodFrame(uint8_t *frame_base) {
     //...
     (void)frame_base;
     return NULL;
   }
 
-  int32_t saveEip(uint8_t* frame_base)
-  {
+  int32_t saveEip(uint8_t *frame_base) {
     //...
     (void)frame_base;
     return 0;
   }
 
-  uint8_t* calleeFrameBase(uint8_t* frame_base)
-  {
+  uint8_t *calleeFrameBase(uint8_t *frame_base) {
     //...
     (void)frame_base;
     return 0;
   }
 
-  void setSafepointFromVirtualPc(int32_t vpc)
-  {
+  void setSafepointFromVirtualPc(int32_t vpc) {
     // NYI -- I don't think we'll need this.
     (void)vpc;
     AvmAssert(false);
   }
 
-  void setSafepointFromNativePc(uint8_t* pc);
+  void setSafepointFromNativePc(uint8_t *pc);
 
-  int32_t safepointVpc()
-  {
-    return vpc_;
-  }
+  int32_t safepointVpc() { return vpc_; }
 
-  bool isSafepointAtThrow()
-  {
-    return (kind_ == kThrowSafepoint);
-  }
-  
-  bool isSafepointAtAbcCall()
-  {
-    return (kind_ == kCallSafepoint);
-  }
+  bool isSafepointAtThrow() { return (kind_ == kThrowSafepoint); }
 
-  SlotStorageType safepointReturnValueSST()
-  {
+  bool isSafepointAtAbcCall() { return (kind_ == kCallSafepoint); }
+
+  SlotStorageType safepointReturnValueSST() {
     AvmAssert(kind_ == kCallSafepoint);
     return rtype_;
   }
 
-  Atom interpretFromSafepoint(uint8_t* fp, MethodEnv* env) ;
-  Atom interpretFromCallSafepoint(uint8_t* fp, MethodEnv* env, Atom return_val);
-  Atom interpretFromThrowSafepoint(uint8_t* fp, MethodEnv* env, int32_t handler_vpc, Atom exn_val);
+  Atom interpretFromSafepoint(uint8_t *fp, MethodEnv *env);
+  Atom interpretFromCallSafepoint(uint8_t *fp, MethodEnv *env, Atom return_val);
+  Atom interpretFromThrowSafepoint(uint8_t *fp, MethodEnv *env,
+                                   int32_t handler_vpc, Atom exn_val);
 };
 
-} // end namespace
+} // namespace halfmoon
 
 #endif // VMCFG_HALFMOON
 #endif // #ifndef HM_DEOPT

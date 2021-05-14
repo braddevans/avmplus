@@ -13,52 +13,52 @@ namespace halfmoon {
 using namespace avmplus;
 
 union AnyVal {
-  Atom atom; // SST_atom
-  const Namespace* ns; // SST_namespace
-  String* str; // SST_string
-  ScriptObject* obj; // SST_scriptobject
-  int32_t i; // SST_int32
-  uint32_t u; // SST_uint32
-  int32_t b; // SST_bool32
-  double d; // SST_double
+  Atom atom;           // SST_atom
+  const Namespace *ns; // SST_namespace
+  String *str;         // SST_string
+  ScriptObject *obj;   // SST_scriptobject
+  int32_t i;           // SST_int32
+  uint32_t u;          // SST_uint32
+  int32_t b;           // SST_bool32
+  double d;            // SST_double
 };
 
-Atom makeatom(AvmCore* core, AnyVal* native, SlotStorageType tag) {
+Atom makeatom(AvmCore *core, AnyVal *native, SlotStorageType tag) {
   switch (tag) {
-    default:
-      AvmAssert(false);
-    case SST_atom:
-      AvmAssert(atomKind(native->atom) != 0);
-      return native->atom;
-    case SST_namespace:
-      AvmAssert(atomKind(native->atom) == 0);
-      return native->ns->atom();
-    case SST_string:
-      AvmAssert(atomKind(native->atom) == 0);
-      AvmAssert(uintptr_t(native->str) > 1000 || native->str == 0);
-      return native->str->atom();
-    case SST_scriptobject:
-      AvmAssert(atomKind(native->atom) == 0);
-      return native->obj->atom();
-    case SST_int32:
-      return core->intToAtom(native->i);
-    case SST_uint32:
-      return core->uintToAtom(native->u);
-    case SST_bool32:
-      AvmAssert(native->b == 0 || native->b == 1);
-      return native->b ? trueAtom : falseAtom;
-    case SST_double:
-      return core->doubleToAtom(native->d);
+  default:
+    AvmAssert(false);
+  case SST_atom:
+    AvmAssert(atomKind(native->atom) != 0);
+    return native->atom;
+  case SST_namespace:
+    AvmAssert(atomKind(native->atom) == 0);
+    return native->ns->atom();
+  case SST_string:
+    AvmAssert(atomKind(native->atom) == 0);
+    AvmAssert(uintptr_t(native->str) > 1000 || native->str == 0);
+    return native->str->atom();
+  case SST_scriptobject:
+    AvmAssert(atomKind(native->atom) == 0);
+    return native->obj->atom();
+  case SST_int32:
+    return core->intToAtom(native->i);
+  case SST_uint32:
+    return core->uintToAtom(native->u);
+  case SST_bool32:
+    AvmAssert(native->b == 0 || native->b == 1);
+    return native->b ? trueAtom : falseAtom;
+  case SST_double:
+    return core->doubleToAtom(native->d);
   }
 }
 
-void buildInterpreterFrame(AnyVal* local_vars, SlotStorageType* type_tags,
-                           Atom* scope, Atom* operand, Atom* locals,
-                           MethodEnv* env, AvmCore* core, int abc_pc) {
-  MethodInfo* method = env->method;
+void buildInterpreterFrame(AnyVal *local_vars, SlotStorageType *type_tags,
+                           Atom *scope, Atom *operand, Atom *locals,
+                           MethodEnv *env, AvmCore *core, int abc_pc) {
+  MethodInfo *method = env->method;
   MethodSignaturep method_signature = method->getMethodSignature();
-  BailoutData* deoptData = JitManager::init(method->pool())->ensureMethodData(
-      method)->bailout_data;
+  BailoutData *deoptData =
+      JitManager::init(method->pool())->ensureMethodData(method)->bailout_data;
 
   int sp = deoptData->getStackPointer(abc_pc);
   int scope_depth = deoptData->getScopeStack(abc_pc);
@@ -86,27 +86,27 @@ void buildInterpreterFrame(AnyVal* local_vars, SlotStorageType* type_tags,
 /// Unbox the value, but pass it as GPR sized value
 uintptr_t unboxValue(Atom retVal, MethodSignaturep method_signature) {
   switch (method_signature->returnTraitsBT()) {
-    case BUILTIN_int:
-      return (uintptr_t) AvmCore::integer_i(retVal);
-    case BUILTIN_uint:
-      return (uintptr_t) AvmCore::integer_u(retVal);
-    case BUILTIN_boolean:
-      return uintptr_t(retVal == trueAtom);
-    case BUILTIN_string:
-      return (uintptr_t) AvmCore::atomToString(retVal);
-    case BUILTIN_array: {
-      AvmAssert(atomKind(retVal) == kObjectType);
-      return (uintptr_t) AvmCore::atomToScriptObject(retVal);
-    }
-    case BUILTIN_namespace:
-    case BUILTIN_any:
-    case BUILTIN_object:
-    case BUILTIN_void:
-      return (uintptr_t) retVal;
-    case BUILTIN_number: // should have called deopt double
-    default:
-      AvmAssert(false && "Unknown return type");
-      return (uintptr_t) retVal;
+  case BUILTIN_int:
+    return (uintptr_t)AvmCore::integer_i(retVal);
+  case BUILTIN_uint:
+    return (uintptr_t)AvmCore::integer_u(retVal);
+  case BUILTIN_boolean:
+    return uintptr_t(retVal == trueAtom);
+  case BUILTIN_string:
+    return (uintptr_t)AvmCore::atomToString(retVal);
+  case BUILTIN_array: {
+    AvmAssert(atomKind(retVal) == kObjectType);
+    return (uintptr_t)AvmCore::atomToScriptObject(retVal);
+  }
+  case BUILTIN_namespace:
+  case BUILTIN_any:
+  case BUILTIN_object:
+  case BUILTIN_void:
+    return (uintptr_t)retVal;
+  case BUILTIN_number: // should have called deopt double
+  default:
+    AvmAssert(false && "Unknown return type");
+    return (uintptr_t)retVal;
   }
 }
 
@@ -114,14 +114,14 @@ void checkBailoutFrame(MethodSignaturep method_signature) {
   AvmAssert(method_signature->local_count() < 32);
   AvmAssert(method_signature->max_scope() < 16);
   AvmAssert(method_signature->max_stack() < 16);
-  (void) method_signature;
+  (void)method_signature;
 }
 
-Atom bailoutInterpreter(AvmCore* core, MethodEnv* env, int abc_pc,
-                        AnyVal* local_vars, SlotStorageType* type_tags) {
-  MethodInfo* method = env->method;
-  JitManager* jit = JitManager::init(method->pool());
-  BailoutData* bailout = jit->ensureMethodData(method)->bailout_data;
+Atom bailoutInterpreter(AvmCore *core, MethodEnv *env, int abc_pc,
+                        AnyVal *local_vars, SlotStorageType *type_tags) {
+  MethodInfo *method = env->method;
+  JitManager *jit = JitManager::init(method->pool());
+  BailoutData *bailout = jit->ensureMethodData(method)->bailout_data;
   int sp = bailout->getStackPointer(abc_pc);
   int scope_depth = bailout->getScopeStack(abc_pc);
 
@@ -137,30 +137,30 @@ Atom bailoutInterpreter(AvmCore* core, MethodEnv* env, int abc_pc,
                                env);
 }
 
-uintptr_t gprBailout(AvmCore* core, MethodEnv* env, int abc_pc,
-                     AnyVal* local_vars, SlotStorageType* type_tags) {
-  MethodInfo* method = env->method;
+uintptr_t gprBailout(AvmCore *core, MethodEnv *env, int abc_pc,
+                     AnyVal *local_vars, SlotStorageType *type_tags) {
+  MethodInfo *method = env->method;
   checkBailoutFrame(method->getMethodSignature());
   return unboxValue(
       bailoutInterpreter(core, env, abc_pc, local_vars, type_tags),
       method->getMethodSignature());
 }
-FUNCTION(uintptr_t(gprBailout), SIG5(P,P,P,I,P,P), gprBailout)
+FUNCTION(uintptr_t(gprBailout), SIG5(P, P, P, I, P, P), gprBailout)
 
-double fprBailout(AvmCore* core, MethodEnv* env, int abc_pc,
-                           AnyVal* local_vars, SlotStorageType* type_tags) {
-  MethodInfo* method = env->method;
+double fprBailout(AvmCore *core, MethodEnv *env, int abc_pc, AnyVal *local_vars,
+                  SlotStorageType *type_tags) {
+  MethodInfo *method = env->method;
   checkBailoutFrame(method->getMethodSignature());
   Atom ret_val = bailoutInterpreter(core, env, abc_pc, local_vars, type_tags);
   return core->atomToDouble(ret_val);
 }
-FUNCTION(uintptr_t(fprBailout), SIG5(D,P,P,I,P,P), fprBailout)
+FUNCTION(uintptr_t(fprBailout), SIG5(D, P, P, I, P, P), fprBailout)
 
-ArrayObject* scriptObjectToArrayObject(ScriptObject* val) {
+ArrayObject *scriptObjectToArrayObject(ScriptObject *val) {
   // Has to be a virtual call, that's why we don't inline it into LIR
   return val->toArrayObject();
 }
-FUNCTION(uintptr_t(scriptObjectToArrayObject), SIG1(P,P),
+FUNCTION(uintptr_t(scriptObjectToArrayObject), SIG1(P, P),
          scriptObjectToArrayObject)
 
 } // end namespace halfmoon

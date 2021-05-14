@@ -37,8 +37,8 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-#include "avmshell.h"
 #include "aot/AOTCompiler.h"
+#include "avmshell.h"
 #include "shell_toplevel-classes.hh"
 #include "shell_toplevel.cpp"
 

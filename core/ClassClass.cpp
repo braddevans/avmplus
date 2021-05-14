@@ -4,25 +4,20 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
-#include "avmplus.h"
 #include "BuiltinNatives.h"
+#include "avmplus.h"
 
-namespace avmplus
-{
-    ClassClass::ClassClass(VTable* cvtable)
-        : ClassClosure(cvtable)
-    {
-        toplevel()->_classClass = this;
+namespace avmplus {
+ClassClass::ClassClass(VTable *cvtable) : ClassClosure(cvtable) {
+  toplevel()->_classClass = this;
 
-        AvmAssert(traits()->getSizeOfInstance() == sizeof(ClassClass));
+  AvmAssert(traits()->getSizeOfInstance() == sizeof(ClassClass));
 
-        createVanillaPrototype();
-    }
-
-    Atom ClassClass::construct(int /*argc*/, Atom* /*argv*/)
-    {
-        toplevel()->throwTypeError(kNotConstructorError, core()->kClassS);
-        return nullObjectAtom;
-    }
+  createVanillaPrototype();
 }
+
+Atom ClassClass::construct(int /*argc*/, Atom * /*argv*/) {
+  toplevel()->throwTypeError(kNotConstructorError, core()->kClassS);
+  return nullObjectAtom;
+}
+} // namespace avmplus

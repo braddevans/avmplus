@@ -8,9 +8,8 @@
 
 #include "MultinameHashtable-impl.h"
 
-namespace avmplus
-{
-    template class MultinameHashtable<Binding, BindingType>;
-    template class MultinameHashtable<Traitsp, GCObjectType>;
-    template class MultinameHashtable<MethodInfo*, GCObjectType>;
-}
+namespace avmplus {
+template class MultinameHashtable<Binding, BindingType>;
+template class MultinameHashtable<Traitsp, GCObjectType>;
+template class MultinameHashtable<MethodInfo *, GCObjectType>;
+} // namespace avmplus

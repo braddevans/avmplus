@@ -6,6 +6,4 @@
 
 #include "avmplus.h"
 
-namespace avmplus
-{
-}
+namespace avmplus {}

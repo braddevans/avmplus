@@ -1,6 +1,6 @@
 /*************************************************
-*      Perl-Compatible Regular Expressions       *
-*************************************************/
+ *      Perl-Compatible Regular Expressions       *
+ *************************************************/
 
 /* PCRE is a library of functions to support regular expressions whose syntax
 and semantics are as close as possible to those of the Perl 5 language.
@@ -37,7 +37,6 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 -----------------------------------------------------------------------------
 */
-
 
 /* This module contains mode-dependent macro and structure definitions. The
 file is #included by pcre2_internal.h if PCRE2_CODE_UNIT_WIDTH is defined.
@@ -80,8 +79,6 @@ just to undefine them all. */
 #undef PUTINC
 #undef TABLE_GET
 
-
-
 /* -------------------------- MACROS ----------------------------- */
 
 /* PCRE keeps offsets in its compiled code as at least 16-bit quantities
@@ -101,36 +98,27 @@ values of 2 or 4 are also supported. */
 #if PCRE2_CODE_UNIT_WIDTH == 8
 
 #if LINK_SIZE == 2
-#define PUT(a,n,d)   \
-  (a[n] = (d) >> 8), \
-  (a[(n)+1] = (d) & 255)
-#define GET(a,n) \
-  (((a)[n] << 8) | (a)[(n)+1])
+#define PUT(a, n, d) (a[n] = (d) >> 8), (a[(n) + 1] = (d)&255)
+#define GET(a, n) (((a)[n] << 8) | (a)[(n) + 1])
 #define MAX_PATTERN_SIZE (1 << 16)
 
 #elif LINK_SIZE == 3
-#define PUT(a,n,d)       \
-  (a[n] = (d) >> 16),    \
-  (a[(n)+1] = (d) >> 8), \
-  (a[(n)+2] = (d) & 255)
-#define GET(a,n) \
-  (((a)[n] << 16) | ((a)[(n)+1] << 8) | (a)[(n)+2])
+#define PUT(a, n, d)                                                           \
+  (a[n] = (d) >> 16), (a[(n) + 1] = (d) >> 8), (a[(n) + 2] = (d)&255)
+#define GET(a, n) (((a)[n] << 16) | ((a)[(n) + 1] << 8) | (a)[(n) + 2])
 #define MAX_PATTERN_SIZE (1 << 24)
 
 #elif LINK_SIZE == 4
-#define PUT(a,n,d)        \
-  (a[n] = (d) >> 24),     \
-  (a[(n)+1] = (d) >> 16), \
-  (a[(n)+2] = (d) >> 8),  \
-  (a[(n)+3] = (d) & 255)
-#define GET(a,n) \
-  (((a)[n] << 24) | ((a)[(n)+1] << 16) | ((a)[(n)+2] << 8) | (a)[(n)+3])
-#define MAX_PATTERN_SIZE (1 << 30)   /* Keep it positive */
+#define PUT(a, n, d)                                                           \
+  (a[n] = (d) >> 24), (a[(n) + 1] = (d) >> 16), (a[(n) + 2] = (d) >> 8),       \
+      (a[(n) + 3] = (d)&255)
+#define GET(a, n)                                                              \
+  (((a)[n] << 24) | ((a)[(n) + 1] << 16) | ((a)[(n) + 2] << 8) | (a)[(n) + 3])
+#define MAX_PATTERN_SIZE (1 << 30) /* Keep it positive */
 
 #else
 #error LINK_SIZE must be 2, 3, or 4
 #endif
-
 
 /* ------------------- 16-bit support  ------------------ */
 
@@ -139,42 +127,33 @@ values of 2 or 4 are also supported. */
 #if LINK_SIZE == 2
 #undef LINK_SIZE
 #define LINK_SIZE 1
-#define PUT(a,n,d)   \
-  (a[n] = (d))
-#define GET(a,n) \
-  (a[n])
+#define PUT(a, n, d) (a[n] = (d))
+#define GET(a, n) (a[n])
 #define MAX_PATTERN_SIZE (1 << 16)
 
 #elif LINK_SIZE == 3 || LINK_SIZE == 4
 #undef LINK_SIZE
 #define LINK_SIZE 2
-#define PUT(a,n,d)   \
-  (a[n] = (d) >> 16), \
-  (a[(n)+1] = (d) & 65535)
-#define GET(a,n) \
-  (((a)[n] << 16) | (a)[(n)+1])
-#define MAX_PATTERN_SIZE (1 << 30)  /* Keep it positive */
+#define PUT(a, n, d) (a[n] = (d) >> 16), (a[(n) + 1] = (d)&65535)
+#define GET(a, n) (((a)[n] << 16) | (a)[(n) + 1])
+#define MAX_PATTERN_SIZE (1 << 30) /* Keep it positive */
 
 #else
 #error LINK_SIZE must be 2, 3, or 4
 #endif
-
 
 /* ------------------- 32-bit support  ------------------ */
 
 #elif PCRE2_CODE_UNIT_WIDTH == 32
 #undef LINK_SIZE
 #define LINK_SIZE 1
-#define PUT(a,n,d)   \
-  (a[n] = (d))
-#define GET(a,n) \
-  (a[n])
-#define MAX_PATTERN_SIZE (1 << 30)  /* Keep it positive */
+#define PUT(a, n, d) (a[n] = (d))
+#define GET(a, n) (a[n])
+#define MAX_PATTERN_SIZE (1 << 30) /* Keep it positive */
 
 #else
 #error Unsupported compiling mode
 #endif
-
 
 /* --------------- Other mode-specific macros ----------------- */
 
@@ -190,13 +169,13 @@ arithmetic results in a signed value. Hence the cast. */
 
 #if PCRE2_CODE_UNIT_WIDTH == 8
 #define IMM2_SIZE 2
-#define GET2(a,n) (unsigned int)(((a)[n] << 8) | (a)[(n)+1])
-#define PUT2(a,n,d) a[n] = (d) >> 8, a[(n)+1] = (d) & 255
+#define GET2(a, n) (unsigned int)(((a)[n] << 8) | (a)[(n) + 1])
+#define PUT2(a, n, d) a[n] = (d) >> 8, a[(n) + 1] = (d)&255
 
-#else  /* Code units are 16 or 32 bits */
+#else /* Code units are 16 or 32 bits */
 #define IMM2_SIZE 1
-#define GET2(a,n) a[n]
-#define PUT2(a,n,d) a[n] = d
+#define GET2(a, n) a[n]
+#define PUT2(a, n, d) a[n] = d
 #endif
 
 /* Other macros that are different for 8-bit mode. The MAX_255 macro checks
@@ -211,17 +190,15 @@ tables. */
 #define MAX_MARK ((1u << 8) - 1)
 #ifdef SUPPORT_UNICODE
 #define SUPPORT_WIDE_CHARS
-#endif  /* SUPPORT_UNICODE */
+#endif /* SUPPORT_UNICODE */
 #define TABLE_GET(c, table, default) ((table)[c])
 
-#else  /* Code units are 16 or 32 bits */
+#else /* Code units are 16 or 32 bits */
 #define MAX_255(c) ((c) <= 255u)
 #define MAX_MARK ((1u << 16) - 1)
 #define SUPPORT_WIDE_CHARS
-#define TABLE_GET(c, table, default) (MAX_255(c)? ((table)[c]):(default))
+#define TABLE_GET(c, table, default) (MAX_255(c) ? ((table)[c]) : (default))
 #endif
-
-
 
 /* ----------------- Character-handling macros ----------------- */
 
@@ -235,9 +212,9 @@ library, the macros all have the same simple definitions. When the new mode is
 implemented, it is expected that these definitions will be varied appropriately
 using #ifdef when compiling the library that supports the special mode. */
 
-#define UCHAR21(eptr)        (*(eptr))
-#define UCHAR21TEST(eptr)    (*(eptr))
-#define UCHAR21INC(eptr)     (*(eptr)++)
+#define UCHAR21(eptr) (*(eptr))
+#define UCHAR21TEST(eptr) (*(eptr))
+#define UCHAR21INC(eptr) (*(eptr)++)
 #define UCHAR21INCTEST(eptr) (*(eptr)++)
 
 /* When UTF encoding is being used, a character is no longer just a single
@@ -265,12 +242,12 @@ UTF support is omitted, we don't even define them. */
 /* #define FORWARCCHARTEST(eptr,end) */
 /* #define ACROSSCHAR(condition, eptr, action) */
 
-#else   /* SUPPORT_UNICODE */
+#else /* SUPPORT_UNICODE */
 
 /* ------------------- 8-bit support  ------------------ */
 
 #if PCRE2_CODE_UNIT_WIDTH == 8
-#define MAYBE_UTF_MULTI          /* UTF chars may use multiple code units */
+#define MAYBE_UTF_MULTI /* UTF chars may use multiple code units */
 
 /* The largest UTF code point that can be encoded as a single code unit. */
 
@@ -283,80 +260,92 @@ UTF support is omitted, we don't even define them. */
 /* Returns with the additional number of characters if IS_MULTICHAR(c) is TRUE.
 Otherwise it has an undefined behaviour. */
 
-#define GET_EXTRALEN(c) (PRIV(utf8_table4)[(c) & 0x3f])
+#define GET_EXTRALEN(c) (PRIV(utf8_table4)[(c)&0x3f])
 
 /* Returns TRUE, if the given character is not the first character
 of a UTF sequence. */
 
-#define NOT_FIRSTCHAR(c) (((c) & 0xc0) == 0x80)
+#define NOT_FIRSTCHAR(c) (((c)&0xc0) == 0x80)
 
 /* Get the next UTF-8 character, not advancing the pointer. This is called when
 we know we are in UTF-8 mode. */
 
-#define GETCHAR(c, eptr) \
-  c = *eptr; \
-  if (c >= 0xc0) GETUTF8(c, eptr);
+#define GETCHAR(c, eptr)                                                       \
+  c = *eptr;                                                                   \
+  if (c >= 0xc0)                                                               \
+    GETUTF8(c, eptr);
 
 /* Get the next UTF-8 character, testing for UTF-8 mode, and not advancing the
 pointer. */
 
-#define GETCHARTEST(c, eptr) \
-  c = *eptr; \
-  if (utf && c >= 0xc0) GETUTF8(c, eptr);
+#define GETCHARTEST(c, eptr)                                                   \
+  c = *eptr;                                                                   \
+  if (utf && c >= 0xc0)                                                        \
+    GETUTF8(c, eptr);
 
 /* Get the next UTF-8 character, advancing the pointer. This is called when we
 know we are in UTF-8 mode. */
 
-#define GETCHARINC(c, eptr) \
-  c = *eptr++; \
-  if (c >= 0xc0) GETUTF8INC(c, eptr);
+#define GETCHARINC(c, eptr)                                                    \
+  c = *eptr++;                                                                 \
+  if (c >= 0xc0)                                                               \
+    GETUTF8INC(c, eptr);
 
 /* Get the next character, testing for UTF-8 mode, and advancing the pointer.
 This is called when we don't know if we are in UTF-8 mode. */
 
-#define GETCHARINCTEST(c, eptr) \
-  c = *eptr++; \
-  if (utf && c >= 0xc0) GETUTF8INC(c, eptr);
+#define GETCHARINCTEST(c, eptr)                                                \
+  c = *eptr++;                                                                 \
+  if (utf && c >= 0xc0)                                                        \
+    GETUTF8INC(c, eptr);
 
 /* Get the next UTF-8 character, not advancing the pointer, incrementing length
 if there are extra bytes. This is called when we know we are in UTF-8 mode. */
 
-#define GETCHARLEN(c, eptr, len) \
-  c = *eptr; \
-  if (c >= 0xc0) GETUTF8LEN(c, eptr, len);
+#define GETCHARLEN(c, eptr, len)                                               \
+  c = *eptr;                                                                   \
+  if (c >= 0xc0)                                                               \
+    GETUTF8LEN(c, eptr, len);
 
 /* Get the next UTF-8 character, testing for UTF-8 mode, not advancing the
 pointer, incrementing length if there are extra bytes. This is called when we
 do not know if we are in UTF-8 mode. */
 
-#define GETCHARLENTEST(c, eptr, len) \
-  c = *eptr; \
-  if (utf && c >= 0xc0) GETUTF8LEN(c, eptr, len);
+#define GETCHARLENTEST(c, eptr, len)                                           \
+  c = *eptr;                                                                   \
+  if (utf && c >= 0xc0)                                                        \
+    GETUTF8LEN(c, eptr, len);
 
 /* If the pointer is not at the start of a character, move it back until
 it is. This is called only in UTF-8 mode - we don't put a test within the macro
 because almost all calls are already within a block of UTF-8 only code. */
 
-#define BACKCHAR(eptr) while((*eptr & 0xc0) == 0x80) eptr--
+#define BACKCHAR(eptr)                                                         \
+  while ((*eptr & 0xc0) == 0x80)                                               \
+  eptr--
 
 /* Same as above, just in the other direction. */
-#define FORWARDCHAR(eptr) while((*eptr & 0xc0) == 0x80) eptr++
-#define FORWARDCHARTEST(eptr,end) while(eptr < end && (*eptr & 0xc0) == 0x80) eptr++
+#define FORWARDCHAR(eptr)                                                      \
+  while ((*eptr & 0xc0) == 0x80)                                               \
+  eptr++
+#define FORWARDCHARTEST(eptr, end)                                             \
+  while (eptr < end && (*eptr & 0xc0) == 0x80)                                 \
+  eptr++
 
 /* Same as above, but it allows a fully customizable form. */
-#define ACROSSCHAR(condition, eptr, action) \
-  while((condition) && ((eptr) & 0xc0) == 0x80) action
+#define ACROSSCHAR(condition, eptr, action)                                    \
+  while ((condition) && ((eptr)&0xc0) == 0x80)                                 \
+  action
 
 /* Deposit a character into memory, returning the number of code units. */
 
-#define PUTCHAR(c, p) ((utf && c > MAX_UTF_SINGLE_CU)? \
-  PRIV(ord2utf)(c,p) : (*p = c, 1))
-
+#define PUTCHAR(c, p)                                                          \
+  ((utf && c > MAX_UTF_SINGLE_CU) ? PRIV(ord2utf)(c, p) : (*p = c, 1))
 
 /* ------------------- 16-bit support  ------------------ */
 
 #elif PCRE2_CODE_UNIT_WIDTH == 16
-#define MAYBE_UTF_MULTI          /* UTF chars may use multiple code units */
+#define MAYBE_UTF_MULTI /* UTF chars may use multiple code units */
 
 /* The largest UTF code point that can be encoded as a single code unit. */
 
@@ -364,7 +353,7 @@ because almost all calls are already within a block of UTF-8 only code. */
 
 /* Tests whether the code point needs extra characters to decode. */
 
-#define HAS_EXTRALEN(c) (((c) & 0xfc00) == 0xd800)
+#define HAS_EXTRALEN(c) (((c)&0xfc00) == 0xd800)
 
 /* Returns with the additional number of characters if IS_MULTICHAR(c) is TRUE.
 Otherwise it has an undefined behaviour. */
@@ -374,90 +363,105 @@ Otherwise it has an undefined behaviour. */
 /* Returns TRUE, if the given character is not the first character
 of a UTF sequence. */
 
-#define NOT_FIRSTCHAR(c) (((c) & 0xfc00) == 0xdc00)
+#define NOT_FIRSTCHAR(c) (((c)&0xfc00) == 0xdc00)
 
 /* Base macro to pick up the low surrogate of a UTF-16 character, not
 advancing the pointer. */
 
-#define GETUTF16(c, eptr) \
-   { c = (((c & 0x3ff) << 10) | (eptr[1] & 0x3ff)) + 0x10000; }
+#define GETUTF16(c, eptr)                                                      \
+  { c = (((c & 0x3ff) << 10) | (eptr[1] & 0x3ff)) + 0x10000; }
 
 /* Get the next UTF-16 character, not advancing the pointer. This is called when
 we know we are in UTF-16 mode. */
 
-#define GETCHAR(c, eptr) \
-  c = *eptr; \
-  if ((c & 0xfc00) == 0xd800) GETUTF16(c, eptr);
+#define GETCHAR(c, eptr)                                                       \
+  c = *eptr;                                                                   \
+  if ((c & 0xfc00) == 0xd800)                                                  \
+    GETUTF16(c, eptr);
 
 /* Get the next UTF-16 character, testing for UTF-16 mode, and not advancing the
 pointer. */
 
-#define GETCHARTEST(c, eptr) \
-  c = *eptr; \
-  if (utf && (c & 0xfc00) == 0xd800) GETUTF16(c, eptr);
+#define GETCHARTEST(c, eptr)                                                   \
+  c = *eptr;                                                                   \
+  if (utf && (c & 0xfc00) == 0xd800)                                           \
+    GETUTF16(c, eptr);
 
 /* Base macro to pick up the low surrogate of a UTF-16 character, advancing
 the pointer. */
 
-#define GETUTF16INC(c, eptr) \
-   { c = (((c & 0x3ff) << 10) | (*eptr++ & 0x3ff)) + 0x10000; }
+#define GETUTF16INC(c, eptr)                                                   \
+  { c = (((c & 0x3ff) << 10) | (*eptr++ & 0x3ff)) + 0x10000; }
 
 /* Get the next UTF-16 character, advancing the pointer. This is called when we
 know we are in UTF-16 mode. */
 
-#define GETCHARINC(c, eptr) \
-  c = *eptr++; \
-  if ((c & 0xfc00) == 0xd800) GETUTF16INC(c, eptr);
+#define GETCHARINC(c, eptr)                                                    \
+  c = *eptr++;                                                                 \
+  if ((c & 0xfc00) == 0xd800)                                                  \
+    GETUTF16INC(c, eptr);
 
 /* Get the next character, testing for UTF-16 mode, and advancing the pointer.
 This is called when we don't know if we are in UTF-16 mode. */
 
-#define GETCHARINCTEST(c, eptr) \
-  c = *eptr++; \
-  if (utf && (c & 0xfc00) == 0xd800) GETUTF16INC(c, eptr);
+#define GETCHARINCTEST(c, eptr)                                                \
+  c = *eptr++;                                                                 \
+  if (utf && (c & 0xfc00) == 0xd800)                                           \
+    GETUTF16INC(c, eptr);
 
 /* Base macro to pick up the low surrogate of a UTF-16 character, not
 advancing the pointer, incrementing the length. */
 
-#define GETUTF16LEN(c, eptr, len) \
-   { c = (((c & 0x3ff) << 10) | (eptr[1] & 0x3ff)) + 0x10000; len++; }
+#define GETUTF16LEN(c, eptr, len)                                              \
+  {                                                                            \
+    c = (((c & 0x3ff) << 10) | (eptr[1] & 0x3ff)) + 0x10000;                   \
+    len++;                                                                     \
+  }
 
 /* Get the next UTF-16 character, not advancing the pointer, incrementing
 length if there is a low surrogate. This is called when we know we are in
 UTF-16 mode. */
 
-#define GETCHARLEN(c, eptr, len) \
-  c = *eptr; \
-  if ((c & 0xfc00) == 0xd800) GETUTF16LEN(c, eptr, len);
+#define GETCHARLEN(c, eptr, len)                                               \
+  c = *eptr;                                                                   \
+  if ((c & 0xfc00) == 0xd800)                                                  \
+    GETUTF16LEN(c, eptr, len);
 
 /* Get the next UTF-816character, testing for UTF-16 mode, not advancing the
 pointer, incrementing length if there is a low surrogate. This is called when
 we do not know if we are in UTF-16 mode. */
 
-#define GETCHARLENTEST(c, eptr, len) \
-  c = *eptr; \
-  if (utf && (c & 0xfc00) == 0xd800) GETUTF16LEN(c, eptr, len);
+#define GETCHARLENTEST(c, eptr, len)                                           \
+  c = *eptr;                                                                   \
+  if (utf && (c & 0xfc00) == 0xd800)                                           \
+    GETUTF16LEN(c, eptr, len);
 
 /* If the pointer is not at the start of a character, move it back until
 it is. This is called only in UTF-16 mode - we don't put a test within the
 macro because almost all calls are already within a block of UTF-16 only
 code. */
 
-#define BACKCHAR(eptr) if ((*eptr & 0xfc00) == 0xdc00) eptr--
+#define BACKCHAR(eptr)                                                         \
+  if ((*eptr & 0xfc00) == 0xdc00)                                              \
+  eptr--
 
 /* Same as above, just in the other direction. */
-#define FORWARDCHAR(eptr) if ((*eptr & 0xfc00) == 0xdc00) eptr++
-#define FORWARDCHARTEST(eptr,end) if (eptr < end && (*eptr & 0xfc00) == 0xdc00) eptr++
+#define FORWARDCHAR(eptr)                                                      \
+  if ((*eptr & 0xfc00) == 0xdc00)                                              \
+  eptr++
+#define FORWARDCHARTEST(eptr, end)                                             \
+  if (eptr < end && (*eptr & 0xfc00) == 0xdc00)                                \
+  eptr++
 
 /* Same as above, but it allows a fully customizable form. */
-#define ACROSSCHAR(condition, eptr, action) \
-  if ((condition) && ((eptr) & 0xfc00) == 0xdc00) action
+#define ACROSSCHAR(condition, eptr, action)                                    \
+  if ((condition) && ((eptr)&0xfc00) == 0xdc00)                                \
+  action
 
 /* Deposit a character into memory, returning the number of code units. */
 
-#define PUTCHAR(c, p) ((utf && c > MAX_UTF_SINGLE_CU)? \
-  PRIV(ord2utf)(c,p) : (*p = c, 1))
-
+#define PUTCHAR(c, p)                                                          \
+  ((utf && c > MAX_UTF_SINGLE_CU) ? PRIV(ord2utf)(c, p) : (*p = c, 1))
 
 /* ------------------- 32-bit support  ------------------ */
 
@@ -474,40 +478,34 @@ into one PCRE2_UCHAR unit. */
 /* Get the next UTF-32 character, not advancing the pointer. This is called when
 we know we are in UTF-32 mode. */
 
-#define GETCHAR(c, eptr) \
-  c = *(eptr);
+#define GETCHAR(c, eptr) c = *(eptr);
 
 /* Get the next UTF-32 character, testing for UTF-32 mode, and not advancing the
 pointer. */
 
-#define GETCHARTEST(c, eptr) \
-  c = *(eptr);
+#define GETCHARTEST(c, eptr) c = *(eptr);
 
 /* Get the next UTF-32 character, advancing the pointer. This is called when we
 know we are in UTF-32 mode. */
 
-#define GETCHARINC(c, eptr) \
-  c = *((eptr)++);
+#define GETCHARINC(c, eptr) c = *((eptr)++);
 
 /* Get the next character, testing for UTF-32 mode, and advancing the pointer.
 This is called when we don't know if we are in UTF-32 mode. */
 
-#define GETCHARINCTEST(c, eptr) \
-  c = *((eptr)++);
+#define GETCHARINCTEST(c, eptr) c = *((eptr)++);
 
 /* Get the next UTF-32 character, not advancing the pointer, not incrementing
 length (since all UTF-32 is of length 1). This is called when we know we are in
 UTF-32 mode. */
 
-#define GETCHARLEN(c, eptr, len) \
-  GETCHAR(c, eptr)
+#define GETCHARLEN(c, eptr, len) GETCHAR(c, eptr)
 
 /* Get the next UTF-32character, testing for UTF-32 mode, not advancing the
 pointer, not incrementing the length (since all UTF-32 is of length 1).
 This is called when we do not know if we are in UTF-32 mode. */
 
-#define GETCHARLENTEST(c, eptr, len) \
-  GETCHARTEST(c, eptr)
+#define GETCHARLENTEST(c, eptr, len) GETCHARTEST(c, eptr)
 
 /* If the pointer is not at the start of a character, move it back until
 it is. This is called only in UTF-32 mode - we don't put a test within the
@@ -516,32 +514,38 @@ code.
 
 These are all no-ops since all UTF-32 characters fit into one pcre_uchar. */
 
-#define BACKCHAR(eptr) do { } while (0)
+#define BACKCHAR(eptr)                                                         \
+  do {                                                                         \
+  } while (0)
 
 /* Same as above, just in the other direction. */
 
-#define FORWARDCHAR(eptr) do { } while (0)
-#define FORWARDCHARTEST(eptr,end) do { } while (0)
+#define FORWARDCHAR(eptr)                                                      \
+  do {                                                                         \
+  } while (0)
+#define FORWARDCHARTEST(eptr, end)                                             \
+  do {                                                                         \
+  } while (0)
 
 /* Same as above, but it allows a fully customizable form. */
 
-#define ACROSSCHAR(condition, eptr, action) do { } while (0)
+#define ACROSSCHAR(condition, eptr, action)                                    \
+  do {                                                                         \
+  } while (0)
 
 /* Deposit a character into memory, returning the number of code units. */
 
 #define PUTCHAR(c, p) (*p = c, 1)
 
-#endif  /* UTF-32 character handling */
-#endif  /* SUPPORT_UNICODE */
-
+#endif /* UTF-32 character handling */
+#endif /* SUPPORT_UNICODE */
 
 /* Mode-dependent macros that have the same definition in all modes. */
 
-#define CU2BYTES(x)     ((x)*((PCRE2_CODE_UNIT_WIDTH/8)))
-#define BYTES2CU(x)     ((x)/((PCRE2_CODE_UNIT_WIDTH/8)))
-#define PUTINC(a,n,d)   PUT(a,n,d), a += LINK_SIZE
-#define PUT2INC(a,n,d)  PUT2(a,n,d), a += IMM2_SIZE
-
+#define CU2BYTES(x) ((x) * ((PCRE2_CODE_UNIT_WIDTH / 8)))
+#define BYTES2CU(x) ((x) / ((PCRE2_CODE_UNIT_WIDTH / 8)))
+#define PUTINC(a, n, d) PUT(a, n, d), a += LINK_SIZE
+#define PUT2INC(a, n, d) PUT2(a, n, d), a += IMM2_SIZE
 
 /* ----------------------- HIDDEN STRUCTURES ----------------------------- */
 
@@ -578,8 +582,8 @@ typedef struct pcre2_real_match_context {
   pcre2_jit_callback jit_callback;
   void *jit_callback_data;
 #endif
-  int    (*callout)(pcre2_callout_block *, void *);
-  void    *callout_data;
+  int (*callout)(pcre2_callout_block *, void *);
+  void *callout_data;
   uint32_t match_limit;
   uint32_t recursion_limit;
 } pcre2_real_match_context;
@@ -590,49 +594,48 @@ copying the size from possibly unaligned memory into a variable of the same
 type. Use a macro rather than a typedef to avoid compiler warnings when this
 file is included multiple times by pcre2test. */
 
-#undef  CODE_BLOCKSIZE_TYPE
+#undef CODE_BLOCKSIZE_TYPE
 #define CODE_BLOCKSIZE_TYPE size_t
 
 typedef struct pcre2_real_code {
-  pcre2_memctl memctl;            /* Memory control fields */
-  const uint8_t *tables;          /* The character tables */
-  void    *executable_jit;        /* Pointer to JIT code */
-  uint8_t  start_bitmap[32];      /* Bitmap for starting code unit < 256 */
-  CODE_BLOCKSIZE_TYPE blocksize;  /* Total (bytes) that was malloc-ed */
-  uint32_t magic_number;          /* Paranoid and endianness check */
-  uint32_t compile_options;       /* Options passed to pcre2_compile() */
-  uint32_t overall_options;       /* Options after processing the pattern */
-  uint32_t flags;                 /* Various state flags */
-  uint32_t limit_match;           /* Limit set in the pattern */
-  uint32_t limit_recursion;       /* Limit set in the pattern */
-  uint32_t first_codeunit;        /* Starting code unit */
-  uint32_t last_codeunit;         /* This codeunit must be seen */
-  uint16_t bsr_convention;        /* What \R matches */
-  uint16_t newline_convention;    /* What is a newline? */
-  uint16_t max_lookbehind;        /* Longest lookbehind (characters) */
-  uint16_t minlength;             /* Minimum length of match */
-  uint16_t top_bracket;           /* Highest numbered group */
-  uint16_t top_backref;           /* Highest numbered back reference */
-  uint16_t name_entry_size;       /* Size (code units) of table entries */
-  uint16_t name_count;            /* Number of name entries in the table */
+  pcre2_memctl memctl;           /* Memory control fields */
+  const uint8_t *tables;         /* The character tables */
+  void *executable_jit;          /* Pointer to JIT code */
+  uint8_t start_bitmap[32];      /* Bitmap for starting code unit < 256 */
+  CODE_BLOCKSIZE_TYPE blocksize; /* Total (bytes) that was malloc-ed */
+  uint32_t magic_number;         /* Paranoid and endianness check */
+  uint32_t compile_options;      /* Options passed to pcre2_compile() */
+  uint32_t overall_options;      /* Options after processing the pattern */
+  uint32_t flags;                /* Various state flags */
+  uint32_t limit_match;          /* Limit set in the pattern */
+  uint32_t limit_recursion;      /* Limit set in the pattern */
+  uint32_t first_codeunit;       /* Starting code unit */
+  uint32_t last_codeunit;        /* This codeunit must be seen */
+  uint16_t bsr_convention;       /* What \R matches */
+  uint16_t newline_convention;   /* What is a newline? */
+  uint16_t max_lookbehind;       /* Longest lookbehind (characters) */
+  uint16_t minlength;            /* Minimum length of match */
+  uint16_t top_bracket;          /* Highest numbered group */
+  uint16_t top_backref;          /* Highest numbered back reference */
+  uint16_t name_entry_size;      /* Size (code units) of table entries */
+  uint16_t name_count;           /* Number of name entries in the table */
 } pcre2_real_code;
 
 /* The real match data structure. */
 
 typedef struct pcre2_real_match_data {
-  pcre2_memctl     memctl;
-  const pcre2_real_code *code;    /* The pattern used for the match */
-  PCRE2_SPTR       subject;       /* The subject that was matched */
-  PCRE2_SPTR       mark;          /* Pointer to last mark */
-  PCRE2_SIZE       leftchar;      /* Offset to leftmost code unit */
-  PCRE2_SIZE       rightchar;     /* Offset to rightmost code unit */
-  PCRE2_SIZE       startchar;     /* Offset to starting code unit */
-  uint16_t         matchedby;     /* Type of match (normal, JIT, DFA) */
-  uint16_t         oveccount;     /* Number of pairs */
-  int              rc;            /* The return code from the match */
-  PCRE2_SIZE       ovector[1];    /* The first field */
+  pcre2_memctl memctl;
+  const pcre2_real_code *code; /* The pattern used for the match */
+  PCRE2_SPTR subject;          /* The subject that was matched */
+  PCRE2_SPTR mark;             /* Pointer to last mark */
+  PCRE2_SIZE leftchar;         /* Offset to leftmost code unit */
+  PCRE2_SIZE rightchar;        /* Offset to rightmost code unit */
+  PCRE2_SIZE startchar;        /* Offset to starting code unit */
+  uint16_t matchedby;          /* Type of match (normal, JIT, DFA) */
+  uint16_t oveccount;          /* Number of pairs */
+  int rc;                      /* The return code from the match */
+  PCRE2_SIZE ovector[1];       /* The first field */
 } pcre2_real_match_data;
-
 
 /* ----------------------- PRIVATE STRUCTURES ----------------------------- */
 
@@ -659,51 +662,51 @@ typedef struct branch_chain {
 compiling. */
 
 typedef struct named_group {
-  PCRE2_SPTR   name;          /* Points to the name in the pattern */
-  uint32_t     number;        /* Group number */
-  uint16_t     length;        /* Length of the name */
-  uint16_t     isdup;         /* TRUE if a duplicate */
+  PCRE2_SPTR name; /* Points to the name in the pattern */
+  uint32_t number; /* Group number */
+  uint16_t length; /* Length of the name */
+  uint16_t isdup;  /* TRUE if a duplicate */
 } named_group;
 
 /* Structure for passing "static" information around between the functions
 doing the compiling, so that they are thread-safe. */
 
 typedef struct compile_block {
-  pcre2_real_compile_context *cx;  /* Points to the compile context */
-  const uint8_t *lcc;              /* Points to lower casing table */
-  const uint8_t *fcc;              /* Points to case-flipping table */
-  const uint8_t *cbits;            /* Points to character type table */
-  const uint8_t *ctypes;           /* Points to table of type maps */
-  PCRE2_SPTR start_workspace;      /* The start of working space */
-  PCRE2_SPTR start_code;           /* The start of the compiled code */
-  PCRE2_SPTR start_pattern;        /* The start of the pattern */
-  PCRE2_SPTR end_pattern;          /* The end of the pattern */
-  PCRE2_UCHAR *hwm;                /* High watermark of workspace */
-  PCRE2_UCHAR *name_table;         /* The name/number table */
-  size_t workspace_size;           /* Size of workspace */
-  uint16_t names_found;            /* Number of entries so far */
-  uint16_t name_entry_size;        /* Size of each entry */
-  open_capitem *open_caps;         /* Chain of open capture items */
-  named_group *named_groups;       /* Points to vector in pre-compile */
-  uint32_t named_group_list_size;  /* Number of entries in the list */
-  uint32_t external_options;       /* External (initial) options */
-  uint32_t external_flags;         /* External flag bits to be set */
-  uint32_t bracount;               /* Count of capturing parens as we compile */
-  uint32_t final_bracount;         /* Saved value after first pass */
-  uint32_t top_backref;            /* Maximum back reference */
-  uint32_t backref_map;            /* Bitmap of low back refs */
-  uint32_t nltype;                 /* Newline type */
-  uint32_t nllen;                  /* Newline string length */
-  PCRE2_UCHAR nl[4];               /* Newline string when fixed length */
-  int  max_lookbehind;             /* Maximum lookbehind (characters) */
-  int  parens_depth;               /* Depth of nested parentheses */
-  int  assert_depth;               /* Depth of nested assertions */
-  int  req_varyopt;                /* "After variable item" flag for reqbyte */
-  BOOL had_accept;                 /* (*ACCEPT) encountered */
-  BOOL had_pruneorskip;            /* (*PRUNE) or (*SKIP) encountered */
-  BOOL check_lookbehind;           /* Lookbehinds need later checking */
-  BOOL dupnames;                   /* Duplicate names exist */
-  BOOL iscondassert;               /* Next assert is a condition */
+  pcre2_real_compile_context *cx; /* Points to the compile context */
+  const uint8_t *lcc;             /* Points to lower casing table */
+  const uint8_t *fcc;             /* Points to case-flipping table */
+  const uint8_t *cbits;           /* Points to character type table */
+  const uint8_t *ctypes;          /* Points to table of type maps */
+  PCRE2_SPTR start_workspace;     /* The start of working space */
+  PCRE2_SPTR start_code;          /* The start of the compiled code */
+  PCRE2_SPTR start_pattern;       /* The start of the pattern */
+  PCRE2_SPTR end_pattern;         /* The end of the pattern */
+  PCRE2_UCHAR *hwm;               /* High watermark of workspace */
+  PCRE2_UCHAR *name_table;        /* The name/number table */
+  size_t workspace_size;          /* Size of workspace */
+  uint16_t names_found;           /* Number of entries so far */
+  uint16_t name_entry_size;       /* Size of each entry */
+  open_capitem *open_caps;        /* Chain of open capture items */
+  named_group *named_groups;      /* Points to vector in pre-compile */
+  uint32_t named_group_list_size; /* Number of entries in the list */
+  uint32_t external_options;      /* External (initial) options */
+  uint32_t external_flags;        /* External flag bits to be set */
+  uint32_t bracount;              /* Count of capturing parens as we compile */
+  uint32_t final_bracount;        /* Saved value after first pass */
+  uint32_t top_backref;           /* Maximum back reference */
+  uint32_t backref_map;           /* Bitmap of low back refs */
+  uint32_t nltype;                /* Newline type */
+  uint32_t nllen;                 /* Newline string length */
+  PCRE2_UCHAR nl[4];              /* Newline string when fixed length */
+  int max_lookbehind;             /* Maximum lookbehind (characters) */
+  int parens_depth;               /* Depth of nested parentheses */
+  int assert_depth;               /* Depth of nested assertions */
+  int req_varyopt;                /* "After variable item" flag for reqbyte */
+  BOOL had_accept;                /* (*ACCEPT) encountered */
+  BOOL had_pruneorskip;           /* (*PRUNE) or (*SKIP) encountered */
+  BOOL check_lookbehind;          /* Lookbehinds need later checking */
+  BOOL dupnames;                  /* Duplicate names exist */
+  BOOL iscondassert;              /* Next assert is a condition */
 } compile_block;
 
 /* Structure for keeping the properties of the in-memory stack used
@@ -711,7 +714,7 @@ by the JIT matcher. */
 
 typedef struct pcre2_real_jit_stack {
   pcre2_memctl memctl;
-  void* stack;
+  void *stack;
 } pcre2_real_jit_stack;
 
 /* Structure for keeping a chain of heap blocks used for saving ovectors
@@ -719,19 +722,19 @@ during pattern recursion when the ovector is larger than can be saved on
 the system stack. */
 
 typedef struct ovecsave_frame {
-  struct ovecsave_frame *next;     /* Next frame on free chain */
-  PCRE2_SIZE saved_ovec[1];        /* First vector element */
+  struct ovecsave_frame *next; /* Next frame on free chain */
+  PCRE2_SIZE saved_ovec[1];    /* First vector element */
 } ovecsave_frame;
 
 /* Structure for items in a linked list that represents an explicit recursive
 call within the pattern; used by pcre_match(). */
 
 typedef struct recursion_info {
-  struct recursion_info *prevrec;  /* Previous recursion record (or NULL) */
-  unsigned int group_num;          /* Number of group that was called */
-  PCRE2_SIZE *ovec_save;           /* Pointer to saved ovector frame */
-  uint32_t saved_capture_last;     /* Last capture number */
-  PCRE2_SPTR subject_position;     /* Position at start of recursion */
+  struct recursion_info *prevrec; /* Previous recursion record (or NULL) */
+  unsigned int group_num;         /* Number of group that was called */
+  PCRE2_SIZE *ovec_save;          /* Pointer to saved ovector frame */
+  uint32_t saved_capture_last;    /* Last capture number */
+  PCRE2_SPTR subject_position;    /* Position at start of recursion */
 } recursion_info;
 
 /* A similar structure for pcre_dfa_match(). */
@@ -756,9 +759,9 @@ typedef struct eptrblock {
 doing traditional NFA matching (pcre2_match() and friends). */
 
 typedef struct match_block {
-  pcre2_memctl memctl;            /* For general use */
+  pcre2_memctl memctl; /* For general use */
 #ifdef HEAP_MATCH_RECURSE
-  pcre2_memctl stack_memctl;      /* For "stack" frames */
+  pcre2_memctl stack_memctl; /* For "stack" frames */
 #endif
   uint32_t match_call_count;      /* As it says */
   uint32_t match_limit;           /* As it says */
@@ -790,20 +793,20 @@ typedef struct match_block {
   PCRE2_SPTR once_target;         /* Where to back up to for atomic groups */
   uint32_t moptions;              /* Match options */
   uint32_t poptions;              /* Pattern options */
-  uint32_t capture_last;          /* Most recent capture number + overflow flag */
-  uint32_t skip_arg_count;        /* For counting SKIP_ARGs */
-  uint32_t ignore_skip_arg;       /* For re-run when SKIP arg name not found */
-  uint32_t match_function_type;   /* Set for certain special calls of match() */
-  uint32_t nltype;                /* Newline type */
-  uint32_t nllen;                 /* Newline string length */
-  PCRE2_UCHAR nl[4];              /* Newline string when fixed */
-  eptrblock *eptrchain;           /* Chain of eptrblocks for tail recursions */
-  recursion_info *recursive;      /* Linked list of recursion data */
+  uint32_t capture_last;        /* Most recent capture number + overflow flag */
+  uint32_t skip_arg_count;      /* For counting SKIP_ARGs */
+  uint32_t ignore_skip_arg;     /* For re-run when SKIP arg name not found */
+  uint32_t match_function_type; /* Set for certain special calls of match() */
+  uint32_t nltype;              /* Newline type */
+  uint32_t nllen;               /* Newline string length */
+  PCRE2_UCHAR nl[4];            /* Newline string when fixed */
+  eptrblock *eptrchain;         /* Chain of eptrblocks for tail recursions */
+  recursion_info *recursive;    /* Linked list of recursion data */
   ovecsave_frame *ovecsave_chain; /* Linked list of free ovecsave blocks */
-  void  *callout_data;            /* To pass back to callouts */
-  int (*callout)(pcre2_callout_block *,void *);  /* Callout function or NULL */
+  void *callout_data;             /* To pass back to callouts */
+  int (*callout)(pcre2_callout_block *, void *); /* Callout function or NULL */
 #ifdef HEAP_MATCH_RECURSE
-  void  *match_frames_base;       /* For remembering malloc'd frames */
+  void *match_frames_base; /* For remembering malloc'd frames */
 #endif
 } match_block;
 
@@ -811,25 +814,25 @@ typedef struct match_block {
 functions. */
 
 typedef struct dfa_match_block {
-  pcre2_memctl memctl;            /* For general use */
-  PCRE2_SPTR start_code;          /* Start of the compiled pattern */
-  PCRE2_SPTR start_subject ;      /* Start of the subject string */
-  PCRE2_SPTR end_subject;         /* End of subject string */
-  PCRE2_SPTR start_used_ptr;      /* Earliest consulted character */
-  PCRE2_SPTR last_used_ptr;       /* Latest consulted character */
-  const uint8_t *tables;          /* Character tables */
-  PCRE2_SIZE start_offset;        /* The start offset value */
-  uint32_t moptions;              /* Match options */
-  uint32_t poptions;              /* Pattern options */
-  uint32_t nltype;                /* Newline type */
-  uint32_t nllen;                 /* Newline string length */
-  PCRE2_UCHAR nl[4];              /* Newline string when fixed */
-  uint16_t bsr_convention;        /* \R interpretation */
-  void *callout_data;             /* To pass back to callouts */
-  int (*callout)(pcre2_callout_block *,void *);  /* Callout function or NULL */
-  dfa_recursion_info *recursive;  /* Linked list of recursion data */
+  pcre2_memctl memctl;       /* For general use */
+  PCRE2_SPTR start_code;     /* Start of the compiled pattern */
+  PCRE2_SPTR start_subject;  /* Start of the subject string */
+  PCRE2_SPTR end_subject;    /* End of subject string */
+  PCRE2_SPTR start_used_ptr; /* Earliest consulted character */
+  PCRE2_SPTR last_used_ptr;  /* Latest consulted character */
+  const uint8_t *tables;     /* Character tables */
+  PCRE2_SIZE start_offset;   /* The start offset value */
+  uint32_t moptions;         /* Match options */
+  uint32_t poptions;         /* Pattern options */
+  uint32_t nltype;           /* Newline type */
+  uint32_t nllen;            /* Newline string length */
+  PCRE2_UCHAR nl[4];         /* Newline string when fixed */
+  uint16_t bsr_convention;   /* \R interpretation */
+  void *callout_data;        /* To pass back to callouts */
+  int (*callout)(pcre2_callout_block *, void *); /* Callout function or NULL */
+  dfa_recursion_info *recursive; /* Linked list of recursion data */
 } dfa_match_block;
 
-#endif  /* PCRE2_PCRE2TEST */
+#endif /* PCRE2_PCRE2TEST */
 
 /* End of pcre2_intmodedep.h */

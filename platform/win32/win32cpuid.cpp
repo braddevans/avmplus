@@ -4,46 +4,44 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
-#include <windows.h>
 #include <winbase.h>
+#include <windows.h>
 
-// disable warnings about "Inline asm assigning to FS:0 handler not registered as safe handler"
-#pragma warning(disable:4733)
+// disable warnings about "Inline asm assigning to FS:0 handler not registered
+// as safe handler"
+#pragma warning(disable : 4733)
 
 // Code from Intel that crashes a Cyrix CPU
-#define CPUID   _asm _emit 0x0F _asm _emit 0xA2
+#define CPUID _asm _emit 0x0F _asm _emit 0xA2
 
-#define CPUID_SSE2_FLAG 0x04000000 //; Is IA SSE2 bit (Bit 26 of EDX) in feature flags set
+#define CPUID_SSE2_FLAG                                                        \
+  0x04000000 //; Is IA SSE2 bit (Bit 26 of EDX) in feature flags set
 static BOOL gP4OsSupport = FALSE;
 
 #ifndef _WIN64
-EXCEPTION_DISPOSITION __cdecl MyExceptionHandlerSSE2(struct _EXCEPTION_RECORD * /*ExceptionRecord*/,
-                                                 void * /*EstablisherFrame*/,
-                                                 struct _CONTEXT *ContextRecord,
-                                                 void * /*DispatcherContext*/)
-{
-    // Turn off the P4 OS support flag.
-    gP4OsSupport = FALSE;
+EXCEPTION_DISPOSITION __cdecl MyExceptionHandlerSSE2(
+    struct _EXCEPTION_RECORD * /*ExceptionRecord*/, void * /*EstablisherFrame*/,
+    struct _CONTEXT *ContextRecord, void * /*DispatcherContext*/) {
+  // Turn off the P4 OS support flag.
+  gP4OsSupport = FALSE;
 
-    // The offending P4 instruction is 3 bytes long.  Skip it and continue.
-    ContextRecord->Eip += 3;
-    return ExceptionContinueExecution;
+  // The offending P4 instruction is 3 bytes long.  Skip it and continue.
+  ContextRecord->Eip += 3;
+  return ExceptionContinueExecution;
 }
 #endif
 
-bool P4Available()
-{
+bool P4Available() {
 #ifdef _M_AMD64
-    // we support all this stuff
-    return true;
+  // we support all this stuff
+  return true;
 #else
-    long featureFlags = 0;
-    //arun
-    BOOL procType = 0;
+  long featureFlags = 0;
+  // arun
+  BOOL procType = 0;
 
 // disable warnings about unreferenced _asm labels.
-#pragma warning(disable:4102)
+#pragma warning(disable : 4102)
 
     _asm {
         push ecx
@@ -135,45 +133,41 @@ end_get_cpuid:
     BOOL bOsSupport = FALSE;
     BOOL bHwSupport = (featureFlags & CPUID_SSE2_FLAG);
 
-    if(bHwSupport) {
-        // Execute a KNI instruction and use Structured Exception Handling
-        // to catch the exception if the OS does not support KNI.
+    if (bHwSupport) {
+      // Execute a KNI instruction and use Structured Exception Handling
+      // to catch the exception if the OS does not support KNI.
 
-        DWORD handler = (DWORD)MyExceptionHandlerSSE2;
+      DWORD handler = (DWORD)MyExceptionHandlerSSE2;
 
-        gP4OsSupport = TRUE;
+      gP4OsSupport = TRUE;
 
-        __asm { // Build EXCEPTION_REGISTRATION record:
+      __asm { // Build EXCEPTION_REGISTRATION record:
             push handler    // Address of handler function
             push FS:[0]     // Address of previous handler
             mov FS:[0],ESP  // Install new EXECEPTION_REGISTRATION
         }
 
-        // If so, test a KNI instruction and make sure you don't get
-        // an exception (this tests OS support)
-        __asm{
-            pushad;
-            //orpd xmm1,xmm1;   //Below are the op codes for this instruction
-                                //emits will compile w/ MSVC 5.0 compiler
-                                //You can comment these out and uncomment the
-                                //orpd when using the Intel Compiler
-            __emit 0x66
-            __emit 0x0f
-            __emit 0x56
-            __emit 0xc9
-            popad;
-        }
+      // If so, test a KNI instruction and make sure you don't get
+      // an exception (this tests OS support)
+      __asm {
+        pushad;
+        // orpd xmm1,xmm1;   //Below are the op codes for this instruction
+        // emits will compile w/ MSVC 5.0 compiler
+        // You can comment these out and uncomment the
+        // orpd when using the Intel Compiler
+        __emit 0x66 __emit 0x0f __emit 0x56 __emit 0xc9 popad;
+      }
 
-        __asm {                 // Remove our EXECEPTION_REGISTRATION record
-            mov eax,[ESP]       // Get pointer to previous record
-            mov FS:[0], EAX     // Install previous record
-            add esp, 8          // Clean our EXECEPTION_REGISTRATION off stack
-        }
+      __asm {
+        // Remove our EXECEPTION_REGISTRATION record
+            mov eax,[ESP] // Get pointer to previous record
+            mov FS:[0], EAX // Install previous record
+            add esp, 8 // Clean our EXECEPTION_REGISTRATION off stack
+      }
 
-        bOsSupport = gP4OsSupport;
+      bOsSupport = gP4OsSupport;
     }
 
     return bHwSupport && bOsSupport && procType;
 #endif
 }
-

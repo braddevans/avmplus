@@ -44,20 +44,20 @@
 #ifndef __compile_abc_structinfo__
 #define __compile_abc_structinfo__
 
-#include "llvm/Config/llvm-config.h"
 #include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/Support/TargetSelect.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/PassManager.h"
+#include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetMachine.h"
 
 #include "halfmoon/hm-main.h"
 
@@ -68,83 +68,85 @@
 // Manages information about the layouts of data in runtime-defined structures.
 //
 
-namespace compile_abc
-{
+namespace compile_abc {
 using namespace avmplus;
 using namespace halfmoon;
-    
+
 struct StructInfo;
 class LLVMModule;
 
 // A field within a structure or class
 struct FieldInfo {
-    FieldInfo() : structInfo(0), memberIx(0), offset(0), slot(-1), type(0) {}
-    std::string name;
-    StructInfo* structInfo;
-    unsigned memberIx;
-    unsigned offset;
-    int slot;
-    std::string typedesc;
-    llvm::Type* type;
-    static bool smallerOffset(const FieldInfo &a, const FieldInfo &b) { return a.offset < b.offset; }
+  FieldInfo() : structInfo(0), memberIx(0), offset(0), slot(-1), type(0) {}
+  std::string name;
+  StructInfo *structInfo;
+  unsigned memberIx;
+  unsigned offset;
+  int slot;
+  std::string typedesc;
+  llvm::Type *type;
+  static bool smallerOffset(const FieldInfo &a, const FieldInfo &b) {
+    return a.offset < b.offset;
+  }
 };
 
 // A structure or class
 struct StructInfo {
-    StructInfo() : size(0), traitsIndex(-1), type(0), traits(0) {}
-    StructInfo(const StructInfo& s, LLVMModule& module);
-    std::string name;
-    unsigned size;
-    int traitsIndex;
-    llvm::StructType* type;
-    Traits* traits;
-    std::vector<FieldInfo> fields;
-    FieldInfo* findField(const std::string& name);
-    std::vector<unsigned> slotToField;
-    FieldInfo* getSlot(unsigned slot) { AvmAssert(slot < slotToField.size()); return &fields[slotToField[slot]]; }
+  StructInfo() : size(0), traitsIndex(-1), type(0), traits(0) {}
+  StructInfo(const StructInfo &s, LLVMModule &module);
+  std::string name;
+  unsigned size;
+  int traitsIndex;
+  llvm::StructType *type;
+  Traits *traits;
+  std::vector<FieldInfo> fields;
+  FieldInfo *findField(const std::string &name);
+  std::vector<unsigned> slotToField;
+  FieldInfo *getSlot(unsigned slot) {
+    AvmAssert(slot < slotToField.size());
+    return &fields[slotToField[slot]];
+  }
 };
-    
+
 // A native nmethod
 struct NativeMethod {
-    NativeMethod() : id(0) {}
-    int id;
-    std::string mangle;
-    std::string typedesc;
+  NativeMethod() : id(0) {}
+  int id;
+  std::string mangle;
+  std::string typedesc;
 };
 
 // Because FieldInfos contain pointers back to StructInfos, we need to ensure
 // that StructInfos don't move. So this map contains pointers to StructInfos
-// and the destructor deletes them. Sadly, you can't use auto_ptrs in collections
-// (no move semantics). Solutions aren't available until C++11 or in Boost,
-// and I don't want to depend on either of those just for this.
-class StructInfoMap: std::map<std::string,StructInfo*>
-{
+// and the destructor deletes them. Sadly, you can't use auto_ptrs in
+// collections (no move semantics). Solutions aren't available until C++11 or in
+// Boost, and I don't want to depend on either of those just for this.
+class StructInfoMap : std::map<std::string, StructInfo *> {
 public:
-    ~StructInfoMap()
-    {
-        for (iterator it = begin(); it != end(); ++it)
-            delete it->second;
-    }
-    
-    StructInfo* findStruct(const std::string& name)
-    {
-        iterator it = find(name);
-        if (it == end())
-            return 0;
-        else
-            return it->second;
-    }
-    
-    void insertStruct(const std::string& name, StructInfo* s)
-    {
-        AvmAssert(find(name) == end());
-        (*this)[name] = s;
-    }
+  ~StructInfoMap() {
+    for (iterator it = begin(); it != end(); ++it)
+      delete it->second;
+  }
+
+  StructInfo *findStruct(const std::string &name) {
+    iterator it = find(name);
+    if (it == end())
+      return 0;
+    else
+      return it->second;
+  }
+
+  void insertStruct(const std::string &name, StructInfo *s) {
+    AvmAssert(find(name) == end());
+    (*this)[name] = s;
+  }
 };
 
-bool parseFieldFile(llvm::raw_ostream &err, std::istream& in, LLVMModule& module,
-                    StructInfoMap* structInfos, StructInfoMap* nativeSlotTemplates, std::vector<NativeMethod>* nativeMethods, uint64_t* pChecksum);
+bool parseFieldFile(llvm::raw_ostream &err, std::istream &in,
+                    LLVMModule &module, StructInfoMap *structInfos,
+                    StructInfoMap *nativeSlotTemplates,
+                    std::vector<NativeMethod> *nativeMethods,
+                    uint64_t *pChecksum);
 
-}
+} // namespace compile_abc
 #endif /* __compile_abc_structinfo__ */
-

@@ -7,53 +7,39 @@
 #ifndef __GCThreadLocal__
 #define __GCThreadLocal__
 
-namespace MMgc
-{
-    template<typename T>
-    class GCThreadLocal
-    {
-    public:
-        GCThreadLocal()
-        : valid(false)
-        {
-            GCAssert(sizeof(T) <= sizeof(void*));
-            bool r = VMPI_tlsCreate(&tlsId);
-            GCAssert(r);
-            (void)r;
-            valid = true;
-            VMPI_tlsSetValue(tlsId, NULL);
-        }
+namespace MMgc {
+template <typename T> class GCThreadLocal {
+public:
+  GCThreadLocal() : valid(false) {
+    GCAssert(sizeof(T) <= sizeof(void *));
+    bool r = VMPI_tlsCreate(&tlsId);
+    GCAssert(r);
+    (void)r;
+    valid = true;
+    VMPI_tlsSetValue(tlsId, NULL);
+  }
 
-        ~GCThreadLocal()
-        {
-            destroy();
-        }
+  ~GCThreadLocal() { destroy(); }
 
-        void destroy()
-        {
-            if (valid) {
-                valid = false;
-                VMPI_tlsDestroy(tlsId);
-            }
-        }
+  void destroy() {
+    if (valid) {
+      valid = false;
+      VMPI_tlsDestroy(tlsId);
+    }
+  }
 
-        T operator=(T tNew)
-        {
-            VMPI_tlsSetValue(tlsId, (void*) tNew);
-            return tNew;
-        }
-        operator T() const
-        {
-            return (T) VMPI_tlsGetValue(tlsId);
-        }
-        T operator->() const
-        {
-            return (T) VMPI_tlsGetValue(tlsId);
-        }
-    private:
-        bool valid;         // Use a separate flag to avoid depending on any particular value of tlsId
-        uintptr_t tlsId;
-    };
-}
+  T operator=(T tNew) {
+    VMPI_tlsSetValue(tlsId, (void *)tNew);
+    return tNew;
+  }
+  operator T() const { return (T)VMPI_tlsGetValue(tlsId); }
+  T operator->() const { return (T)VMPI_tlsGetValue(tlsId); }
+
+private:
+  bool valid; // Use a separate flag to avoid depending on any particular value
+              // of tlsId
+  uintptr_t tlsId;
+};
+} // namespace MMgc
 
 #endif

@@ -13,28 +13,25 @@ namespace halfmoon {
 /**
  * WorkList used for propagateTypes().  fixme: this should use SeqStack<T>.
  */
-template<class T> struct WorkList {
-  Allocator& alloc;
-  Seq<T>* work;
-  Seq<T>* end;
-  Seq<T>* free;
+template <class T> struct WorkList {
+  Allocator &alloc;
+  Seq<T> *work;
+  Seq<T> *end;
+  Seq<T> *free;
   BitSet members;
-  WorkList(Allocator& alloc, int max_id) :
-    alloc(alloc), work(0), end(0), free(0), members(alloc, max_id) {
-  }
+  WorkList(Allocator &alloc, int max_id)
+      : alloc(alloc), work(0), end(0), free(0), members(alloc, max_id) {}
 
-  bool empty() {
-    return !work;
-  }
+  bool empty() { return !work; }
 
   Seq<T> *newnode(T item) {
     members.set(item->id);
-    Seq<T>* n = free;
+    Seq<T> *n = free;
     if (n) {
       free = n->tail;
       n->head = item;
     } else {
-      n = new (alloc) Seq<T> (item);
+      n = new (alloc) Seq<T>(item);
     }
     return n;
   }
@@ -42,7 +39,7 @@ template<class T> struct WorkList {
   void add(T item) {
     if (members.get(item->id))
       return;
-    Seq<T>* n = newnode(item);
+    Seq<T> *n = newnode(item);
     n->tail = 0;
     if (end)
       end->tail = n;
@@ -53,7 +50,7 @@ template<class T> struct WorkList {
 
   T pop() {
     AvmAssert(!empty());
-    Seq<T>* n = work;
+    Seq<T> *n = work;
     work = n->tail;
     if (!work)
       end = 0;
@@ -64,14 +61,14 @@ template<class T> struct WorkList {
     return item;
   }
 
-  void dump(PrintWriter& console) {
+  void dump(PrintWriter &console) {
 #ifdef AVMPLUSE_VERBOSE
     console << "[";
-    for (Seq<T>* n = work; n; n = n->tail)
+    for (Seq<T> *n = work; n; n = n->tail)
       console << kInstrPrefix << n->head->id << (n->tail ? "," : "");
     console << "]";
 #else
-    (void) console;
+    (void)console;
 #endif
   }
 };
@@ -115,13 +112,9 @@ template<class T> struct WorkList {
 
 class SCCP {
 public:
-  SCCP(Allocator& alloc, InstrGraph* ir)
-  : alloc(alloc)
-  , ir(ir)
-  , ssawork(alloc, ir->size())
-  , cfgwork()
-  , mark(alloc, ir->size())
-  , analyzer(ir) {
+  SCCP(Allocator &alloc, InstrGraph *ir)
+      : alloc(alloc), ir(ir), ssawork(alloc, ir->size()), cfgwork(),
+        mark(alloc, ir->size()), analyzer(ir) {
     Allocator0 alloc0(alloc);
     eval_counts = new (alloc0) int[ir->size()];
   }
@@ -130,28 +123,28 @@ public:
   void analyze();
 
 private:
-  void analyzeBlock(BlockStartInstr*);
-  void analyzeSSA(Instr*);
-  void analyzeBranch(BlockEndInstr*);
-  void addInstrUsers(Instr*);
-  void addBlock(BlockStartInstr*);
+  void analyzeBlock(BlockStartInstr *);
+  void analyzeSSA(Instr *);
+  void analyzeBranch(BlockEndInstr *);
+  void addInstrUsers(Instr *);
+  void addBlock(BlockStartInstr *);
 
 private:
-  Allocator& alloc;
-  InstrGraph* ir;
-  WorkList<Instr*> ssawork;
-  SeqStack<BlockStartInstr*> cfgwork;
+  Allocator &alloc;
+  InstrGraph *ir;
+  WorkList<Instr *> ssawork;
+  SeqStack<BlockStartInstr *> cfgwork;
   BitSet mark;
-  const Type** old_types;
+  const Type **old_types;
   TypeAnalyzer analyzer;
-  int* eval_counts; // count how many times each instruction is evaluated.
+  int *eval_counts; // count how many times each instruction is evaluated.
 };
 
 /**
  * Enque the block.  If it is already visited, just enqueu it.
  * Otherwise, mark it reached and enque all the instructions in the block.
  */
-void SCCP::addBlock(BlockStartInstr* block) {
+void SCCP::addBlock(BlockStartInstr *block) {
   if (!mark.get(block->id))
     cfgwork.push(block);
   else
@@ -160,8 +153,8 @@ void SCCP::addBlock(BlockStartInstr* block) {
 
 /**
  * helper - add the users of the Defs of a given
- * instruction to the passed worklist. 
- * 
+ * instruction to the passed worklist.
+ *
  * This encapsulates several nontrivial pieces of logic:
  * 1. Skip use instructions that haven't been reached yet.
  * 2. Skip over dead arms of constant conditionals.
@@ -170,9 +163,9 @@ void SCCP::addBlock(BlockStartInstr* block) {
  * 4. When reaching a block the first time, mark all its instructions reached
  *    *and* enque them, because they could have been previously skipped.
  */
-void SCCP::addInstrUsers(Instr* instr) {
+void SCCP::addInstrUsers(Instr *instr) {
   for (AllUsesRange u(instr); !u.empty(); u.popFront()) {
-    Instr* use_instr = user(u.front());
+    Instr *use_instr = user(u.front());
     if (mark.get(use_instr->id))
       ssawork.add(use_instr);
   }
@@ -183,15 +176,16 @@ void SCCP::init() {
   // dev: also find capacity for temp def array
   int max_defs = 1;
   for (AllInstrRange i(ir); !i.empty(); i.popFront()) {
-    Instr* instr = i.front();
+    Instr *instr = i.front();
     if (!hasRootDefs(instr))
       resetTypes(instr);
     int num_defs = numDefs(instr);
-    if (num_defs > max_defs) max_defs = num_defs;
+    if (num_defs > max_defs)
+      max_defs = num_defs;
   }
 
   // dev: we use this to hold saved types for reality check
-  old_types = new (alloc) const Type*[max_defs];
+  old_types = new (alloc) const Type *[max_defs];
 }
 
 /**
@@ -202,7 +196,7 @@ void SCCP::init() {
  * should be low constants.  (handwave).  An eval count in the 100's or
  * 1000's means something is terribly wrong.
  */
-void printCounts(InstrGraph* ir, int* eval_counts) {
+void printCounts(InstrGraph *ir, int *eval_counts) {
   printf("SCCP eval counts\n");
   for (int i = 0, n = ir->size(); i < n; ++i) {
     if (eval_counts[i] > 0)
@@ -225,13 +219,13 @@ void SCCP::analyze() {
   //  printCounts(ir, eval_counts);
 }
 
-void SCCP::analyzeBlock(BlockStartInstr* block) {
+void SCCP::analyzeBlock(BlockStartInstr *block) {
   // mark each instruction in the block.
   for (InstrRange i(block); !i.empty(); i.popFront())
     mark.set(i.front()->id);
   // evaluate each instruction and queue all reachable users.
   for (InstrRange i(block); !i.empty(); i.popFront()) {
-    Instr* instr = i.front();
+    Instr *instr = i.front();
     eval_counts[instr->id]++;
     analyzer.computeTypes(instr);
     addInstrUsers(instr);
@@ -239,22 +233,22 @@ void SCCP::analyzeBlock(BlockStartInstr* block) {
   analyzeBranch(ir->blockEnd(block));
 }
 
-void SCCP::analyzeBranch(BlockEndInstr* end) {
+void SCCP::analyzeBranch(BlockEndInstr *end) {
   switch (kind(end)) {
-    case HR_goto:
-      addBlock(cast<GotoInstr>(end)->target);
-      break;
-    case HR_if:
-    case HR_switch: {
-      CondInstr* cond = (CondInstr*)end;
-      ArmInstr* arm = getConstArm(cond);
-      if (arm)
-        addBlock(arm);
-      else
-        for (ArrayRange<ArmInstr*> a = armRange(cond); !a.empty();)
-          addBlock(a.popFront());
-      break;
-    }
+  case HR_goto:
+    addBlock(cast<GotoInstr>(end)->target);
+    break;
+  case HR_if:
+  case HR_switch: {
+    CondInstr *cond = (CondInstr *)end;
+    ArmInstr *arm = getConstArm(cond);
+    if (arm)
+      addBlock(arm);
+    else
+      for (ArrayRange<ArmInstr *> a = armRange(cond); !a.empty();)
+        addBlock(a.popFront());
+    break;
+  }
   }
   if (end->catch_blocks != NULL) {
     for (CatchBlockRange r(end); !r.empty();)
@@ -262,10 +256,10 @@ void SCCP::analyzeBranch(BlockEndInstr* end) {
   }
 }
 
-void SCCP::analyzeSSA(Instr* instr) {
+void SCCP::analyzeSSA(Instr *instr) {
   if (numDefs(instr) == 0) {
     if (isBlockEnd(instr))
-      analyzeBranch((BlockEndInstr*)instr);
+      analyzeBranch((BlockEndInstr *)instr);
     return;
   }
   // dev: save current types for later check
@@ -279,7 +273,8 @@ void SCCP::analyzeSSA(Instr* instr) {
   bool changed2 = false;
   i = 0;
   for (ArrayRange<Def> d = defRange(instr); !d.empty(); d.popFront(), ++i) {
-    AvmAssert(subtypeof(old_types[i], type(d.front())) && "illegal type narrowing");
+    AvmAssert(subtypeof(old_types[i], type(d.front())) &&
+              "illegal type narrowing");
     changed2 |= *type(d.front()) != *old_types[i];
   }
   if (changed2) {
@@ -291,14 +286,14 @@ void SCCP::analyzeSSA(Instr* instr) {
 }
 
 /**
- * propagate types through an InstrGraph, starting with root defs 
+ * propagate types through an InstrGraph, starting with root defs
  * in start and constant instructions.
  *
- * Note that per SCCP, types in dead arms of constant conditionals 
+ * Note that per SCCP, types in dead arms of constant conditionals
  * are set to UN.
  *
- * Algorithm outline: we maintain two structures: a worklist 
- * of instructions to evaluate, and a set of instructions 
+ * Algorithm outline: we maintain two structures: a worklist
+ * of instructions to evaluate, and a set of instructions
  * marked reachable.
  *
  * Initialize:
@@ -309,11 +304,11 @@ void SCCP::analyzeSSA(Instr* instr) {
  * Propagate:
  * 1. while worklist not empty, deque instruction I
  * 2. evaluate I's output types using TypeAnalyzer
- * 3. If any types changed, AvmAssert(old-T <: new-T) and 
+ * 3. If any types changed, AvmAssert(old-T <: new-T) and
  *    enque reachable uses.
  * 4. If I is a branch, mark and enque reachable arms.
  */
-void propagateTypes(InstrGraph* ir) {
+void propagateTypes(InstrGraph *ir) {
   Allocator scratch;
   SCCP sccp(scratch, ir);
   sccp.init();
@@ -332,22 +327,22 @@ void propagateTypes(InstrGraph* ir) {
  * instruction. Note: it's the caller's responsibility to copy
  * calculated results to a permanent location: they will be
  * overwritten the next time this function is called on the graph.
- * 
+ *
  * TODO check compatibility of arg types with param types.
  * TODO use type range instead of array, check arg count
  */
-void propagateTypes(InstrGraph* ir, const Type** arg_types) {
+void propagateTypes(InstrGraph *ir, const Type **arg_types) {
   Allocator scratch;
-  StartInstr* start = cast<StartInstr> (ir->begin);
+  StartInstr *start = cast<StartInstr>(ir->begin);
   int paramc = start->paramc;
-  Def* params = start->params;
+  Def *params = start->params;
 
-  const Type** save_types = new (scratch) const Type*[paramc];
+  const Type **save_types = new (scratch) const Type *[paramc];
   for (int i = 0; i < paramc; i++) {
     save_types[i] = type(params[i]);
     setType(&params[i], arg_types[i]);
   }
-  
+
   propagateTypes(ir);
 
   for (int i = 0; i < paramc; i++) {
@@ -358,18 +353,18 @@ void propagateTypes(InstrGraph* ir, const Type** arg_types) {
 /**
  * Propagate types through a fat instruction subgraph,
  * starting from the input types of an instance.
- * 
+ *
  * Note: propagated type are left in place in the subgraph;
  * caller must copy them out to a permanent location.
  */
-void propagateTypes(Instr* fat_instr) {
+void propagateTypes(Instr *fat_instr) {
   AvmAssert(hasSubgraph(fat_instr));
-  InstrGraph* ir = subgraph(fat_instr);
+  InstrGraph *ir = subgraph(fat_instr);
   AvmAssert(kind(ir->begin) == HR_template);
   AvmAssert(numDefs(ir->begin) == numUses(fat_instr));
   Allocator scratch;
   propagateTypes(ir, getUseTypes(scratch, fat_instr));
 }
 
-}
+} // namespace halfmoon
 #endif // VMCFG_HALFMOON

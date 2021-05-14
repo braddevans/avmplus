@@ -6,60 +6,43 @@
 
 #include "SymbianHeap.h"
 
-SymbianHeap::SymbianHeap(TInt size)
-{
-    m_startAddr = 0;
-    m_endAddr = 0;
-    m_next = 0;
-    if(m_chunk.CreateDisconnectedLocal(0, 0, size, EOwnerProcess) == KErrNone)
-    {
-        m_startAddr = (TUint)m_chunk.Base();
-        m_endAddr = m_startAddr + size;
-    }
+SymbianHeap::SymbianHeap(TInt size) {
+  m_startAddr = 0;
+  m_endAddr = 0;
+  m_next = 0;
+  if (m_chunk.CreateDisconnectedLocal(0, 0, size, EOwnerProcess) == KErrNone) {
+    m_startAddr = (TUint)m_chunk.Base();
+    m_endAddr = m_startAddr + size;
+  }
 }
 
-SymbianHeap::~SymbianHeap()
-{
-    m_chunk.Close();
+SymbianHeap::~SymbianHeap() { m_chunk.Close(); }
+
+bool SymbianHeap::Commit(TUint addr, TUint size) {
+  if (m_chunk.Commit(addr - m_startAddr, size) == KErrNone)
+    return true;
+  else
+    return false;
 }
 
-bool SymbianHeap::Commit(TUint addr, TUint size)
-{
-    if(m_chunk.Commit(addr - m_startAddr, size) == KErrNone)
-        return true;
-    else
-        return false;
+bool SymbianHeap::Decommit(TUint addr, TUint size) {
+  if (m_chunk.Decommit(addr - m_startAddr, size) == KErrNone)
+    return true;
+  else
+    return false;
 }
 
-bool SymbianHeap::Decommit(TUint addr, TUint size)
-{
-    if(m_chunk.Decommit(addr - m_startAddr, size) == KErrNone)
-        return true;
-    else
-        return false;
-}
+TUint SymbianHeap::GetStart() { return m_startAddr; }
 
-TUint SymbianHeap::GetStart()
-{
-    return m_startAddr;
-}
-
-TUint SymbianHeap::GetEnd()
-{
-    return m_endAddr;
-}
+TUint SymbianHeap::GetEnd() { return m_endAddr; }
 
 /* static */
-SymbianHeap* SymbianHeap::FindHeap(TUint addr, SymbianHeap* heap)
-{
-    while(heap)
-    {
-        if((addr >= heap->GetStart()) && (addr < heap->GetEnd()))
-        {
-            return heap;
-        }
-        heap = heap->m_next;
+SymbianHeap *SymbianHeap::FindHeap(TUint addr, SymbianHeap *heap) {
+  while (heap) {
+    if ((addr >= heap->GetStart()) && (addr < heap->GetEnd())) {
+      return heap;
     }
-    return NULL;
+    heap = heap->m_next;
+  }
+  return NULL;
 }
-

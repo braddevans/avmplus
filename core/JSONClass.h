@@ -7,28 +7,27 @@
 #ifndef __avmplus_JSONClass__
 #define __avmplus_JSONClass__
 
-namespace avmplus
-{
+namespace avmplus {
 
-    class GC_AS3_EXACT(JSONClass, ClassClosure)
-    {
-    protected:
-        JSONClass(VTable* cvtable);
-    public:
-        Atom parseCore(String* text);
+class GC_AS3_EXACT(JSONClass, ClassClosure) {
+protected:
+  JSONClass(VTable *cvtable);
 
-        String* stringifySpecializedToString(Atom value,
-                                             ArrayObject* propertyWhitelist,
-                                             FunctionObject* replacerFunction,
-                                             String* gap);
+public:
+  Atom parseCore(String *text);
 
-    // ------------------------ DATA SECTION BEGIN
-    private:
-        GC_NO_DATA(JSONClass)
+  String *stringifySpecializedToString(Atom value,
+                                       ArrayObject *propertyWhitelist,
+                                       FunctionObject *replacerFunction,
+                                       String *gap);
 
-        DECLARE_SLOTS_JSONClass;
-    // ------------------------ DATA SECTION END
-    };
-}
+  // ------------------------ DATA SECTION BEGIN
+private:
+  GC_NO_DATA(JSONClass)
+
+  DECLARE_SLOTS_JSONClass;
+  // ------------------------ DATA SECTION END
+};
+} // namespace avmplus
 
 #endif /* __avmplus_JSONClass__ */

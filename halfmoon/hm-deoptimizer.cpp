@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "hm-main.h"
 #include "hm-deoptimizer.h"
+#include "hm-main.h"
 
 #ifdef VMCFG_HALFMOON
 
@@ -14,8 +14,7 @@ namespace halfmoon {
 using namespace avmplus;
 using namespace nanojit;
 
-void HMDeoptDataWriter::mdAlloc(NIns*& start, NIns*& end, NIns*& bytep)
-{
+void HMDeoptDataWriter::mdAlloc(NIns *&start, NIns *&end, NIns *&bytep) {
   if (start)
     CodeAlloc::add(data_, start, end);
 
@@ -24,20 +23,11 @@ void HMDeoptDataWriter::mdAlloc(NIns*& start, NIns*& end, NIns*& bytep)
   bytep = start;
 }
 
-HMDeoptDataWriter::HMDeoptDataWriter(CodeAlloc& md_alloc,
-                                     Allocator& tmp_alloc,
-                                     const MethodSignature* signature,
-                                     LIns** defs)
-  : md_alloc_(md_alloc),
-    tmp_alloc_(tmp_alloc),
-    def_ins_(defs),
-    data_(NULL),
-    mdins_(NULL),
-    start_(NULL),
-    end_(NULL),
-    sig_(signature),
-    mdstart_(NULL)
-{
+HMDeoptDataWriter::HMDeoptDataWriter(CodeAlloc &md_alloc, Allocator &tmp_alloc,
+                                     const MethodSignature *signature,
+                                     LIns **defs)
+    : md_alloc_(md_alloc), tmp_alloc_(tmp_alloc), def_ins_(defs), data_(NULL),
+      mdins_(NULL), start_(NULL), end_(NULL), sig_(signature), mdstart_(NULL) {
   mdAlloc(start_, end_, mdins_);
 
   mdstart_ = mdins_;
@@ -48,9 +38,9 @@ HMDeoptDataWriter::HMDeoptDataWriter(CodeAlloc& md_alloc,
   frame_size_ = signature->frame_size();
   stack_base_ = signature->stack_base();
   scope_base_ = signature->scope_base();
-  n_locals_   = signature->local_count();
+  n_locals_ = signature->local_count();
 
-  npc_ = 1;  // Must differ from sentinel value of 0.
+  npc_ = 1; // Must differ from sentinel value of 0.
   vpc_ = 0;
   scopep_ = 0;
   stackp_ = 0;
@@ -62,16 +52,15 @@ HMDeoptDataWriter::HMDeoptDataWriter(CodeAlloc& md_alloc,
 
 //#define DEOPT_METADATA_DIAGNOSTIC_HACK
 
-DeoptData* HMDeoptDataWriter::finish()
-{
+DeoptData *HMDeoptDataWriter::finish() {
   AvmAssert(mdstart_ != NULL);
   md_alloc_.addRemainder(data_, start_, end_, start_, mdins_);
 
   // Placement new.  Create HMDeoptData header in space previously reserved.
-  DeoptData* dd = new (mdstart_) DeoptData(sig_);
+  DeoptData *dd = new (mdstart_) DeoptData(sig_);
 
 #ifdef DEOPT_METADATA_DIAGNOSTIC_HACK
-  //fprintf(stderr, "READING\n");
+  // fprintf(stderr, "READING\n");
   HMDeoptContext ctx(dd);
   // Force full parse of metadata.
   // Relies on sentinel set in endAssembly().
@@ -81,31 +70,25 @@ DeoptData* HMDeoptDataWriter::finish()
   return dd;
 }
 
-void HMDeoptDataWriter::abandon()
-{
+void HMDeoptDataWriter::abandon() {
   md_alloc_.freeAll(data_);
   mdstart_ = NULL;
 }
 
-void HMDeoptDataWriter::ensureSpace(int bytes)
-{
+void HMDeoptDataWriter::ensureSpace(int bytes) {
   // There had better be enough space for both the
   // instruction we wish to allocate, and the link
   // to the next chunk that may follow it.
-  if (mdins_ + bytes + (1+sizeof(uintptr_t)) > end_) {
+  if (mdins_ + bytes + (1 + sizeof(uintptr_t)) > end_) {
     mdAlloc(start_, end_, mdins_);
     writeUInt8(MD_LINK);
     writeUIntPtr(uintptr_t(mdins_));
   }
 }
-  
-void HMDeoptDataWriter::writeUInt8(uint8_t value)
-{
-  *(mdins_++) = value;
-}
 
-void HMDeoptDataWriter::writeUInt32(uint32_t value)
-{
+void HMDeoptDataWriter::writeUInt8(uint8_t value) { *(mdins_++) = value; }
+
+void HMDeoptDataWriter::writeUInt32(uint32_t value) {
   // Write bytewise to avoid unaligned writes.
   // Probably cheaper to write unaligned if the
   // machine handles it without a software trap.
@@ -116,8 +99,7 @@ void HMDeoptDataWriter::writeUInt32(uint32_t value)
 }
 
 #ifdef VMCFG_64BIT
-void HMDeoptDataWriter::writeUInt64(uint64_t value)
-{
+void HMDeoptDataWriter::writeUInt64(uint64_t value) {
   *(mdins_++) = uint8_t(value & 0x00000000000000ff);
   *(mdins_++) = uint8_t((value & 0x000000000000ff00) >> 8);
   *(mdins_++) = uint8_t((value & 0x0000000000ff0000) >> 16);
@@ -129,8 +111,7 @@ void HMDeoptDataWriter::writeUInt64(uint64_t value)
 }
 #endif
 
-void HMDeoptDataWriter::writeUIntPtr(uintptr_t value)
-{
+void HMDeoptDataWriter::writeUIntPtr(uintptr_t value) {
 #ifdef VMCFG_64BIT
   writeUInt64(value);
 #else
@@ -138,18 +119,17 @@ void HMDeoptDataWriter::writeUIntPtr(uintptr_t value)
 #endif
 }
 
-void HMDeoptDataWriter::writeULEB128(uint32_t value)
-{
+void HMDeoptDataWriter::writeULEB128(uint32_t value) {
   do {
     uint8_t byte = value & 0x7f;
     value >>= 7;
-    if (value > 0) byte |= 0x80;
+    if (value > 0)
+      byte |= 0x80;
     *(mdins_++) = byte;
   } while (value > 0);
 }
 
-int HMDeoptDataWriter::byteCountULEB128(uint32_t value)
-{
+int HMDeoptDataWriter::byteCountULEB128(uint32_t value) {
   int count = 0;
   do {
     count++;
@@ -158,11 +138,10 @@ int HMDeoptDataWriter::byteCountULEB128(uint32_t value)
   return count;
 }
 
-void HMDeoptDataWriter::writeSLEB128(int32_t value)
-{
+void HMDeoptDataWriter::writeSLEB128(int32_t value) {
   // TODO: Portability issue -- Signed >> must be an arithmetic shift.
   AvmAssert(-1 >> 1 == -1);
-  for(;;) {
+  for (;;) {
     uint8_t byte = value & 0x7f;
     value >>= 7;
     // Stop writing when the remaining bits are just copies of the sign bit.
@@ -175,10 +154,9 @@ void HMDeoptDataWriter::writeSLEB128(int32_t value)
   }
 }
 
-int HMDeoptDataWriter::byteCountSLEB128(int32_t value)
-{
+int HMDeoptDataWriter::byteCountSLEB128(int32_t value) {
   int count = 0;
-  for(;;) {
+  for (;;) {
     count++;
     int byte = value & 0x7f;
     value >>= 7;
@@ -188,29 +166,31 @@ int HMDeoptDataWriter::byteCountSLEB128(int32_t value)
   }
 }
 
-void HMDeoptDataWriter::beginAssembly(Assembler* assm, uint8_t* address)
-{
+void HMDeoptDataWriter::beginAssembly(Assembler *assm, uint8_t *address) {
   (void)assm;
   npc_ = uintptr_t(address);
-  ensureSpace(1+sizeof(uintptr_t));
+  ensureSpace(1 + sizeof(uintptr_t));
   writeUInt8(MD_SET_NPC);
   writeUIntPtr(uintptr_t(npc_));
 }
 
-void HMDeoptDataWriter::safepointStart(Assembler* assm, void* payload, uint8_t* address)
-{
+void HMDeoptDataWriter::safepointStart(Assembler *assm, void *payload,
+                                       uint8_t *address) {
   (void)assm;
-  DeoptSafepointInstr* safepoint = static_cast<DeoptSafepointInstr*>(payload);
+  DeoptSafepointInstr *safepoint = static_cast<DeoptSafepointInstr *>(payload);
   uintptr_t addr = uintptr_t(address);
 
-  // Virtual pc may advance or retreat with native pc advance, so adjustment is signed.
+  // Virtual pc may advance or retreat with native pc advance, so adjustment is
+  // signed.
   int32_t vpc_adjustment = int32_t(vpc_) - int32_t(safepoint->vpc);
-  // Native pc values are assigned in monotonically decreasing order (due to assembly
-  // in reverse), so the adjustment is always non-negative, interpreted as a decrement.
+  // Native pc values are assigned in monotonically decreasing order (due to
+  // assembly in reverse), so the adjustment is always non-negative, interpreted
+  // as a decrement.
   int32_t npc_decrement = int32_t(npc_) - int32_t(addr);
   AvmAssert(npc_decrement >= 0);
 
-  ensureSpace(1 + byteCountSLEB128(vpc_adjustment) + byteCountULEB128(npc_decrement));
+  ensureSpace(1 + byteCountSLEB128(vpc_adjustment) +
+              byteCountULEB128(npc_decrement));
   writeUInt8(MD_END);
   writeSLEB128(vpc_adjustment);
   writeULEB128(npc_decrement);
@@ -218,17 +198,16 @@ void HMDeoptDataWriter::safepointStart(Assembler* assm, void* payload, uint8_t* 
   npc_ = addr;
 }
 
-void HMDeoptDataWriter::emitSetSlotIdx(DeoptSafepointInstr* safepoint,
-                                       Assembler* assm, int slot, int i)
-{
-  Use& use = safepoint->value_in(i);
+void HMDeoptDataWriter::emitSetSlotIdx(DeoptSafepointInstr *safepoint,
+                                       Assembler *assm, int slot, int i) {
+  Use &use = safepoint->value_in(i);
   int frame_idx = assm->forceStackIndex(def_ins(use));
   SlotStorageType sst = type2sst(type(use));
   // The slot type will likely change much less often than the frame_index,
   // but it is unclear at this point whether a separate MD_SLOT_TYPE instruction
   // is warranted.  For now, each MD_SLOT_IDX contains the type.
   if (frame_slots_[slot] != frame_idx || frame_types_[slot] != sst) {
-    //fprintf(stderr, "slot %d @ %d : %d\n", slot, frame_idx, sst);
+    // fprintf(stderr, "slot %d @ %d : %d\n", slot, frame_idx, sst);
     ensureSpace(1 + 1 + byteCountULEB128(slot) + byteCountULEB128(frame_idx));
     writeUInt8(MD_SLOT_IDX);
     writeUInt8(uint8_t(sst));
@@ -239,13 +218,13 @@ void HMDeoptDataWriter::emitSetSlotIdx(DeoptSafepointInstr* safepoint,
   }
 }
 
-void HMDeoptDataWriter::safepointEnd(Assembler* assm, void* payload, uint8_t* address)
-{
+void HMDeoptDataWriter::safepointEnd(Assembler *assm, void *payload,
+                                     uint8_t *address) {
   (void)address;
-  DeoptSafepointInstr* safepoint = static_cast<DeoptSafepointInstr*>(payload);
+  DeoptSafepointInstr *safepoint = static_cast<DeoptSafepointInstr *>(payload);
 
   int n_operands = safepoint->stackp;
-  int n_scopes   = safepoint->scopep;
+  int n_scopes = safepoint->scopep;
 
   // TODO: Recognize nested safepoints and produce MD_INLINE.
   // This is probably better done here than in hm-liremitter.cpp.
@@ -259,7 +238,7 @@ void HMDeoptDataWriter::safepointEnd(Assembler* assm, void* payload, uint8_t* ad
     writeULEB128(safepoint->nargs);
     break;
   case kInlineSafepoint:
-    ensureSpace(1+sizeof(uintptr_t));
+    ensureSpace(1 + sizeof(uintptr_t));
     writeUInt8(MD_INLINE);
     writeUIntPtr(uintptr_t(safepoint->minfo));
     break;
@@ -298,21 +277,19 @@ void HMDeoptDataWriter::safepointEnd(Assembler* assm, void* payload, uint8_t* ad
   for (int i = stack_base_; i <= n_operands; i++) {
     emitSetSlotIdx(safepoint, assm, i, j++);
   }
-
 }
 
-void HMDeoptDataWriter::setNativePc(uint8_t* address)
-{
-  //fprintf(stderr, "NEW CHUNK address=0x%p\n", address);
+void HMDeoptDataWriter::setNativePc(uint8_t *address) {
+  // fprintf(stderr, "NEW CHUNK address=0x%p\n", address);
   npc_ = uintptr_t(address);
-  ensureSpace(1+sizeof(uintptr_t));
+  ensureSpace(1 + sizeof(uintptr_t));
   writeUInt8(MD_SET_NPC);
   writeUIntPtr(npc_);
 }
 
-void HMDeoptDataWriter::endAssembly(Assembler* assm, uint8_t* address)
-{
-  (void)assm; (void)address;
+void HMDeoptDataWriter::endAssembly(Assembler *assm, uint8_t *address) {
+  (void)assm;
+  (void)address;
   // Write sentinel value.  Not strictly necessary, but we are presently
   // depending on it in the implementation of some diagnostics.
   ensureSpace(1 + sizeof(uintptr_t));
@@ -320,88 +297,81 @@ void HMDeoptDataWriter::endAssembly(Assembler* assm, uint8_t* address)
   writeUIntPtr(0);
 }
 
-
 /// Deoptimizer for compiled methods generated by Halfmoon.
 
 typedef DeoptimizerInstance<DeoptData, HMDeoptContext> HMDeoptimizer;
 
-Deoptimizer* DeoptData::createDeoptimizer(MethodInfo* info)
-{
+Deoptimizer *DeoptData::createDeoptimizer(MethodInfo *info) {
   return mmfx_new(HMDeoptimizer(info, this));
 }
 
 // Return a generic pointer to local slot at the specified index.
-static void* addrOfJitSlot(uint8_t* nativefp, int slot_ix, int shift) {
-  return (void*)(nativefp + (slot_ix << shift));
+static void *addrOfJitSlot(uint8_t *nativefp, int slot_ix, int shift) {
+  return (void *)(nativefp + (slot_ix << shift));
 }
 
 /// Frame populators for compiled methods generated by Halfmoon.
 
 class HMFramePopulator : /*implements*/ public FramePopulator {
 public:
-  HMFramePopulator(AvmCore* core, const HMDeoptContext& ctx, uint8_t* nativefp)
-    : core_(core),
-      ctx_(ctx),
-      nativefp_(nativefp)
-  {}
-  virtual void populate(Atom* framep, int *scopeDepth, int *stackDepth);
+  HMFramePopulator(AvmCore *core, const HMDeoptContext &ctx, uint8_t *nativefp)
+      : core_(core), ctx_(ctx), nativefp_(nativefp) {}
+  virtual void populate(Atom *framep, int *scopeDepth, int *stackDepth);
   virtual ~HMFramePopulator() {}
+
 protected:
-  AvmCore* core_;
-  const HMDeoptContext& ctx_;
-  uint8_t* nativefp_;
+  AvmCore *core_;
+  const HMDeoptContext &ctx_;
+  uint8_t *nativefp_;
   SlotStorageType slotType(int i);
-  void populateLocals(Atom* framep);
-  void populateScopes(Atom* framep, int *scopeDepth);
-  void populateStack(Atom* framep, int *stackDepth);
+  void populateLocals(Atom *framep);
+  void populateScopes(Atom *framep, int *scopeDepth);
+  void populateStack(Atom *framep, int *stackDepth);
+
 private:
   DISALLOW_COPY_AND_ASSIGN(HMFramePopulator);
 };
 
-SlotStorageType HMFramePopulator::slotType(int i)
-{
+SlotStorageType HMFramePopulator::slotType(int i) {
   uint32_t tag = ctx_.frame_types_[i];
   return SlotStorageType(tag);
 }
 
-void HMFramePopulator::populateLocals(Atom* framep)
-{
+void HMFramePopulator::populateLocals(Atom *framep) {
   int local_count = ctx_.signature_->local_count();
   for (int i = 0; i < local_count; i++) {
-    void *slot_addr = addrOfJitSlot(nativefp_, ctx_.frame_slots_[i],
-                                    VARSHIFT(this));
+    void *slot_addr =
+        addrOfJitSlot(nativefp_, ctx_.frame_slots_[i], VARSHIFT(this));
     framep[i] = nativeLocalToAtom(core_, slot_addr, slotType(i));
   }
 }
 
-void HMFramePopulator::populateScopes(Atom* framep, int *scope_depth)
-{
-  int scope_base  = ctx_.signature_->scope_base();
+void HMFramePopulator::populateScopes(Atom *framep, int *scope_depth) {
+  int scope_base = ctx_.signature_->scope_base();
 
   for (int i = 0; i < ctx_.scopep_; i++) {
     int j = scope_base + i;
-    void *slot_addr = addrOfJitSlot(nativefp_, ctx_.frame_slots_[j],
-                                    VARSHIFT(this));
+    void *slot_addr =
+        addrOfJitSlot(nativefp_, ctx_.frame_slots_[j], VARSHIFT(this));
     framep[j] = nativeLocalToAtom(core_, slot_addr, slotType(j));
   }
   *scope_depth = ctx_.scopep_;
 }
-   
-void HMFramePopulator::populateStack(Atom* framep, int *stack_depth)
-{
-  int stack_base  = ctx_.signature_->stack_base();
+
+void HMFramePopulator::populateStack(Atom *framep, int *stack_depth) {
+  int stack_base = ctx_.signature_->stack_base();
 
   for (int i = 0; i < ctx_.stackp_; i++) {
     int j = stack_base + i;
-    void *slot_addr = addrOfJitSlot(nativefp_, ctx_.frame_slots_[j],
-                                    VARSHIFT(this));
+    void *slot_addr =
+        addrOfJitSlot(nativefp_, ctx_.frame_slots_[j], VARSHIFT(this));
     framep[j] = nativeLocalToAtom(core_, slot_addr, slotType(j));
   }
   *stack_depth = ctx_.stackp_;
 }
 
-void HMFramePopulator::populate(Atom* framep, int *scope_depth, int *stack_depth)
-{
+void HMFramePopulator::populate(Atom *framep, int *scope_depth,
+                                int *stack_depth) {
   populateLocals(framep);
   populateScopes(framep, scope_depth);
   populateStack(framep, stack_depth);
@@ -409,88 +379,72 @@ void HMFramePopulator::populate(Atom* framep, int *scope_depth, int *stack_depth
 
 class HMHandlerFramePopulator : public HMFramePopulator {
 public:
-  HMHandlerFramePopulator(AvmCore* core, const HMDeoptContext& ctx,
-                          uint8_t* nativefp, Atom exn_val)
-    : HMFramePopulator(core, ctx, nativefp),
-      exn_val_(exn_val)
-  {}
-  virtual void populate(Atom* framep, int *scope_depth, int *stack_depth);
+  HMHandlerFramePopulator(AvmCore *core, const HMDeoptContext &ctx,
+                          uint8_t *nativefp, Atom exn_val)
+      : HMFramePopulator(core, ctx, nativefp), exn_val_(exn_val) {}
+  virtual void populate(Atom *framep, int *scope_depth, int *stack_depth);
   virtual ~HMHandlerFramePopulator() {}
+
 private:
   DISALLOW_COPY_AND_ASSIGN(HMHandlerFramePopulator);
   Atom exn_val_;
 };
 
-void HMHandlerFramePopulator::populate(Atom* framep, int *scope_depth,
-                                       int *stack_depth)
-{
+void HMHandlerFramePopulator::populate(Atom *framep, int *scope_depth,
+                                       int *stack_depth) {
   populateLocals(framep);
   *scope_depth = 0;
-  int stack_base  = ctx_.signature_->stack_base();
+  int stack_base = ctx_.signature_->stack_base();
   framep[stack_base] = exn_val_;
   *stack_depth = 1;
 }
-    
+
 class HMReturnFramePopulator : public HMFramePopulator {
 public:
-  HMReturnFramePopulator(AvmCore* core, const HMDeoptContext& ctx,
-                         uint8_t* nativefp, Atom return_val)
-    : HMFramePopulator(core, ctx, nativefp),
-      return_val_(return_val)
-  {}
-  virtual void populate(Atom* framep, int *scope_depth, int *stack_depth);
+  HMReturnFramePopulator(AvmCore *core, const HMDeoptContext &ctx,
+                         uint8_t *nativefp, Atom return_val)
+      : HMFramePopulator(core, ctx, nativefp), return_val_(return_val) {}
+  virtual void populate(Atom *framep, int *scope_depth, int *stack_depth);
   virtual ~HMReturnFramePopulator() {}
+
 private:
   DISALLOW_COPY_AND_ASSIGN(HMReturnFramePopulator);
   Atom return_val_;
 };
 
-void HMReturnFramePopulator::populate(Atom* framep, int *scope_depth,
-                                      int *stack_depth)
-{
+void HMReturnFramePopulator::populate(Atom *framep, int *scope_depth,
+                                      int *stack_depth) {
   int stack_idx;
   populateLocals(framep);
   populateScopes(framep, scope_depth);
   populateStack(framep, &stack_idx);
   stack_idx -= ctx_.nargs_;
-  int stack_base  = ctx_.signature_->stack_base();
+  int stack_base = ctx_.signature_->stack_base();
   framep[stack_base + stack_idx] = return_val_;
   *stack_depth = stack_idx + 1;
 }
 
-
 /// Interpret deoptimization metadata.
 
-HMDeoptContext::HMDeoptContext(DeoptData* data)
-  : deopt_data_(data),
-    signature_(data->signature_),
-    frame_size_(signature_->frame_size()),
-    stack_base_(signature_->stack_base()),
-    scope_base_(signature_->scope_base()),
-    n_locals_(signature_->local_count()),
-    npc_(0),
-    vpc_(0),
-    scopep_(0),
-    stackp_(0),
-    mdins_(0)
-{
+HMDeoptContext::HMDeoptContext(DeoptData *data)
+    : deopt_data_(data), signature_(data->signature_),
+      frame_size_(signature_->frame_size()),
+      stack_base_(signature_->stack_base()),
+      scope_base_(signature_->scope_base()),
+      n_locals_(signature_->local_count()), npc_(0), vpc_(0), scopep_(0),
+      stackp_(0), mdins_(0) {
   frame_slots_ = mmfx_new_array(int, frame_size_);
   frame_types_ = mmfx_new_array(uint8_t, frame_size_);
 }
 
-HMDeoptContext::~HMDeoptContext()
-{
+HMDeoptContext::~HMDeoptContext() {
   mmfx_delete_array(frame_slots_);
   mmfx_delete_array(frame_types_);
 }
 
-uint8_t HMDeoptContext::readUInt8()
-{
-  return uint8_t(*(mdins_++));
-}
+uint8_t HMDeoptContext::readUInt8() { return uint8_t(*(mdins_++)); }
 
-uint32_t HMDeoptContext::readUInt32()
-{
+uint32_t HMDeoptContext::readUInt32() {
   uint32_t value = *(mdins_++);
   value = (value << 8) | *(mdins_++);
   value = (value << 8) | *(mdins_++);
@@ -499,8 +453,7 @@ uint32_t HMDeoptContext::readUInt32()
 }
 
 #ifdef VMCFG_64BIT
-uint64_t HMDeoptContext::readUInt64()
-{
+uint64_t HMDeoptContext::readUInt64() {
   uint64_t value = *(mdins_++);
   value = (value << 8) | *(mdins_++);
   value = (value << 8) | *(mdins_++);
@@ -513,8 +466,7 @@ uint64_t HMDeoptContext::readUInt64()
 }
 #endif
 
-uintptr_t HMDeoptContext::readUIntPtr()
-{
+uintptr_t HMDeoptContext::readUIntPtr() {
 #ifdef VMCFG_64BIT
   return readUInt64();
 #else
@@ -522,8 +474,7 @@ uintptr_t HMDeoptContext::readUIntPtr()
 #endif
 }
 
-uint32_t HMDeoptContext::readULEB128()
-{
+uint32_t HMDeoptContext::readULEB128() {
   int byte;
   uint32_t value = 0;
   do {
@@ -533,8 +484,7 @@ uint32_t HMDeoptContext::readULEB128()
   return value;
 }
 
-int32_t HMDeoptContext::readSLEB128()
-{
+int32_t HMDeoptContext::readSLEB128() {
   int byte;
   int shift = 0;
   uint32_t value = 0;
@@ -549,11 +499,10 @@ int32_t HMDeoptContext::readSLEB128()
   }
   return value;
 }
-  
-void HMDeoptContext::setSafepointFromNativePc(uint8_t* pc)
-{
+
+void HMDeoptContext::setSafepointFromNativePc(uint8_t *pc) {
   kind_ = kInvalidSafepoint;
-  npc_ = 1;  // Must differ from sentinel value of 0.
+  npc_ = 1; // Must differ from sentinel value of 0.
   vpc_ = 0;
   scopep_ = 0;
   stackp_ = 0;
@@ -565,12 +514,12 @@ void HMDeoptContext::setSafepointFromNativePc(uint8_t* pc)
   minfo_ = NULL;
 
   mdins_ = deopt_data_->instructions();
-  //fprintf(stderr, "mdins_ = %p\n", mdins_);
+  // fprintf(stderr, "mdins_ = %p\n", mdins_);
 
   while (npc_ > uintptr_t(pc)) {
     // TODO: Need check for end of stream, if only for assertion.
     int op = *(mdins_++);
-    //fprintf(stderr, "OP %d @ %p\n", op, mdins_);
+    // fprintf(stderr, "OP %d @ %p\n", op, mdins_);
     switch (op) {
     case MD_CALL: {
       kind_ = kCallSafepoint;
@@ -582,7 +531,7 @@ void HMDeoptContext::setSafepointFromNativePc(uint8_t* pc)
     }
     case MD_INLINE: {
       kind_ = kInlineSafepoint;
-      minfo_ = (MethodInfo*)readUIntPtr();
+      minfo_ = (MethodInfo *)readUIntPtr();
       AvmAssert(false); // NYI
       break;
     }
@@ -601,7 +550,7 @@ void HMDeoptContext::setSafepointFromNativePc(uint8_t* pc)
       uint32_t frame_idx = readULEB128();
       frame_slots_[slot] = frame_idx;
       frame_types_[slot] = sst;
-      //fprintf(stderr, "set_slot %d @ %d\n", slot, frame_idx);
+      // fprintf(stderr, "set_slot %d @ %d\n", slot, frame_idx);
       break;
     }
     case MD_SET_STACK: {
@@ -622,7 +571,7 @@ void HMDeoptContext::setSafepointFromNativePc(uint8_t* pc)
       break;
     }
     case MD_LINK: {
-      mdins_ = (NIns*)readUIntPtr();
+      mdins_ = (NIns *)readUIntPtr();
       break;
     }
     default:
@@ -631,18 +580,15 @@ void HMDeoptContext::setSafepointFromNativePc(uint8_t* pc)
   }
 }
 
-Atom HMDeoptContext::interpretFromSafepoint(uint8_t* fp, MethodEnv* env)
-{
+Atom HMDeoptContext::interpretFromSafepoint(uint8_t *fp, MethodEnv *env) {
   // Continue at safepoint instruction.
   AvmAssert(signature_ == env->method->getMethodSignature());
   HMFramePopulator populator(env->core(), *this, fp);
   return interpBoxedAtLocation(env, vpc_, populator);
 }
 
-Atom HMDeoptContext::interpretFromCallSafepoint(uint8_t* fp,
-                                                MethodEnv* env,
-                                                Atom return_val)
-{
+Atom HMDeoptContext::interpretFromCallSafepoint(uint8_t *fp, MethodEnv *env,
+                                                Atom return_val) {
   // Interpreter frame will reconstruct state at call, with boxed result pushed
   // on operand stack.
   AvmAssert(signature_ == env->method->getMethodSignature());
@@ -651,8 +597,7 @@ Atom HMDeoptContext::interpretFromCallSafepoint(uint8_t* fp,
   return interpBoxedAtLocation(env, (vpc_ + vlen_), populator);
 }
 
-Atom HMDeoptContext::interpretFromThrowSafepoint(uint8_t* fp,
-                                                 MethodEnv* env,
+Atom HMDeoptContext::interpretFromThrowSafepoint(uint8_t *fp, MethodEnv *env,
                                                  int32_t handler_vpc,
                                                  Atom exn_val) {
   // Continue at handler target, with stacks reset and exception pushed.

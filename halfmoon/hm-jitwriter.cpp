@@ -60,42 +60,31 @@ namespace halfmoon {
  *
  */
 
-JitWriter::JitWriter(MethodInfo* method, Toplevel *tl, AbcEnv *abc_env)
-: method_(method)
-, console_(method->pool()->core->console)
-, jit_mgr_(0)
-, abc_(0)
-, current_block_(0)
-, abc_env_(abc_env)
-, toplevel_(tl)
-, calling_context_(NULL) //matz_inline_experiment
-{
-}
+JitWriter::JitWriter(MethodInfo *method, Toplevel *tl, AbcEnv *abc_env)
+    : method_(method), console_(method->pool()->core->console), jit_mgr_(0),
+      abc_(0), current_block_(0), abc_env_(abc_env), toplevel_(tl),
+      calling_context_(NULL) // matz_inline_experiment
+{}
 
-
-JitWriter::JitWriter(MethodInfo* method, const Context *calling_context)
-: method_(method)
-, console_(method->pool()->core->console)
-, jit_mgr_(0)
-, abc_(0)
-, current_block_(0)
-, abc_env_(calling_context->abc_env)
-, toplevel_(calling_context->toplevel)
-, calling_context_(calling_context) {
+JitWriter::JitWriter(MethodInfo *method, const Context *calling_context)
+    : method_(method), console_(method->pool()->core->console), jit_mgr_(0),
+      abc_(0), current_block_(0), abc_env_(calling_context->abc_env),
+      toplevel_(calling_context->toplevel), calling_context_(calling_context) {
   AvmAssert(calling_context_ && "calling_context cannot be null");
 }
 
 JitWriter::~JitWriter() {
   abc_->~AbcGraph();
-  if (enable_profiler) profiled_info_->~ProfiledInformation();
+  if (enable_profiler)
+    profiled_info_->~ProfiledInformation();
   cleanup();
 }
 
-void JitWriter::writePrologue(const FrameState* frame, const uint8_t* pc,
-                              CodegenDriver*) {
+void JitWriter::writePrologue(const FrameState *frame, const uint8_t *pc,
+                              CodegenDriver *) {
   AvmAssert(frame->abc_pc == pc);
-  (void) frame;
-  (void) pc;
+  (void)frame;
+  (void)pc;
   jit_mgr_ = JitManager::init(method_->pool());
 
 #ifdef AVMPLUS_VERBOSE
@@ -105,55 +94,51 @@ void JitWriter::writePrologue(const FrameState* frame, const uint8_t* pc,
 
   abc_ = new (alloc_) AbcGraph(method_);
   if (enable_profiler) {
-      profiled_info_ = new (alloc_) ProfiledInformation();
+    profiled_info_ = new (alloc_) ProfiledInformation();
   }
   startBlock(frame);
 }
 
-void JitWriter::writeEpilogue(const FrameState*) {
+void JitWriter::writeEpilogue(const FrameState *) {
   if (enable_verbose) {
 #ifdef AVMPLUS_VERBOSE
     console_ << "analyze   " << method_ << "\n";
 #endif
   }
 
-  Context cxt(method_, method_->pool()->core->console, toplevel_, abc_env_, calling_context_);
+  Context cxt(method_, method_->pool()->core->console, toplevel_, abc_env_,
+              calling_context_);
 
-  InstrGraph* ir = parseAbc(method_, jit_mgr_->lattice(), jit_mgr_->infos(),
-                            alloc_, abc_,
-                            toplevel_, abc_env_, profiled_info_,
-                            cxt);
+  InstrGraph *ir =
+      parseAbc(method_, jit_mgr_->lattice(), jit_mgr_->infos(), alloc_, abc_,
+               toplevel_, abc_env_, profiled_info_, cxt);
   jit_mgr_->set_ir(method_, ir);
   switch (enable_mode) {
-    case kModeInterpret:
-      jit_mgr_->set_interp(method_, ir);
-      break;
-    case kModeLirStubs:
-    case kModeLir:
-      jit_mgr_->set_lir(method_, ir, profiled_info_);
-      break;
+  case kModeInterpret:
+    jit_mgr_->set_interp(method_, ir);
+    break;
+  case kModeLirStubs:
+  case kModeLir:
+    jit_mgr_->set_lir(method_, ir, profiled_info_);
+    break;
   }
 }
 
-GprMethodProc JitWriter::finish() {
-  return jit_mgr_->getImpl(method_);
-}
+GprMethodProc JitWriter::finish() { return jit_mgr_->getImpl(method_); }
 
-InstrGraph* JitWriter::ir() {
-  return jit_mgr_->ir(method_);
-}
+InstrGraph *JitWriter::ir() { return jit_mgr_->ir(method_); }
 
-void JitWriter::analyze(AbcOpcode abcop, const uint8_t* pc,
-                        const FrameState* frame) {
+void JitWriter::analyze(AbcOpcode abcop, const uint8_t *pc,
+                        const FrameState *frame) {
   AvmAssert(pc == frame->abc_pc);
-  (void) frame;
+  (void)frame;
 
 #ifdef AVMPLUS_VERBOSE
   if (enable_verbose) {
     console_ << "analyze " << opcodeInfo[abcop].name << '\n';
   }
 #else
-  (void) abcop;
+  (void)abcop;
 #endif
 
   if (current_block_ && pc > current_block_->start && abc_->haveBlock(pc)) {
@@ -167,12 +152,12 @@ void JitWriter::analyze(AbcOpcode abcop, const uint8_t* pc,
   }
 }
 
-void JitWriter::finishBlock(const uint8_t* nextpc) {
+void JitWriter::finishBlock(const uint8_t *nextpc) {
   current_block_->end = nextpc;
   current_block_ = 0;
 }
 
-void JitWriter::newBlock(const uint8_t* abc_pc, const FrameState* frame) {
+void JitWriter::newBlock(const uint8_t *abc_pc, const FrameState *frame) {
   if (current_block_ && current_block_->start == abc_pc) {
     // we just started this block.  ignore.
     return;
@@ -182,50 +167,51 @@ void JitWriter::newBlock(const uint8_t* abc_pc, const FrameState* frame) {
   abc_->analyzeExceptions(current_block_);
 }
 
-void JitWriter::startBlock(const FrameState* frame) {
+void JitWriter::startBlock(const FrameState *frame) {
   newBlock(frame->abc_pc, frame);
   MethodSignaturep signature = method_->getMethodSignature();
-  const Type** types = new (abc_->alloc0()) const Type*[signature->frame_size()];
+  const Type **types =
+      new (abc_->alloc0()) const Type *[signature->frame_size()];
   FrameRange<const FrameValue> from = range(&frame->value(0), frame, signature);
-  FrameRange<const Type*> t = range(types, frame, signature);
+  FrameRange<const Type *> t = range(types, frame, signature);
   for (; !from.empty(); from.popFront(), t.popFront())
     t.front() = jit_mgr_->lattice()->makeType(from.front());
   current_block_->start_types = types;
 }
 
 static bool needSavedScopes(const uint8_t *pc, AbcOpcode op) {
-  switch ((AbcOpcode) *pc) {
-    case OP_getlex:
+  switch ((AbcOpcode)*pc) {
+  case OP_getlex:
+  case OP_findpropstrict:
+  case OP_findproperty:
+    switch (op) {
     case OP_findpropstrict:
     case OP_findproperty:
-      switch (op) {
-        case OP_findpropstrict:
-        case OP_findproperty:
-        case OP_getscopeobject:
-        case OP_getouterscope:
-        case OP_finddef:
-        case OP_findpropglobal:
-        case OP_findpropglobalstrict:
-        case OP_getglobalscope:
-          return true;
-        default:
-          break;
-      }
+    case OP_getscopeobject:
+    case OP_getouterscope:
+    case OP_finddef:
+    case OP_findpropglobal:
+    case OP_findpropglobalstrict:
+    case OP_getglobalscope:
+      return true;
     default:
       break;
+    }
+  default:
+    break;
   }
   return false;
 }
 
-void JitWriter::write(const FrameState* frame, const uint8_t* pc,
-                      AbcOpcode abcop, Traits*) {
+void JitWriter::write(const FrameState *frame, const uint8_t *pc,
+                      AbcOpcode abcop, Traits *) {
   analyze(abcop, pc, frame);
   if (needSavedScopes(pc, abcop))
     abc_->abc_instrs.put(pc, new (abc_->alloc_) AbcInstr(abcop));
   if (abcop == OP_lookupswitch || isEndOpcode(abcop)) {
     uint32_t imm30 = 0, imm30b = 0;
     int imm8 = 0, imm24 = 0;
-    const uint8_t* nextpc = pc;
+    const uint8_t *nextpc = pc;
     AvmCore::readOperands(nextpc, imm30, imm24, imm30b, imm8);
     if (abcop == OP_lookupswitch)
       abc_->analyzeSwitch(current_block_, pc, nextpc, imm24, imm30b + 1);
@@ -233,13 +219,13 @@ void JitWriter::write(const FrameState* frame, const uint8_t* pc,
   }
 }
 
-void JitWriter::writeOp1(const FrameState* frame, const uint8_t *pc,
-                         AbcOpcode abcop, uint32_t opd1, Traits*) {
+void JitWriter::writeOp1(const FrameState *frame, const uint8_t *pc,
+                         AbcOpcode abcop, uint32_t opd1, Traits *) {
   analyze(abcop, pc, frame);
   if (needSavedScopes(pc, abcop))
     abc_->abc_instrs.put(pc, new (abc_->alloc_) AbcInstr(abcop, opd1));
   if (isBranchOpcode(abcop)) {
-    const uint8_t* nextpc = pc + 4;
+    const uint8_t *nextpc = pc + 4;
     int offset = int32_t(opd1);
     if (abcop == OP_jump) {
       abc_->analyzeEnd(current_block_, nextpc + offset);
@@ -252,18 +238,18 @@ void JitWriter::writeOp1(const FrameState* frame, const uint8_t *pc,
   }
 }
 
-void JitWriter::writeOp2(const FrameState* frame, const uint8_t *pc,
-                         AbcOpcode abcop, uint32_t, uint32_t, Traits*) {
+void JitWriter::writeOp2(const FrameState *frame, const uint8_t *pc,
+                         AbcOpcode abcop, uint32_t, uint32_t, Traits *) {
   analyze(abcop, pc, frame);
 }
 
-void JitWriter::writeMethodCall(const FrameState* frame, const uint8_t *pc,
-                                AbcOpcode abcop, MethodInfo*, uintptr_t,
-                                uint32_t, Traits*) {
+void JitWriter::writeMethodCall(const FrameState *frame, const uint8_t *pc,
+                                AbcOpcode abcop, MethodInfo *, uintptr_t,
+                                uint32_t, Traits *) {
   analyze(abcop, pc, frame);
 }
 
-void JitWriter::writeNip(const FrameState* frame, const uint8_t *pc,
+void JitWriter::writeNip(const FrameState *frame, const uint8_t *pc,
                          uint32_t count) {
   while (count--) {
     analyze(OP_swap, pc, frame);
@@ -271,18 +257,18 @@ void JitWriter::writeNip(const FrameState* frame, const uint8_t *pc,
   }
 }
 
-void JitWriter::writeCheckNull(const FrameState* frame, uint32_t) {
+void JitWriter::writeCheckNull(const FrameState *frame, uint32_t) {
   analyze(OP_convert_o, frame->abc_pc, frame);
 }
 
-void JitWriter::writeCoerce(const FrameState* frame, uint32_t, Traits*) {
+void JitWriter::writeCoerce(const FrameState *frame, uint32_t, Traits *) {
   analyze(OP_coerce, frame->abc_pc, frame);
 }
 
-void JitWriter::writeBlockStart(const FrameState* frame) {
+void JitWriter::writeBlockStart(const FrameState *frame) {
   AvmAssert((!current_block_ || current_block_->start <= frame->abc_pc) &&
-         "didn't expect blocks out of order");
-  const uint8_t* pc = frame->abc_pc;
+            "didn't expect blocks out of order");
+  const uint8_t *pc = frame->abc_pc;
   if (current_block_ && current_block_->start < pc) {
     abc_->analyzeEnd(current_block_, pc);
     finishBlock(pc);
@@ -291,5 +277,5 @@ void JitWriter::writeBlockStart(const FrameState* frame) {
   analyze(OP_label, pc, frame);
 }
 
-} // namespace avmplus
+} // namespace halfmoon
 #endif // VMCFG_HALFMOON

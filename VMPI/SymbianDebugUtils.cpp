@@ -14,12 +14,10 @@
 //#include "e32def.h"
 //#include "e32std.h"
 
-void VMPI_debugLog(const char* /*message*/)
-{
-//  VMPI_log( message ); //also log to standard output
+void VMPI_debugLog(const char * /*message*/) {
+  //  VMPI_log( message ); //also log to standard output
 }
 
-void VMPI_debugBreak()
-{
-//  ASSERT( false );
+void VMPI_debugBreak() {
+  //  ASSERT( false );
 }

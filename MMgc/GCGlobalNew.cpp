@@ -6,78 +6,66 @@
 
 #include "MMgc.h"
 
-namespace MMgc
-{
+namespace MMgc {
 #ifdef MMGC_USE_SYSTEM_MALLOC
 
-    void *SystemNew(size_t size, FixedMallocOpts opts)
-    {
-        void *space = VMPI_alloc(size);
-        if (space == NULL)
-        {
-            if (opts & MMgc::kCanFail)
-                return NULL;
+void *SystemNew(size_t size, FixedMallocOpts opts) {
+  void *space = VMPI_alloc(size);
+  if (space == NULL) {
+    if (opts & MMgc::kCanFail)
+      return NULL;
 
-            int attempt = 0;
-            do {
-                GCHeap::GetGCHeap()->SystemOOMEvent(size, attempt++);
-                space = VMPI_alloc(size);
-            } while (space == NULL);
-        }
+    int attempt = 0;
+    do {
+      GCHeap::GetGCHeap()->SystemOOMEvent(size, attempt++);
+      space = VMPI_alloc(size);
+    } while (space == NULL);
+  }
 #ifdef MMGC_MEMORY_PROFILER
-        GCHeap* heap = GCHeap::GetGCHeap();
-        if (heap)
-            heap->TrackSystemAlloc(space, size);
+  GCHeap *heap = GCHeap::GetGCHeap();
+  if (heap)
+    heap->TrackSystemAlloc(space, size);
 #endif
-        if (opts & MMgc::kZero)
-            VMPI_memset(space, 0, size);
-        return space;
-    }
+  if (opts & MMgc::kZero)
+    VMPI_memset(space, 0, size);
+  return space;
+}
 
-    void SystemDelete(void *p)
-    {
+void SystemDelete(void *p) {
 #ifdef MMGC_MEMORY_PROFILER
-        if (p) {
-            // heap can be NULL during OOM shutdown
-            GCHeap* heap = GCHeap::GetGCHeap();
-            if (heap)
-                heap->TrackSystemFree(p);
-        }
+  if (p) {
+    // heap can be NULL during OOM shutdown
+    GCHeap *heap = GCHeap::GetGCHeap();
+    if (heap)
+      heap->TrackSystemFree(p);
+  }
 #endif
-        VMPI_free(p);
-    }
+  VMPI_free(p);
+}
 
 #endif // MMGC_USE_SYSTEM_MALLOC
-	
-	// There are calls to these baked into binary modules such as DRM.
-	// Some third-party code is given an abbreviated version of the allocation macros
-	// and their dependencies that duplicates code in AllocationMacros.h.
-	// We leave these alone in implementing partitioning, and direct all such
-	// allocations to kExternalAllocPartition.
 
-    void *AllocCall(size_t s, FixedMallocOpts opts)
-    {
-        return AllocCallInline(s, opts, kExternalAllocPartition);
-    }
+// There are calls to these baked into binary modules such as DRM.
+// Some third-party code is given an abbreviated version of the allocation
+// macros and their dependencies that duplicates code in AllocationMacros.h. We
+// leave these alone in implementing partitioning, and direct all such
+// allocations to kExternalAllocPartition.
 
-    void DeleteCall(void* p)
-    {
-        DeleteCallInline(p, kExternalAllocPartition);
-    }
-	
-	// We define new variants here to support partitioning in AllocationMacros.h.
-	
-    void *MMFXAllocCall(size_t s, FixedMallocOpts opts, int partition)
-    {
-        return AllocCallInline(s, opts, partition);
-    }
+void *AllocCall(size_t s, FixedMallocOpts opts) {
+  return AllocCallInline(s, opts, kExternalAllocPartition);
+}
 
-    void MMFXDeleteCall(void* p, int partition)
-    {
-        DeleteCallInline(p, partition);
-    }
+void DeleteCall(void *p) { DeleteCallInline(p, kExternalAllocPartition); }
 
-};
+// We define new variants here to support partitioning in AllocationMacros.h.
+
+void *MMFXAllocCall(size_t s, FixedMallocOpts opts, int partition) {
+  return AllocCallInline(s, opts, partition);
+}
+
+void MMFXDeleteCall(void *p, int partition) { DeleteCallInline(p, partition); }
+
+}; // namespace MMgc
 
 #ifdef MMGC_OVERRIDE_GLOBAL_NEW
 
@@ -85,249 +73,228 @@ namespace MMgc
 
 #else
 
-void* operator new(size_t size, MMgc::NewDummyOperand /*ignored*/) MMGC_NEW_THROWS_CLAUSE
-{
-    return MMgc::NewTaggedScalar(size);
+void *operator new(size_t size,
+                   MMgc::NewDummyOperand /*ignored*/) MMGC_NEW_THROWS_CLAUSE {
+  return MMgc::NewTaggedScalar(size);
 }
 
-void* operator new(size_t size, MMgc::NewDummyOperand /*ignored*/, MMgc::FixedMallocOpts opts) MMGC_NEW_THROWS_CLAUSE
-{
-    return MMgc::NewTaggedScalar(size, opts);
+void *operator new(size_t size, MMgc::NewDummyOperand /*ignored*/,
+                   MMgc::FixedMallocOpts opts) MMGC_NEW_THROWS_CLAUSE {
+  return MMgc::NewTaggedScalar(size, opts);
 }
 
-namespace MMgc
-{
-    // Return NULL iff ((opts & kCanFail) != 0)
-    REALLY_INLINE void *TaggedAlloc(size_t size, FixedMallocOpts opts, uint32_t guard, int partition)
-    {
-        (void)guard;
+namespace MMgc {
+// Return NULL iff ((opts & kCanFail) != 0)
+REALLY_INLINE void *TaggedAlloc(size_t size, FixedMallocOpts opts,
+                                uint32_t guard, int partition) {
+  (void)guard;
 
 #ifdef MMGC_DELETE_DEBUGGING
-        // Store a guard cookie preceding the object so that we can see if it is
-        // released with a proper delete (scalar/array)
-        size = GCHeap::CheckForAllocSizeOverflow(size, MMGC_GUARDCOOKIE_SIZE);
-#endif //MMGC_DELETE_DEBUGGING
-
-        char* mem = (char*)AllocCallInline(size, opts, partition);
-
-#ifdef MMGC_DELETE_DEBUGGING
-        if (mem != NULL)
-        {
-            *(uint32_t*)(void*)mem = guard;
-            mem += MMGC_GUARDCOOKIE_SIZE;
-        }
+  // Store a guard cookie preceding the object so that we can see if it is
+  // released with a proper delete (scalar/array)
+  size = GCHeap::CheckForAllocSizeOverflow(size, MMGC_GUARDCOOKIE_SIZE);
 #endif // MMGC_DELETE_DEBUGGING
 
-        return mem;
-    }
+  char *mem = (char *)AllocCallInline(size, opts, partition);
 
-    REALLY_INLINE void* NewTaggedScalar(size_t size, FixedMallocOpts opts)
-    {
-        GCAssertMsg(GCHeap::GetGCHeap()->IsStackEntered() || (opts&kCanFail) != 0, "MMGC_ENTER macro must exist on the stack");
-
-        return TaggedAlloc(size, opts, GCHeap::MMScalarTag, kMMFXNewScalarPartition);
-    }
-
-    void* NewTaggedArray(size_t count, size_t elsize, FixedMallocOpts opts, bool isPrimitive, int partition)
-    {
-        GCAssertMsg(GCHeap::GetGCHeap()->IsStackEntered() || (opts&kCanFail) != 0, "MMGC_ENTER macro must exist on the stack");
-
-        if ((opts & kCanFail) && (elsize > 0))
-        {
-            // 04sep15 pgrandma@adobe.com : https://watsonexp.corp.adobe.com/#bug=4016752
-            //
-            // CL 590139 on 10/13/09 (old repository) broke kCanFail,
-            // as CheckForCallocSizeOverflow() will Abort() when (count*elsize)
-            // would overflow 32-bit math.
-            //
-            // So I'm adding an early return NULL for kCanFail
-            // when the allocation would exceed kMaxObjectSize.
-            size_t limit = isPrimitive
-                ? (MMgc::GCHeap::kMaxObjectSize)
-                : (MMgc::GCHeap::kMaxObjectSize - MMGC_ARRAYHEADER_SIZE);
-            
-            limit = limit / elsize; // (elsize != 0) due to previous check
-            
-            if (count > limit) {
-                return NULL;
-            }
-        }
-        
-        size_t size = GCHeap::CheckForCallocSizeOverflow(count, elsize);
-
-		void *p;
-        if (isPrimitive)
-		{
-			p = TaggedAlloc(size, opts, GCHeap::MMNormalArrayTag + uint32_t(isPrimitive), partition);
-		}
-		else
-		{
-            size = GCHeap::CheckForAllocSizeOverflow(size, MMGC_ARRAYHEADER_SIZE);
-			p = TaggedAlloc(size, opts, GCHeap::MMNormalArrayTag + uint32_t(isPrimitive), partition);
-			
-			if (p != NULL)
-			{
-				*(size_t*)p = count;
-				p = (char*)p + MMGC_ARRAYHEADER_SIZE;
-			}
-		}
-
-        return p;
-    }
-	
 #ifdef MMGC_DELETE_DEBUGGING
-    // Helper functions to check the guard.
-    // The guard is an uin32_t stored in locations preceding the object.
+  if (mem != NULL) {
+    *(uint32_t *)(void *)mem = guard;
+    mem += MMGC_GUARDCOOKIE_SIZE;
+  }
+#endif // MMGC_DELETE_DEBUGGING
 
-    // The solaris compiler does not allow these to be both static and REALLY_INLINE,
-    // so choose the latter over the former.
+  return mem;
+}
 
-    REALLY_INLINE bool CheckForAllocationGuard(void* mem, uint32_t guard)
-    {
-        return (*(uint32_t*)(void *)((char*)mem - MMGC_GUARDCOOKIE_SIZE) == guard);
+REALLY_INLINE void *NewTaggedScalar(size_t size, FixedMallocOpts opts) {
+  GCAssertMsg(GCHeap::GetGCHeap()->IsStackEntered() || (opts & kCanFail) != 0,
+              "MMGC_ENTER macro must exist on the stack");
+
+  return TaggedAlloc(size, opts, GCHeap::MMScalarTag, kMMFXNewScalarPartition);
+}
+
+void *NewTaggedArray(size_t count, size_t elsize, FixedMallocOpts opts,
+                     bool isPrimitive, int partition) {
+  GCAssertMsg(GCHeap::GetGCHeap()->IsStackEntered() || (opts & kCanFail) != 0,
+              "MMGC_ENTER macro must exist on the stack");
+
+  if ((opts & kCanFail) && (elsize > 0)) {
+    // 04sep15 pgrandma@adobe.com :
+    // https://watsonexp.corp.adobe.com/#bug=4016752
+    //
+    // CL 590139 on 10/13/09 (old repository) broke kCanFail,
+    // as CheckForCallocSizeOverflow() will Abort() when (count*elsize)
+    // would overflow 32-bit math.
+    //
+    // So I'm adding an early return NULL for kCanFail
+    // when the allocation would exceed kMaxObjectSize.
+    size_t limit = isPrimitive
+                       ? (MMgc::GCHeap::kMaxObjectSize)
+                       : (MMgc::GCHeap::kMaxObjectSize - MMGC_ARRAYHEADER_SIZE);
+
+    limit = limit / elsize; // (elsize != 0) due to previous check
+
+    if (count > limit) {
+      return NULL;
     }
+  }
 
-    REALLY_INLINE bool IsScalarAllocation(void* p)
-    {
-        return CheckForAllocationGuard(p, GCHeap::MMScalarTag);
+  size_t size = GCHeap::CheckForCallocSizeOverflow(count, elsize);
+
+  void *p;
+  if (isPrimitive) {
+    p = TaggedAlloc(size, opts,
+                    GCHeap::MMNormalArrayTag + uint32_t(isPrimitive),
+                    partition);
+  } else {
+    size = GCHeap::CheckForAllocSizeOverflow(size, MMGC_ARRAYHEADER_SIZE);
+    p = TaggedAlloc(size, opts,
+                    GCHeap::MMNormalArrayTag + uint32_t(isPrimitive),
+                    partition);
+
+    if (p != NULL) {
+      *(size_t *)p = count;
+      p = (char *)p + MMGC_ARRAYHEADER_SIZE;
     }
+  }
 
-    REALLY_INLINE bool IsArrayAllocation(void* p, bool primitive)
-    {
-        // Check if we have array guard right before the pointer.
-        uint32_t guard = GCHeap::MMNormalArrayTag + uint32_t(primitive);
-        return CheckForAllocationGuard(p, guard)                                    // simple array
-            || CheckForAllocationGuard((char*)p - MMGC_ARRAYHEADER_SIZE, guard);    // array with header
-    }
+  return p;
+}
 
-    REALLY_INLINE bool IsGCHeapAllocation(void* p)
-    {
-		GCHeap* heap = GCHeap::GetGCHeap();
-		if (!heap)
-			return false;
-		for (int i = 0; i < MMgc::kNumHeapPartitions; i++)
-		{
-			if (heap->GetPartition(i)->IsAddressInHeap(p))
-				return true;
-		}
-		return false;
-    }
-	
-    REALLY_INLINE bool IsGCHeapAllocation(void* p, int partition)
-    {
-		GCHeap* heap = GCHeap::GetGCHeap();
-		if (!heap)
-			return false;
-		return heap->GetPartition(partition)->IsAddressInHeap(p);
-    }
-
-    void VerifyTaggedScalar(void* p)
-    {
-        if (!IsScalarAllocation(p))
-        {
-            if (IsArrayAllocation(p, true) || IsArrayAllocation(p, false))
-            {
-                GCAssertMsg(0, "Trying to release array pointer with scalar destructor! Check the allocation and free calls for this object!");
-            }
-            else if (!IsGCHeapAllocation(p))
-            {
-                GCAssertMsg(0, "Trying to release system memory with scalar deletefunc! Check the allocation and free calls for this object!");
-            }
-            else
-            {
-                GCAssertMsg(0, "Trying to release funky memory with scalar deletefunc! Check the allocation and free calls for this object!");
-            }
-        }
-    }
-
-    void VerifyTaggedArray(void* p, bool primitive, int partition)
-    {
-        if (!IsArrayAllocation(p, primitive))
-        {
-            if (IsArrayAllocation(p, !primitive))
-            {
-                GCAssertMsg(0, "Trying to release array pointer with different type destructor! Check the allocation and free calls for this object!");
-            }
-            if (IsScalarAllocation(p))
-            {
-                GCAssertMsg(0, "Trying to release scalar pointer with vector destructor! Check the allocation and free calls for this object!");
-            }
-            else if (!IsGCHeapAllocation(p, partition))
-            {
-                GCAssertMsg(0, "Trying to release pointer from wrong partition with vector deletefunc! Check the allocation and free calls for this object!");
-            }
-            else if (!IsGCHeapAllocation(p))
-            {
-                GCAssertMsg(0, "Trying to release system pointer with vector deletefunc! Check the allocation and free calls for this object!");
-            }
-            else
-            {
-                GCAssertMsg(0, "Trying to release funky memory with vector deletefunc! Check the allocation and free calls for this object!");
-            }
-        }
-    }
-
-    // Functions to actually release the memory through FixedMalloc.
-    // Non-debug versions of these functions are always inlined.
-
-    void DeleteTaggedScalar(void* p)
-    {
 #ifdef MMGC_DELETE_DEBUGGING
-        // we need to adjust the pointer to release also the guard.
-        p = (char*)p - MMGC_GUARDCOOKIE_SIZE;
-#endif //MMGC_DELETE_DEBUGGING
+// Helper functions to check the guard.
+// The guard is an uin32_t stored in locations preceding the object.
 
-        DeleteCallInline(p, kMMFXNewScalarPartition);
+// The solaris compiler does not allow these to be both static and
+// REALLY_INLINE, so choose the latter over the former.
+
+REALLY_INLINE bool CheckForAllocationGuard(void *mem, uint32_t guard) {
+  return (*(uint32_t *)(void *)((char *)mem - MMGC_GUARDCOOKIE_SIZE) == guard);
+}
+
+REALLY_INLINE bool IsScalarAllocation(void *p) {
+  return CheckForAllocationGuard(p, GCHeap::MMScalarTag);
+}
+
+REALLY_INLINE bool IsArrayAllocation(void *p, bool primitive) {
+  // Check if we have array guard right before the pointer.
+  uint32_t guard = GCHeap::MMNormalArrayTag + uint32_t(primitive);
+  return CheckForAllocationGuard(p, guard) // simple array
+         || CheckForAllocationGuard((char *)p - MMGC_ARRAYHEADER_SIZE,
+                                    guard); // array with header
+}
+
+REALLY_INLINE bool IsGCHeapAllocation(void *p) {
+  GCHeap *heap = GCHeap::GetGCHeap();
+  if (!heap)
+    return false;
+  for (int i = 0; i < MMgc::kNumHeapPartitions; i++) {
+    if (heap->GetPartition(i)->IsAddressInHeap(p))
+      return true;
+  }
+  return false;
+}
+
+REALLY_INLINE bool IsGCHeapAllocation(void *p, int partition) {
+  GCHeap *heap = GCHeap::GetGCHeap();
+  if (!heap)
+    return false;
+  return heap->GetPartition(partition)->IsAddressInHeap(p);
+}
+
+void VerifyTaggedScalar(void *p) {
+  if (!IsScalarAllocation(p)) {
+    if (IsArrayAllocation(p, true) || IsArrayAllocation(p, false)) {
+      GCAssertMsg(0, "Trying to release array pointer with scalar destructor! "
+                     "Check the allocation and free calls for this object!");
+    } else if (!IsGCHeapAllocation(p)) {
+      GCAssertMsg(0, "Trying to release system memory with scalar deletefunc! "
+                     "Check the allocation and free calls for this object!");
+    } else {
+      GCAssertMsg(0, "Trying to release funky memory with scalar deletefunc! "
+                     "Check the allocation and free calls for this object!");
     }
+  }
+}
 
-    void DeleteTaggedArrayWithHeader( void* p )
-    {
-        if (p)
-        {
+void VerifyTaggedArray(void *p, bool primitive, int partition) {
+  if (!IsArrayAllocation(p, primitive)) {
+    if (IsArrayAllocation(p, !primitive)) {
+      GCAssertMsg(
+          0, "Trying to release array pointer with different type destructor! "
+             "Check the allocation and free calls for this object!");
+    }
+    if (IsScalarAllocation(p)) {
+      GCAssertMsg(0, "Trying to release scalar pointer with vector destructor! "
+                     "Check the allocation and free calls for this object!");
+    } else if (!IsGCHeapAllocation(p, partition)) {
+      GCAssertMsg(
+          0,
+          "Trying to release pointer from wrong partition with vector "
+          "deletefunc! Check the allocation and free calls for this object!");
+    } else if (!IsGCHeapAllocation(p)) {
+      GCAssertMsg(0, "Trying to release system pointer with vector deletefunc! "
+                     "Check the allocation and free calls for this object!");
+    } else {
+      GCAssertMsg(0, "Trying to release funky memory with vector deletefunc! "
+                     "Check the allocation and free calls for this object!");
+    }
+  }
+}
+
+// Functions to actually release the memory through FixedMalloc.
+// Non-debug versions of these functions are always inlined.
+
+void DeleteTaggedScalar(void *p) {
 #ifdef MMGC_DELETE_DEBUGGING
-            p = ((char*)p - (MMGC_ARRAYHEADER_SIZE + MMGC_GUARDCOOKIE_SIZE));
+  // we need to adjust the pointer to release also the guard.
+  p = (char *)p - MMGC_GUARDCOOKIE_SIZE;
+#endif // MMGC_DELETE_DEBUGGING
+
+  DeleteCallInline(p, kMMFXNewScalarPartition);
+}
+
+void DeleteTaggedArrayWithHeader(void *p) {
+  if (p) {
+#ifdef MMGC_DELETE_DEBUGGING
+    p = ((char *)p - (MMGC_ARRAYHEADER_SIZE + MMGC_GUARDCOOKIE_SIZE));
 #else
-            p = ((char*)p - MMGC_ARRAYHEADER_SIZE);
-#endif //MMGC_DELETE_DEBUGGING
-            DeleteCallInline(p, kMMFXNewArrayPartition);
-        }
-    }
+    p = ((char *)p - MMGC_ARRAYHEADER_SIZE);
+#endif // MMGC_DELETE_DEBUGGING
+    DeleteCallInline(p, kMMFXNewArrayPartition);
+  }
+}
 
-    void DeleteTaggedScalarChecked(void* p)
-    {
-        if (p)
-        {
+void DeleteTaggedScalarChecked(void *p) {
+  if (p) {
 #ifdef MMGC_DELETE_DEBUGGING
-            VerifyTaggedScalar(p);
+    VerifyTaggedScalar(p);
 #endif
-            DeleteTaggedScalar(p);
-        }
-    }
+    DeleteTaggedScalar(p);
+  }
+}
 
-    void DeleteTaggedArrayWithHeaderChecked(void* p, bool primitive, int partition)
-    {
-        if (p)
-        {
+void DeleteTaggedArrayWithHeaderChecked(void *p, bool primitive,
+                                        int partition) {
+  if (p) {
 #ifdef MMGC_DELETE_DEBUGGING
-            VerifyTaggedArray(p, primitive, partition);
+    VerifyTaggedArray(p, primitive, partition);
 #endif
-            if (primitive)
-			{
+    if (primitive) {
 #ifdef MMGC_DELETE_DEBUGGING
-				// we need to adjust the pointer to release also the guard.
-				p = (char*)p - MMGC_GUARDCOOKIE_SIZE;
-#endif //MMGC_DELETE_DEBUGGING
-				
-				DeleteCallInline(p, partition);
-			}
-            else
-			{
-                DeleteTaggedArrayWithHeader(p);
-			}
-        }
-    }
+      // we need to adjust the pointer to release also the guard.
+      p = (char *)p - MMGC_GUARDCOOKIE_SIZE;
+#endif // MMGC_DELETE_DEBUGGING
 
-#endif //MMGC_DELETE_DEBUGGING
+      DeleteCallInline(p, partition);
+    } else {
+      DeleteTaggedArrayWithHeader(p);
+    }
+  }
+}
+
+#endif // MMGC_DELETE_DEBUGGING
 
 } // namespace MMgc
 

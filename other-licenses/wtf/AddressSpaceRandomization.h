@@ -12,8 +12,8 @@ namespace WTF {
 // Calculates a random preferred mapping address. In calculating an
 // address, we balance good ASLR against not fragmenting the address
 // space too badly.
-WTF_EXPORT void* getRandomPageBase();
+WTF_EXPORT void *getRandomPageBase();
 
-}
+} // namespace WTF
 
 #endif

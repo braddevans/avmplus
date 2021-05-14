@@ -11,11 +11,11 @@ namespace halfmoon {
 
 /// Adjust the IR so models are consistent everywhere.
 ///
-void fixModels(Context*, InstrGraph* ir);
+void fixModels(Context *, InstrGraph *ir);
 
-ModelKind promoteModelKind(const Type* t);
+ModelKind promoteModelKind(const Type *t);
 
-SlotStorageType type2sst(const Type*);
+SlotStorageType type2sst(const Type *);
 
 } // namespace halfmoon
 #endif

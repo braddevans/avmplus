@@ -6,4 +6,3 @@
 
 #define avmplus_DomainClass_isExactInterlock 1
 #define avmplus_DomainObject_isExactInterlock 1
-

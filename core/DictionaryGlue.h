@@ -4,65 +4,61 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
 #ifndef DICTIONARYGLUE_INCLUDED
 #define DICTIONARYGLUE_INCLUDED
 
-namespace avmplus
-{
-    class GC_AS3_EXACT_WITH_HOOK(DictionaryObject, ScriptObject)
-    {
-        friend class DictionaryClass;
-    protected:
-        DictionaryObject(VTable *vtable, ScriptObject *delegate);
-        
-    public:
+namespace avmplus {
+class GC_AS3_EXACT_WITH_HOOK(DictionaryObject, ScriptObject) {
+  friend class DictionaryClass;
 
-        void init(bool weakKeys);
+protected:
+  DictionaryObject(VTable *vtable, ScriptObject *delegate);
 
-        // multiname and Stringp forms fall through to ScriptObject
-        virtual Atom getAtomProperty(Atom name) const;
-        virtual bool hasAtomProperty(Atom name) const;
-        virtual bool deleteAtomProperty(Atom name);
-        virtual void setAtomProperty(Atom name, Atom value);
+public:
+  void init(bool weakKeys);
 
-        virtual Atom nextName(int index);
-        virtual Atom nextValue(int index);
-        virtual int nextNameIndex(int index);
+  // multiname and Stringp forms fall through to ScriptObject
+  virtual Atom getAtomProperty(Atom name) const;
+  virtual bool hasAtomProperty(Atom name) const;
+  virtual bool deleteAtomProperty(Atom name);
+  virtual void setAtomProperty(Atom name, Atom value);
 
-        bool isUsingWeakKeys() const { return getHeapHashtable()->weakKeys(); }
+  virtual Atom nextName(int index);
+  virtual Atom nextValue(int index);
+  virtual int nextNameIndex(int index);
 
-    private:
+  bool isUsingWeakKeys() const { return getHeapHashtable()->weakKeys(); }
 
-        // Deliberately declared out-of-line; inline declaration inexplicably
-        // makes certain permutations of XCode 3.2.x for iOS segfault.
-        // Voodoo coding FTW!
-        void gcTraceHook_DictionaryObject(MMgc::GC *gc);
-            
-        HeapHashtable* getHeapHashtable() const;
+private:
+  // Deliberately declared out-of-line; inline declaration inexplicably
+  // makes certain permutations of XCode 3.2.x for iOS segfault.
+  // Voodoo coding FTW!
+  void gcTraceHook_DictionaryObject(MMgc::GC *gc);
 
-        Atom FASTCALL getKeyFromObject(Atom object) const;
+  HeapHashtable *getHeapHashtable() const;
 
-    // ------------------------ DATA SECTION BEGIN
-        GC_NO_DATA(DictionaryObject)
+  Atom FASTCALL getKeyFromObject(Atom object) const;
 
-    private:
-        DECLARE_SLOTS_DictionaryObject;
-    // ------------------------ DATA SECTION END
-    };
+  // ------------------------ DATA SECTION BEGIN
+  GC_NO_DATA(DictionaryObject)
 
-    class GC_AS3_EXACT(DictionaryClass, ClassClosure)
-    {
-    private:
-        DictionaryClass(VTable *vtable);
-    public:
-    // ------------------------ DATA SECTION BEGIN
-        GC_NO_DATA(DictionaryClass)
+private:
+  DECLARE_SLOTS_DictionaryObject;
+  // ------------------------ DATA SECTION END
+};
 
-    private:
-        DECLARE_SLOTS_DictionaryClass;
-    // ------------------------ DATA SECTION END
-    };
-}
+class GC_AS3_EXACT(DictionaryClass, ClassClosure) {
+private:
+  DictionaryClass(VTable *vtable);
+
+public:
+  // ------------------------ DATA SECTION BEGIN
+  GC_NO_DATA(DictionaryClass)
+
+private:
+  DECLARE_SLOTS_DictionaryClass;
+  // ------------------------ DATA SECTION END
+};
+} // namespace avmplus
 
 #endif /* DICTIONARYGLUE_INCLUDED */

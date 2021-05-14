@@ -11,17 +11,17 @@ namespace halfmoon {
 
 /// "Early" Scheduling.  Place pure expression instructions in the highest
 /// block in the dominator tree where all the inputs are available.
-void scheduleEarly(InstrGraph*);
+void scheduleEarly(InstrGraph *);
 
 /// "Late" Scheduling.  Place pure expression instructions in the lowest block
 /// in the dominator tree that still dominates all uses.
-void scheduleLate(InstrGraph*);
+void scheduleLate(InstrGraph *);
 
 /// "Middle" Scheduling.  Place instructions in the lowest block in the
 /// dominator tree, among the candidate blocks with the lowest loop nesting
 /// depth.  This will hoist loop invariant expressions out of loops, but
 /// otherwise sink them as much as possible.
-void scheduleMiddle(InstrGraph*);
+void scheduleMiddle(InstrGraph *);
 
 } // namespace halfmoon
 

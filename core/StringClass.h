@@ -7,46 +7,45 @@
 #ifndef __avmplus_StringClass__
 #define __avmplus_StringClass__
 
+namespace avmplus {
+/**
+ * class StringClass
+ */
+class GC_AS3_EXACT(StringClass, ClassClosure) {
+protected:
+  StringClass(VTable *cvtable);
 
-namespace avmplus
-{
-    /**
-     * class StringClass
-     */
-    class GC_AS3_EXACT(StringClass, ClassClosure)
-    {
-    protected:
-        StringClass(VTable* cvtable);
-        
-    public:
-        REALLY_INLINE static StringClass* create(MMgc::GC *gc, VTable* cvtable)
-        {
-            return new (gc, MMgc::kExact, cvtable->getExtraSize()) StringClass(cvtable);
-        }
+public:
+  REALLY_INLINE static StringClass *create(MMgc::GC *gc, VTable *cvtable) {
+    return new (gc, MMgc::kExact, cvtable->getExtraSize()) StringClass(cvtable);
+  }
 
-        // this = argv[0]
-        // arg1 = argv[1]
-        // argN = argv[argc]
-        Atom call(int argc, Atom* argv);
+  // this = argv[0]
+  // arg1 = argv[1]
+  // argN = argv[argc]
+  Atom call(int argc, Atom *argv);
 
-        // native methods.  see String.as
-        ArrayObject* _match(Stringp s, Atom pattern);
-        Stringp _replace(Stringp in, Atom pattern, Atom replacementAtom);
-        int _search(Stringp in, Atom regexpAtom);
-        ArrayObject* _split(Stringp in, Atom delimAtom, uint32_t limit);
+  // native methods.  see String.as
+  ArrayObject *_match(Stringp s, Atom pattern);
+  Stringp _replace(Stringp in, Atom pattern, Atom replacementAtom);
+  int _search(Stringp in, Atom regexpAtom);
+  ArrayObject *_split(Stringp in, Atom delimAtom, uint32_t limit);
 
-        // defined via rest args to allow length = 1 and support calling with no args... ES3 spec says length = 1
-        Stringp AS3_fromCharCode(Atom *argv, int argc);
+  // defined via rest args to allow length = 1 and support calling with no
+  // args... ES3 spec says length = 1
+  Stringp AS3_fromCharCode(Atom *argv, int argc);
 
-        inline Stringp fromCharCode(Atom *argv, int argc) { return AS3_fromCharCode(argv, argc); }
+  inline Stringp fromCharCode(Atom *argv, int argc) {
+    return AS3_fromCharCode(argv, argc);
+  }
 
-    // ------------------------ DATA SECTION BEGIN
-    private:
-        GC_NO_DATA(StringClass)
+  // ------------------------ DATA SECTION BEGIN
+private:
+  GC_NO_DATA(StringClass)
 
-        DECLARE_SLOTS_StringClass;
-    // ------------------------ DATA SECTION END
-    };
-}
+  DECLARE_SLOTS_StringClass;
+  // ------------------------ DATA SECTION END
+};
+} // namespace avmplus
 
 #endif /* __avmplus_StringClass__ */

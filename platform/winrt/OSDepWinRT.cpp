@@ -9,33 +9,28 @@
 using namespace Windows::System::Threading;
 using namespace Windows::Foundation;
 
-namespace avmplus
-{
-	struct IntWriterData
-	{
-		ThreadPoolTimer^ timer;
-	};
-	
-	uintptr_t OSDep::startIntWriteTimer(uint32_t millis, volatile int *addr)
-    {
-		IntWriterData *data = (IntWriterData *) VMPI_alloc(sizeof(IntWriterData));
-		data->timer = nullptr;
-		
-		TimeSpan timeSpan;
-		timeSpan.Duration = millis;
+namespace avmplus {
+struct IntWriterData {
+  ThreadPoolTimer ^ timer;
+};
 
-		data->timer = ThreadPoolTimer::CreatePeriodicTimer(ref new TimerElapsedHandler([&] (ThreadPoolTimer^ timer) {
-			*addr = 1;
-		}
-		), timeSpan);
-		return (uintptr_t)data;
-    }
+uintptr_t OSDep::startIntWriteTimer(uint32_t millis, volatile int *addr) {
+  IntWriterData *data = (IntWriterData *)VMPI_alloc(sizeof(IntWriterData));
+  data->timer = nullptr;
 
-    void OSDep::stopTimer(uintptr_t handle)
-    {
-		IntWriterData *data = (IntWriterData *) handle;
-		data->timer->Cancel();
-		data->timer = nullptr;
-		VMPI_free(data);
-    }
+  TimeSpan timeSpan;
+  timeSpan.Duration = millis;
+
+  data->timer = ThreadPoolTimer::CreatePeriodicTimer(
+      ref new TimerElapsedHandler([&](ThreadPoolTimer ^ timer) { *addr = 1; }),
+      timeSpan);
+  return (uintptr_t)data;
 }
+
+void OSDep::stopTimer(uintptr_t handle) {
+  IntWriterData *data = (IntWriterData *)handle;
+  data->timer->Cancel();
+  data->timer = nullptr;
+  VMPI_free(data);
+}
+} // namespace avmplus

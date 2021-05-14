@@ -7,48 +7,43 @@
 #ifndef __avmplus_DateClass__
 #define __avmplus_DateClass__
 
+namespace avmplus {
+/**
+ * class DateClass
+ */
+class GC_AS3_EXACT(DateClass, ClassClosure) {
+protected:
+  DateClass(VTable *cvtable);
 
-namespace avmplus
-{
-    /**
-     * class DateClass
-     */
-    class GC_AS3_EXACT(DateClass, ClassClosure)
-    {
-    protected:
-        DateClass(VTable* cvtable);
+public:
+  // this = argv[0]
+  // arg1 = argv[1]
+  // argN = argv[argc]
+  Atom call(int argc, Atom *argv);
 
-    public:
+  /** @name instance methods */
+  /*@{*/
+  Atom get(Atom thisAtom, Atom *args, int argc, int index);
+  Atom set(Atom thisAtom, Atom *args, int argc, int index);
+  /*@}*/
 
-        // this = argv[0]
-        // arg1 = argv[1]
-        // argN = argv[argc]
-        Atom call(int argc, Atom* argv);
+  /** @name static methods */
+  /*@{*/
+  double parse(Atom input);
+  double UTC(Atom year, Atom month, Atom date, Atom hours, Atom minutes,
+             Atom seconds, Atom ms, Atom *args, int argc);
+  /*@}*/
 
-        /** @name instance methods */
-        /*@{*/
-        Atom get(Atom thisAtom, Atom *args, int argc, int index);
-        Atom set(Atom thisAtom, Atom *args, int argc, int index);
-        /*@}*/
+private:
+  double stringToDateDouble(Stringp s);
 
-        /** @name static methods */
-        /*@{*/
-        double parse(Atom input);
-        double UTC(Atom year, Atom month, Atom date,
-                   Atom hours, Atom minutes, Atom seconds, Atom ms,
-                   Atom *args, int argc);
-        /*@}*/
+  // ------------------------ DATA SECTION BEGIN
+  GC_NO_DATA(DateClass)
 
-    private:
-        double      stringToDateDouble(Stringp s);
-
-    // ------------------------ DATA SECTION BEGIN
-        GC_NO_DATA(DateClass)
-
-    private:
-        DECLARE_SLOTS_DateClass;
-    // ------------------------ DATA SECTION END
-    };
-}
+private:
+  DECLARE_SLOTS_DateClass;
+  // ------------------------ DATA SECTION END
+};
+} // namespace avmplus
 
 #endif /* __avmplus_DateClass__ */

@@ -1,518 +1,471 @@
 /* -*- Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*- */
 /* vi: set ts=4 sw=4 expandtab: (add to ~/.vimrc: set modeline modelines=5) */
 /* This Source Code Form is subject to the terms of the Mozilla Public
-* License, v. 2.0. If a copy of the MPL was not distributed with this
-* file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <windows.h>
 
-#include "MMgc.h"
 #include "../other-licenses/wtf/AddressSpaceRandomization.h"
+#include "MMgc.h"
 
 #ifdef MMGC_MEMORY_PROFILER
-    #include <malloc.h>
-    #include <strsafe.h>
-#ifndef UNDER_CE  // Not available on WinMo builds
-    #include <DbgHelp.h>
-    #include <io.h>
+#include <malloc.h>
+#include <strsafe.h>
+#ifndef UNDER_CE // Not available on WinMo builds
+#include <DbgHelp.h>
+#include <io.h>
 #endif
 #endif
 
 #ifdef NANOJIT_WIN_CFG
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifndef INTERNAL_BUILD
-typedef struct _CFG_CALL_TARGET_INFO { 
-	ULONG_PTR Offset; 
-	ULONG_PTR Flags; 
+typedef struct _CFG_CALL_TARGET_INFO {
+  ULONG_PTR Offset;
+  ULONG_PTR Flags;
 } CFG_CALL_TARGET_INFO, *PCFG_CALL_TARGET_INFO;
 #endif
 
-#define FILE_MAP_TARGETS_INVALID       0x40000000 
-#define PAGE_TARGETS_NO_UPDATE      0x40000000
-#define PAGE_TARGETS_INVALID        0x40000000
+#define FILE_MAP_TARGETS_INVALID 0x40000000
+#define PAGE_TARGETS_NO_UPDATE 0x40000000
+#define PAGE_TARGETS_INVALID 0x40000000
 #define CFG_CALL_TARGET_VALID (0x1)
 
 #pragma section(".00cfg", read)
 #define DECLSPEC_CFG_SECTION __declspec(allocate(".00cfg"))
 
-BOOL WINAPI SetProcessValidCallTargetsStub(_In_ HANDLE,
-									_In_ PVOID,
-									_In_ SIZE_T,
-									_In_ ULONG,
-									_In_reads_(0) PCFG_CALL_TARGET_INFO)
-{
-	return FALSE;
+BOOL WINAPI SetProcessValidCallTargetsStub(_In_ HANDLE, _In_ PVOID, _In_ SIZE_T,
+                                           _In_ ULONG,
+                                           _In_reads_(0)
+                                               PCFG_CALL_TARGET_INFO) {
+  return FALSE;
 }
 
 // SetProcessValidCallTargets function pointer type.
-typedef BOOL (WINAPI *FNCSetProcessValidCallTargets)(HANDLE, PVOID, SIZE_T, ULONG, PCFG_CALL_TARGET_INFO);
+typedef BOOL(WINAPI *FNCSetProcessValidCallTargets)(HANDLE, PVOID, SIZE_T,
+                                                    ULONG,
+                                                    PCFG_CALL_TARGET_INFO);
 
 //
-// Allocate SetProcessValidCallTargetsPtr in the .00cfg so that it is implicitly merged into the 
-// import section of the binary (which is read-only).
-// Indirect calls using this pointer do not have the guard check function,
-// and so will not fail the CFG check.
+// Allocate SetProcessValidCallTargetsPtr in the .00cfg so that it is implicitly
+// merged into the import section of the binary (which is read-only). Indirect
+// calls using this pointer do not have the guard check function, and so will
+// not fail the CFG check.
 //
 
-EXTERN_C DECLSPEC_CFG_SECTION FNCSetProcessValidCallTargets SetProcessValidCallTargetsPtr = SetProcessValidCallTargetsStub;
+EXTERN_C DECLSPEC_CFG_SECTION FNCSetProcessValidCallTargets
+    SetProcessValidCallTargetsPtr = SetProcessValidCallTargetsStub;
 EXTERN_C DECLSPEC_CFG_SECTION LONG gIsSupportedSetICallTarget = false;
 EXTERN_C DECLSPEC_CFG_SECTION LONG gIsSetICallTargetResolved = false;
 
-
-DECLSPEC_GUARDNOCF BOOL CallSetProcessValidCallTargets( _In_ HANDLE hProcess,
-														_In_ PVOID pBuffer,
-														_In_ SIZE_T nLength,
-														_In_ ULONG nInfoArgs,
-														_In_reads_(0) PCFG_CALL_TARGET_INFO InfoArgs)
-{
-	// Read into local to avoid compiler optimizing away a read-only global variable.
-	FNCSetProcessValidCallTargets pfn;
-	pfn = (FNCSetProcessValidCallTargets)ReadPointerNoFence((volatile PVOID *)&SetProcessValidCallTargetsPtr);
-	return pfn(hProcess, pBuffer, nLength, nInfoArgs, InfoArgs);
+DECLSPEC_GUARDNOCF BOOL CallSetProcessValidCallTargets(
+    _In_ HANDLE hProcess, _In_ PVOID pBuffer, _In_ SIZE_T nLength,
+    _In_ ULONG nInfoArgs, _In_reads_(0) PCFG_CALL_TARGET_INFO InfoArgs) {
+  // Read into local to avoid compiler optimizing away a read-only global
+  // variable.
+  FNCSetProcessValidCallTargets pfn;
+  pfn = (FNCSetProcessValidCallTargets)ReadPointerNoFence(
+      (volatile PVOID *)&SetProcessValidCallTargetsPtr);
+  return pfn(hProcess, pBuffer, nLength, nInfoArgs, InfoArgs);
 }
 
-DECLSPEC_GUARDNOCF BOOL IsSupportedSetICallTarget()
-{
-	// Read into local to avoid compiler optimizing away a read-only global variable.
-	BOOL ret;
-	ret = (BOOL)ReadNoFence((volatile LONG *)&gIsSupportedSetICallTarget);
-	return ret;
+DECLSPEC_GUARDNOCF BOOL IsSupportedSetICallTarget() {
+  // Read into local to avoid compiler optimizing away a read-only global
+  // variable.
+  BOOL ret;
+  ret = (BOOL)ReadNoFence((volatile LONG *)&gIsSupportedSetICallTarget);
+  return ret;
 }
 
-DECLSPEC_GUARDNOCF BOOL IsSetICallTargetResolved()
-{
-	// Read into local to avoid compiler optimizing away a read-only global variable.
-	BOOL ret;
-	ret = (BOOL)ReadNoFence((volatile LONG *)&gIsSetICallTargetResolved);
-	return ret;
+DECLSPEC_GUARDNOCF BOOL IsSetICallTargetResolved() {
+  // Read into local to avoid compiler optimizing away a read-only global
+  // variable.
+  BOOL ret;
+  ret = (BOOL)ReadNoFence((volatile LONG *)&gIsSetICallTargetResolved);
+  return ret;
 }
 
-VOID ResolveSetProcessValidCallTargets()
-{
-	ULONG dwOldProtect;
-	FNCSetProcessValidCallTargets funcPtr;
+VOID ResolveSetProcessValidCallTargets() {
+  ULONG dwOldProtect;
+  FNCSetProcessValidCallTargets funcPtr;
 
-	if (IsSetICallTargetResolved())
-		return;
+  if (IsSetICallTargetResolved())
+    return;
 
-	if (!VirtualProtect(&gIsSetICallTargetResolved, sizeof(BOOL), PAGE_READWRITE, &dwOldProtect))
-		return;
-	gIsSetICallTargetResolved = (LONG)true;
-	if (!VirtualProtect(&gIsSetICallTargetResolved, sizeof(BOOL), dwOldProtect, &dwOldProtect))
-		return;
+  if (!VirtualProtect(&gIsSetICallTargetResolved, sizeof(BOOL), PAGE_READWRITE,
+                      &dwOldProtect))
+    return;
+  gIsSetICallTargetResolved = (LONG) true;
+  if (!VirtualProtect(&gIsSetICallTargetResolved, sizeof(BOOL), dwOldProtect,
+                      &dwOldProtect))
+    return;
 
-	funcPtr = (FNCSetProcessValidCallTargets)GetProcAddress(GetModuleHandleW(L"api-ms-win-core-memory-l1-1-3.dll"), "SetProcessValidCallTargets");
-	if (funcPtr == nullptr)
-		return;
+  funcPtr = (FNCSetProcessValidCallTargets)GetProcAddress(
+      GetModuleHandleW(L"api-ms-win-core-memory-l1-1-3.dll"),
+      "SetProcessValidCallTargets");
+  if (funcPtr == nullptr)
+    return;
 
-	if (!VirtualProtect(&SetProcessValidCallTargetsPtr, sizeof(PVOID), PAGE_READWRITE, &dwOldProtect))
-		return;
-	SetProcessValidCallTargetsPtr = funcPtr;
-	if (!VirtualProtect(&SetProcessValidCallTargetsPtr, sizeof(PVOID), dwOldProtect, &dwOldProtect))
-		return;
+  if (!VirtualProtect(&SetProcessValidCallTargetsPtr, sizeof(PVOID),
+                      PAGE_READWRITE, &dwOldProtect))
+    return;
+  SetProcessValidCallTargetsPtr = funcPtr;
+  if (!VirtualProtect(&SetProcessValidCallTargetsPtr, sizeof(PVOID),
+                      dwOldProtect, &dwOldProtect))
+    return;
 
-	if (!VirtualProtect(&gIsSupportedSetICallTarget, sizeof(BOOL), PAGE_READWRITE, &dwOldProtect))
-		return;
-	gIsSupportedSetICallTarget = (LONG)true;
-	if (!VirtualProtect(&gIsSupportedSetICallTarget, sizeof(BOOL), dwOldProtect, &dwOldProtect))
-		return;
+  if (!VirtualProtect(&gIsSupportedSetICallTarget, sizeof(BOOL), PAGE_READWRITE,
+                      &dwOldProtect))
+    return;
+  gIsSupportedSetICallTarget = (LONG) true;
+  if (!VirtualProtect(&gIsSupportedSetICallTarget, sizeof(BOOL), dwOldProtect,
+                      &dwOldProtect))
+    return;
 }
-#endif //NANOJIT_WIN_CFG
+#endif // NANOJIT_WIN_CFG
 
-bool AVMPI_canMergeContiguousRegions()
-{
-    return false;
-}
+bool AVMPI_canMergeContiguousRegions() { return false; }
 
-bool AVMPI_canCommitAlreadyCommittedMemory()
-{
-    return true;
-}
+bool AVMPI_canCommitAlreadyCommittedMemory() { return true; }
 
-bool AVMPI_useVirtualMemory()
-{
-    return true;
-}
+bool AVMPI_useVirtualMemory() { return true; }
 
-bool AVMPI_areNewPagesDirty()
-{
-    return false;
-}
+bool AVMPI_areNewPagesDirty() { return false; }
 
-void* AVMPI_reserveMemoryRegion(void* address, size_t size)
-{
+void *AVMPI_reserveMemoryRegion(void *address, size_t size) {
 #ifdef NANOJIT_WIN_CFG
-	// Resolve SetProcessValidCallTargets() function pointer if OS supports it.
-	ResolveSetProcessValidCallTargets();
+  // Resolve SetProcessValidCallTargets() function pointer if OS supports it.
+  ResolveSetProcessValidCallTargets();
 #endif
 
 #ifdef AVMPLUS_64BIT
-	if (!address) {
-		address = WTF::getRandomPageBase();
-    }
+  if (!address) {
+    address = WTF::getRandomPageBase();
+  }
 #endif // AVMPLUS_64BIT
 
-    return VirtualAlloc(address,
-                        size,
-						MEM_RESERVE,
-                        PAGE_NOACCESS);
+  return VirtualAlloc(address, size, MEM_RESERVE, PAGE_NOACCESS);
 }
 
-bool AVMPI_releaseMemoryRegion(void* address, size_t /*size*/)
-{
-    return VirtualFree(address, 0, MEM_RELEASE) == TRUE;
+bool AVMPI_releaseMemoryRegion(void *address, size_t /*size*/) {
+  return VirtualFree(address, 0, MEM_RELEASE) == TRUE;
 }
 
-static bool CommitMemory(void* address, size_t size)
-{
-    address = VirtualAlloc(address,
-                           size,
-                           MEM_COMMIT,
-                           PAGE_READWRITE);
-    return address != NULL;
+static bool CommitMemory(void *address, size_t size) {
+  address = VirtualAlloc(address, size, MEM_COMMIT, PAGE_READWRITE);
+  return address != NULL;
 }
 
-bool AVMPI_commitMemory(void* address, size_t size)
-{
-    bool success = false;
-    MEMORY_BASIC_INFORMATION mbi;
-    do {
-        VirtualQuery(address, &mbi, sizeof(MEMORY_BASIC_INFORMATION));
-        size_t commitSize = size > mbi.RegionSize ? mbi.RegionSize : size;
-        success = CommitMemory(address, commitSize);
-        address = (char*)address + commitSize;
-        size -= commitSize;
-    } while(size > 0 && success);
+bool AVMPI_commitMemory(void *address, size_t size) {
+  bool success = false;
+  MEMORY_BASIC_INFORMATION mbi;
+  do {
+    VirtualQuery(address, &mbi, sizeof(MEMORY_BASIC_INFORMATION));
+    size_t commitSize = size > mbi.RegionSize ? mbi.RegionSize : size;
+    success = CommitMemory(address, commitSize);
+    address = (char *)address + commitSize;
+    size -= commitSize;
+  } while (size > 0 && success);
 
-    return success;
+  return success;
 }
 
-bool AVMPI_decommitMemory(char *address, size_t size)
-{
-    bool success = false;
-    MEMORY_BASIC_INFORMATION mbi;
-    do {
-        VirtualQuery(address, &mbi, sizeof(MEMORY_BASIC_INFORMATION));
-        size_t commitSize = size > mbi.RegionSize ? mbi.RegionSize : size;
-        success = VirtualFree(address, commitSize, MEM_DECOMMIT) == TRUE;
-        address += commitSize;
-        size -= commitSize;
-    } while(size > 0 && success);
+bool AVMPI_decommitMemory(char *address, size_t size) {
+  bool success = false;
+  MEMORY_BASIC_INFORMATION mbi;
+  do {
+    VirtualQuery(address, &mbi, sizeof(MEMORY_BASIC_INFORMATION));
+    size_t commitSize = size > mbi.RegionSize ? mbi.RegionSize : size;
+    success = VirtualFree(address, commitSize, MEM_DECOMMIT) == TRUE;
+    address += commitSize;
+    size -= commitSize;
+  } while (size > 0 && success);
 
-    return success;
+  return success;
 }
 
-void* AVMPI_allocateAlignedMemory(size_t size)
-{
-    return VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_READWRITE);
+void *AVMPI_allocateAlignedMemory(size_t size) {
+  return VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_READWRITE);
 }
 
-void AVMPI_releaseAlignedMemory(void* address)
-{
-    AVMPI_releaseMemoryRegion(address, 0);
+void AVMPI_releaseAlignedMemory(void *address) {
+  AVMPI_releaseMemoryRegion(address, 0);
 }
 
 #ifdef UNDER_CE
-    typedef DWORD (*pTGetProcessIndexFromID)(HANDLE hProc);
-    static pTGetProcessIndexFromID gGetID=NULL;
-#if _WIN32_WCE>=0x600
-    THIS WILL NOT WORK ON WINCE 6.0 AND ABOVE
+typedef DWORD (*pTGetProcessIndexFromID)(HANDLE hProc);
+static pTGetProcessIndexFromID gGetID = NULL;
+#if _WIN32_WCE >= 0x600
+THIS WILL NOT WORK ON WINCE 6.0 AND ABOVE
 #endif
 #endif
 
 #ifdef UNDER_CE
 
-// The WinCE version of getPrivateResidentPageCount must do some specific things to get
-// an accurate picture of private bytes due to how WinCE lays out memory for the process.
-// see http://msdn.microsoft.com/en-us/library/bb331824.aspx for a desccription of how the memory is laid out.
-// Note that we are running on Windows Mobile 6.0, but that is based on WinCE 5.0.
-// Basically, first we walk the memory for the process slot, from 0x10000 to 0x2000000.  Then we walk the memory
-// in the large memory area (0x42000000 - 0x80000000), as this is where gcheap allocates memory from.
+    // The WinCE version of getPrivateResidentPageCount must do some specific
+    // things to get an accurate picture of private bytes due to how WinCE lays
+    // out memory for the process. see
+    // http://msdn.microsoft.com/en-us/library/bb331824.aspx for a desccription
+    // of how the memory is laid out. Note that we are running on Windows
+    // Mobile 6.0, but that is based on WinCE 5.0. Basically, first we walk the
+    // memory for the process slot, from 0x10000 to 0x2000000.  Then we walk the
+    // memory in the large memory area (0x42000000 - 0x80000000), as this is
+    // where gcheap allocates memory from.
 
-size_t AVMPI_getPrivateResidentPageCount()
-{
-    void  *addr = (void*)(0x00010000);
-    void  *endAddr = (void*)(0x02000000);
+        size_t
+        AVMPI_getPrivateResidentPageCount() {
+  void *addr = (void *)(0x00010000);
+  void *endAddr = (void *)(0x02000000);
 
-    size_t bytes=0;
-    MEMORY_BASIC_INFORMATION mib;
-    while(true)
-    {
-        size_t ret = VirtualQuery(addr, &mib, sizeof(MEMORY_BASIC_INFORMATION));
-        if(ret == 0)
-            break;
+  size_t bytes = 0;
+  MEMORY_BASIC_INFORMATION mib;
+  while (true) {
+    size_t ret = VirtualQuery(addr, &mib, sizeof(MEMORY_BASIC_INFORMATION));
+    if (ret == 0)
+      break;
 
-        if((mib.State & MEM_COMMIT))
-            if ((DWORD)mib.BaseAddress + mib.RegionSize > (DWORD)endAddr)
-                bytes += (DWORD)endAddr - (DWORD)mib.BaseAddress;
-            else
+    if ((mib.State & MEM_COMMIT))
+      if ((DWORD)mib.BaseAddress + mib.RegionSize > (DWORD)endAddr)
+        bytes += (DWORD)endAddr - (DWORD)mib.BaseAddress;
+      else
 
-            bytes += mib.RegionSize;
+        bytes += mib.RegionSize;
 
-            addr = (void*) ((intptr_t)mib.BaseAddress + mib.RegionSize);
-            if (addr>=endAddr)
-                break;
+    addr = (void *)((intptr_t)mib.BaseAddress + mib.RegionSize);
+    if (addr >= endAddr)
+      break;
+  }
+
+  MMgc::GCHeap *heap = MMgc::GCHeap::GetGCHeap();
+
+  // We need to also walk the shared memory regions to make sure we
+  // count the blocks we've allocated there
+  MMgc::GCHeap::Region *curRegion = heap->lastRegion;
+  if (curRegion)
+    addr = curRegion->baseAddr;
+  else
+    addr = NULL;
+
+  while (curRegion != NULL) {
+    addr = curRegion->baseAddr;
+    if (addr < (void *)0x42000000) {
+      // Not in the shared regions
+      curRegion = curRegion->prev;
+      continue;
     }
 
-    MMgc::GCHeap* heap = MMgc::GCHeap::GetGCHeap();
+    while (true) {
+      size_t ret = VirtualQuery(addr, &mib, sizeof(MEMORY_BASIC_INFORMATION));
+      if (ret == 0)
+        break;
 
-    // We need to also walk the shared memory regions to make sure we
-    // count the blocks we've allocated there
-    MMgc::GCHeap::Region* curRegion = heap->lastRegion;
-    if (curRegion)
-        addr = curRegion->baseAddr;
-    else
-        addr = NULL;
+      if ((mib.State & MEM_COMMIT)) // && (mib.Type & MEM_PRIVATE))
+      {
+        if ((DWORD)mib.BaseAddress + mib.RegionSize >
+            (DWORD)curRegion->reserveTop)
+          bytes += (DWORD)curRegion->reserveTop - (DWORD)mib.BaseAddress;
+        else
+          bytes += mib.RegionSize;
+      }
 
-    while (curRegion!=NULL)
-    {
-        addr = curRegion->baseAddr;
-        if (addr < (void*)0x42000000)
-        {
-            // Not in the shared regions
-            curRegion = curRegion->prev;
-            continue;
-        }
+      addr = (void *)((intptr_t)mib.BaseAddress + mib.RegionSize);
 
-        while(true)
-        {
-            size_t ret = VirtualQuery(addr, &mib, sizeof(MEMORY_BASIC_INFORMATION));
-            if(ret == 0)
-                break;
-
-            if((mib.State & MEM_COMMIT)) // && (mib.Type & MEM_PRIVATE))
-            {
-                if ((DWORD)mib.BaseAddress + mib.RegionSize > (DWORD)curRegion->reserveTop)
-                    bytes += (DWORD)curRegion->reserveTop - (DWORD)mib.BaseAddress;
-                else
-                    bytes += mib.RegionSize;
-            }
-
-            addr = (void*) ((intptr_t)mib.BaseAddress + mib.RegionSize);
-
-            if (addr>=curRegion->reserveTop)
-                break;
-        }
-        curRegion = curRegion->prev;
+      if (addr >= curRegion->reserveTop)
+        break;
     }
+    curRegion = curRegion->prev;
+  }
 
-    return bytes / VMPI_getVMPageSize();
+  return bytes / VMPI_getVMPageSize();
 }
 
-#else // UNDER_CE
+#else  // UNDER_CE
 
-size_t AVMPI_getPrivateResidentPageCount()
-{
-    void *addr = 0;
-    size_t bytes=0;
-    MEMORY_BASIC_INFORMATION mib;
-    while(true)
-    {
-        size_t ret = VirtualQuery(addr, &mib, sizeof(MEMORY_BASIC_INFORMATION));
-        if(ret == 0)
-            break;
+size_t AVMPI_getPrivateResidentPageCount() {
+  void *addr = 0;
+  size_t bytes = 0;
+  MEMORY_BASIC_INFORMATION mib;
+  while (true) {
+    size_t ret = VirtualQuery(addr, &mib, sizeof(MEMORY_BASIC_INFORMATION));
+    if (ret == 0)
+      break;
 
-        if((mib.State & MEM_COMMIT) && (mib.Type & MEM_PRIVATE))
-            bytes += mib.RegionSize;
+    if ((mib.State & MEM_COMMIT) && (mib.Type & MEM_PRIVATE))
+      bytes += mib.RegionSize;
 
-            addr = (void*) ((intptr_t)mib.BaseAddress + mib.RegionSize);
-    }
+    addr = (void *)((intptr_t)mib.BaseAddress + mib.RegionSize);
+  }
 
-    return bytes / VMPI_getVMPageSize();
+  return bytes / VMPI_getVMPageSize();
 }
-#endif //UNDER_CE
+#endif // UNDER_CE
 
-void AVMPI_cleanStack(size_t amt)
-{
-    void *space = alloca(amt);
-    if(space)
-    {
-        VMPI_memset(space, 0, amt);
-    }
+void AVMPI_cleanStack(size_t amt) {
+  void *space = alloca(amt);
+  if (space) {
+    VMPI_memset(space, 0, amt);
+  }
 }
 
-uintptr_t AVMPI_getThreadStackBase()
-{
-    MEMORY_BASIC_INFORMATION __mib;
-    VirtualQuery(&__mib, &__mib, sizeof(MEMORY_BASIC_INFORMATION));
-    return (uintptr_t)__mib.BaseAddress + __mib.RegionSize;
+uintptr_t AVMPI_getThreadStackBase() {
+  MEMORY_BASIC_INFORMATION __mib;
+  VirtualQuery(&__mib, &__mib, sizeof(MEMORY_BASIC_INFORMATION));
+  return (uintptr_t)__mib.BaseAddress + __mib.RegionSize;
 }
 
 #ifdef MMGC_MEMORY_PROFILER
 
 #ifndef UNDER_CE
-namespace MMgc
+namespace MMgc {
+// This relies on headers that don't exist in winmo builds
+
+// --------------------------------------------------------------------------
+// --------------------------------------------------------------------------
+// --------------------------------------------------------------------------
+
+// helper snarfed and simplified from main flash player code.
+// since we only need it here and only for debug, I didn't bother
+// migrating the whole thing.
+class DynamicLoadLibraryHelper {
+protected:
+  DynamicLoadLibraryHelper(const char *p_dllName, bool p_required = true);
+  virtual ~DynamicLoadLibraryHelper();
+
+  FARPROC GetProc(const char *p_funcName, bool p_required = true);
+
+public:
+  // note that this is only if any of the *required* ones failed;
+  // some "optional" ones may be missing and still have this return true.
+  bool AllRequiredItemsPresent() const { return m_allRequiredItemsPresent; }
+
+private:
+  HMODULE m_lib;
+  bool m_allRequiredItemsPresent;
+};
+
+// --------------------------------------------------------------------------
+// --------------------------------------------------------------------------
+// --------------------------------------------------------------------------
+
+#define GETPROC(n)                                                             \
+  do {                                                                         \
+    m_##n = (n##ProcPtr)GetProc(#n);                                           \
+  } while (0)
+#define GETPROC_OPTIONAL(n)                                                    \
+  do {                                                                         \
+    m_##n = (n##ProcPtr)GetProc(#n, false);                                    \
+  } while (0)
+
+// --------------------------------------------------------------------------
+DynamicLoadLibraryHelper::DynamicLoadLibraryHelper(const char *p_dllName,
+                                                   bool p_required)
+    : m_lib(NULL), m_allRequiredItemsPresent(true) // assume the best
 {
-    // This relies on headers that don't exist in winmo builds
-
-    // --------------------------------------------------------------------------
-    // --------------------------------------------------------------------------
-    // --------------------------------------------------------------------------
-
-    // helper snarfed and simplified from main flash player code.
-    // since we only need it here and only for debug, I didn't bother
-    // migrating the whole thing.
-    class DynamicLoadLibraryHelper
-    {
-    protected:
-        DynamicLoadLibraryHelper(const char* p_dllName, bool p_required = true);
-        virtual ~DynamicLoadLibraryHelper();
-
-        FARPROC GetProc(const char* p_funcName, bool p_required = true);
-
-    public:
-        // note that this is only if any of the *required* ones failed;
-        // some "optional" ones may be missing and still have this return true.
-        bool AllRequiredItemsPresent() const { return m_allRequiredItemsPresent; }
-
-    private:
-        HMODULE m_lib;
-        bool m_allRequiredItemsPresent;
-    };
-
-    // --------------------------------------------------------------------------
-    // --------------------------------------------------------------------------
-    // --------------------------------------------------------------------------
-
-#define GETPROC(n) do { m_##n = (n##ProcPtr)GetProc(#n); } while (0)
-#define GETPROC_OPTIONAL(n) do { m_##n = (n##ProcPtr)GetProc(#n, false); } while (0)
-
-    // --------------------------------------------------------------------------
-    DynamicLoadLibraryHelper::DynamicLoadLibraryHelper(const char* p_dllName, bool p_required) :
-    m_lib(NULL),
-        m_allRequiredItemsPresent(true) // assume the best
-    {
-        m_lib = ::LoadLibraryA(p_dllName);
-        if (p_required && (m_lib == NULL || m_lib == INVALID_HANDLE_VALUE))
-        {
-            // don't assert here... it will trigger a DebugBreak(), which will crash
-            // systems not running a debugger... and QE insists that they be able
-            // to run Debug builds on debuggerless Win98 systems... (sigh)
-            //GCAssertMsg(0, p_dllName);
-            m_allRequiredItemsPresent = false;
-        }
-    }
-
-    // --------------------------------------------------------------------------
-    FARPROC DynamicLoadLibraryHelper::GetProc(const char* p_funcName, bool p_required)
-    {
-        FARPROC a_proc = NULL;
-        if (m_lib != NULL && m_lib != INVALID_HANDLE_VALUE)
-        {
-            a_proc = ::GetProcAddress(m_lib, p_funcName);
-        }
-        if (p_required && a_proc == NULL)
-        {
-            // don't assert here... it will trigger a DebugBreak(), which will crash
-            // systems not running a debugger... and QE insists that they be able
-            // to run Debug builds on debuggerless Win98 systems... (sigh)
-            //GCAssertMsg(0, p_funcName);
-            m_allRequiredItemsPresent = false;
-        }
-        return a_proc;
-    }
-
-    // --------------------------------------------------------------------------
-    DynamicLoadLibraryHelper::~DynamicLoadLibraryHelper()
-    {
-        if (m_lib != NULL && m_lib != INVALID_HANDLE_VALUE)
-        {
-            ::FreeLibrary(m_lib);
-        }
-    }
-
-    // --------------------------------------------------------------------------
-    // --------------------------------------------------------------------------
-    // --------------------------------------------------------------------------
-
-    // --------------------------------------------------------------------------
-    class DbgHelpDllHelper : public DynamicLoadLibraryHelper
-    {
-    public:
-        DbgHelpDllHelper();
-
-    public:
-
-        typedef BOOL (__stdcall *StackWalk64ProcPtr)(
-            DWORD                             MachineType,
-            HANDLE                            hProcess,
-            HANDLE                            hThread,
-            LPSTACKFRAME64                    StackFrame,
-            PVOID                             ContextRecord,
-            PREAD_PROCESS_MEMORY_ROUTINE64    ReadMemoryRoutine,
-            PFUNCTION_TABLE_ACCESS_ROUTINE64  FunctionTableAccessRoutine,
-            PGET_MODULE_BASE_ROUTINE64        GetModuleBaseRoutine,
-            PTRANSLATE_ADDRESS_ROUTINE64      TranslateAddress
-            );
-
-        typedef PVOID (__stdcall *SymFunctionTableAccess64ProcPtr)(
-            HANDLE  hProcess,
-            DWORD64 AddrBase
-            );
-
-        typedef DWORD64 (__stdcall *SymGetModuleBase64ProcPtr)(
-            HANDLE  hProcess,
-            DWORD64 qwAddr
-            );
-
-        typedef BOOL (__stdcall *SymGetLineFromAddr64ProcPtr)(
-            HANDLE                  hProcess,
-            DWORD64                 qwAddr,
-            PDWORD                  pdwDisplacement,
-            PIMAGEHLP_LINE64        Line64
-            );
-
-        typedef BOOL (__stdcall *SymGetSymFromAddr64ProcPtr)(
-            HANDLE                  hProcess,
-            DWORD64                 qwAddr,
-            PDWORD64                pdwDisplacement,
-            PIMAGEHLP_SYMBOL64      Symbol
-            );
-
-        typedef BOOL (__stdcall *SymInitializeProcPtr)(
-            HANDLE   hProcess,
-            PSTR     UserSearchPath,
-            BOOL     fInvadeProcess
-            );
-
-    public:
-        StackWalk64ProcPtr                  m_StackWalk64;
-        SymFunctionTableAccess64ProcPtr     m_SymFunctionTableAccess64;
-        SymGetModuleBase64ProcPtr           m_SymGetModuleBase64;
-        SymGetLineFromAddr64ProcPtr         m_SymGetLineFromAddr64;
-        SymGetSymFromAddr64ProcPtr          m_SymGetSymFromAddr64;
-        SymInitializeProcPtr                m_SymInitialize;
-    };
-
-    // --------------------------------------------------------------------------
-    DbgHelpDllHelper::DbgHelpDllHelper() :
-    DynamicLoadLibraryHelper("dbghelp.dll"),
-        m_StackWalk64(NULL),
-        m_SymFunctionTableAccess64(NULL),
-        m_SymGetModuleBase64(NULL),
-        m_SymGetLineFromAddr64(NULL),
-        m_SymGetSymFromAddr64(NULL),
-        m_SymInitialize(NULL)
-    {
-        GETPROC(StackWalk64);
-        GETPROC(SymFunctionTableAccess64);
-        GETPROC(SymGetModuleBase64);
-        GETPROC(SymGetLineFromAddr64);
-        GETPROC(SymGetSymFromAddr64);
-        GETPROC(SymInitialize);
-    }
+  m_lib = ::LoadLibraryA(p_dllName);
+  if (p_required && (m_lib == NULL || m_lib == INVALID_HANDLE_VALUE)) {
+    // don't assert here... it will trigger a DebugBreak(), which will crash
+    // systems not running a debugger... and QE insists that they be able
+    // to run Debug builds on debuggerless Win98 systems... (sigh)
+    // GCAssertMsg(0, p_dllName);
+    m_allRequiredItemsPresent = false;
+  }
 }
-    // declaring this statically will dynamically load the dll and procs
-    // at startup, and never ever release them... if this ever becomes NON-debug
-    // code, you might want to have a way to toss all this... but for _DEBUG
-    // only, it should be fine
+
+// --------------------------------------------------------------------------
+FARPROC DynamicLoadLibraryHelper::GetProc(const char *p_funcName,
+                                          bool p_required) {
+  FARPROC a_proc = NULL;
+  if (m_lib != NULL && m_lib != INVALID_HANDLE_VALUE) {
+    a_proc = ::GetProcAddress(m_lib, p_funcName);
+  }
+  if (p_required && a_proc == NULL) {
+    // don't assert here... it will trigger a DebugBreak(), which will crash
+    // systems not running a debugger... and QE insists that they be able
+    // to run Debug builds on debuggerless Win98 systems... (sigh)
+    // GCAssertMsg(0, p_funcName);
+    m_allRequiredItemsPresent = false;
+  }
+  return a_proc;
+}
+
+// --------------------------------------------------------------------------
+DynamicLoadLibraryHelper::~DynamicLoadLibraryHelper() {
+  if (m_lib != NULL && m_lib != INVALID_HANDLE_VALUE) {
+    ::FreeLibrary(m_lib);
+  }
+}
+
+// --------------------------------------------------------------------------
+// --------------------------------------------------------------------------
+// --------------------------------------------------------------------------
+
+// --------------------------------------------------------------------------
+class DbgHelpDllHelper : public DynamicLoadLibraryHelper {
+public:
+  DbgHelpDllHelper();
+
+public:
+  typedef BOOL(__stdcall *StackWalk64ProcPtr)(
+      DWORD MachineType, HANDLE hProcess, HANDLE hThread,
+      LPSTACKFRAME64 StackFrame, PVOID ContextRecord,
+      PREAD_PROCESS_MEMORY_ROUTINE64 ReadMemoryRoutine,
+      PFUNCTION_TABLE_ACCESS_ROUTINE64 FunctionTableAccessRoutine,
+      PGET_MODULE_BASE_ROUTINE64 GetModuleBaseRoutine,
+      PTRANSLATE_ADDRESS_ROUTINE64 TranslateAddress);
+
+  typedef PVOID(__stdcall *SymFunctionTableAccess64ProcPtr)(HANDLE hProcess,
+                                                            DWORD64 AddrBase);
+
+  typedef DWORD64(__stdcall *SymGetModuleBase64ProcPtr)(HANDLE hProcess,
+                                                        DWORD64 qwAddr);
+
+  typedef BOOL(__stdcall *SymGetLineFromAddr64ProcPtr)(HANDLE hProcess,
+                                                       DWORD64 qwAddr,
+                                                       PDWORD pdwDisplacement,
+                                                       PIMAGEHLP_LINE64 Line64);
+
+  typedef BOOL(__stdcall *SymGetSymFromAddr64ProcPtr)(
+      HANDLE hProcess, DWORD64 qwAddr, PDWORD64 pdwDisplacement,
+      PIMAGEHLP_SYMBOL64 Symbol);
+
+  typedef BOOL(__stdcall *SymInitializeProcPtr)(HANDLE hProcess,
+                                                PSTR UserSearchPath,
+                                                BOOL fInvadeProcess);
+
+public:
+  StackWalk64ProcPtr m_StackWalk64;
+  SymFunctionTableAccess64ProcPtr m_SymFunctionTableAccess64;
+  SymGetModuleBase64ProcPtr m_SymGetModuleBase64;
+  SymGetLineFromAddr64ProcPtr m_SymGetLineFromAddr64;
+  SymGetSymFromAddr64ProcPtr m_SymGetSymFromAddr64;
+  SymInitializeProcPtr m_SymInitialize;
+};
+
+// --------------------------------------------------------------------------
+DbgHelpDllHelper::DbgHelpDllHelper()
+    : DynamicLoadLibraryHelper("dbghelp.dll"), m_StackWalk64(NULL),
+      m_SymFunctionTableAccess64(NULL), m_SymGetModuleBase64(NULL),
+      m_SymGetLineFromAddr64(NULL), m_SymGetSymFromAddr64(NULL),
+      m_SymInitialize(NULL) {
+  GETPROC(StackWalk64);
+  GETPROC(SymFunctionTableAccess64);
+  GETPROC(SymGetModuleBase64);
+  GETPROC(SymGetLineFromAddr64);
+  GETPROC(SymGetSymFromAddr64);
+  GETPROC(SymInitialize);
+}
+} // namespace MMgc
+  // declaring this statically will dynamically load the dll and procs
+  // at startup, and never ever release them... if this ever becomes NON-debug
+  // code, you might want to have a way to toss all this... but for _DEBUG
+  // only, it should be fine
 static MMgc::DbgHelpDllHelper g_DbgHelpDll;
 #endif
 
-    static const int MaxNameLength = 256;
+static const int MaxNameLength = 256;
 
 #ifdef _WIN64
 #define MACHINETYPE IMAGE_FILE_MACHINE_AMD64
@@ -520,51 +473,51 @@ static MMgc::DbgHelpDllHelper g_DbgHelpDll;
 #define MACHINETYPE IMAGE_FILE_MACHINE_I386
 #endif
 
-    bool InitDbgHelp()
-    {
-        static vmpi_spin_lock_t lock;
-        static bool inited = false;
+bool InitDbgHelp() {
+  static vmpi_spin_lock_t lock;
+  static bool inited = false;
 
-        // We must hold the lock for the entire initialization process:
-        //  - if we set inited to true and Release the lock then other
-        //    threads may forge ahead without initialization having occured
-        //  - if we leave it false and Release then other threads
-        //    may try to perform initialization as well.
-        MMGC_LOCK(lock);
-        if(!inited) {
+  // We must hold the lock for the entire initialization process:
+  //  - if we set inited to true and Release the lock then other
+  //    threads may forge ahead without initialization having occured
+  //  - if we leave it false and Release then other threads
+  //    may try to perform initialization as well.
+  MMGC_LOCK(lock);
+  if (!inited) {
 #ifndef UNDER_CE
-            if(!g_DbgHelpDll.m_SymInitialize ||
-                !(*g_DbgHelpDll.m_SymInitialize)(GetCurrentProcess(), NULL, true)) {
-                    LPVOID lpMsgBuf;
-                    if(FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                        NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-                        (LPTSTR) &lpMsgBuf, 0, NULL ))
-                    {
-                        GCAssertMsg(false, "See lpMsgBuf");
-                        LocalFree(lpMsgBuf);
-                    }
-                    return false;
-            }
-#endif // ifn UNDER_CE
-            inited = true;
-        }
-        return true;
+    if (!g_DbgHelpDll.m_SymInitialize ||
+        !(*g_DbgHelpDll.m_SymInitialize)(GetCurrentProcess(), NULL, true)) {
+      LPVOID lpMsgBuf;
+      if (FormatMessage(
+              FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+                  FORMAT_MESSAGE_IGNORE_INSERTS,
+              NULL, GetLastError(),
+              MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+              (LPTSTR)&lpMsgBuf, 0, NULL)) {
+        GCAssertMsg(false, "See lpMsgBuf");
+        LocalFree(lpMsgBuf);
+      }
+      return false;
     }
+#endif // ifn UNDER_CE
+    inited = true;
+  }
+  return true;
+}
 
 #ifdef UNDER_CE
-typedef ULONG NTAPI RtlCaptureStackBackTrace_Function(
-    IN HANDLE hThrd,
-    IN ULONG dwMaxFrames,
-    OUT void* lpFrames,
-    IN DWORD dwFlags,
-    IN DWORD dwSkip);
+typedef ULONG NTAPI RtlCaptureStackBackTrace_Function(IN HANDLE hThrd,
+                                                      IN ULONG dwMaxFrames,
+                                                      OUT void *lpFrames,
+                                                      IN DWORD dwFlags,
+                                                      IN DWORD dwSkip);
 
-static RtlCaptureStackBackTrace_Function* const RtlCaptureStackBackTrace_fn =
-    (RtlCaptureStackBackTrace_Function*)
-    GetProcAddress(LoadLibrary(_T("coredll.dll")), _T("GetThreadCallStack"));
+static RtlCaptureStackBackTrace_Function *const RtlCaptureStackBackTrace_fn =
+    (RtlCaptureStackBackTrace_Function *)GetProcAddress(
+        LoadLibrary(_T("coredll.dll")), _T("GetThreadCallStack"));
 
 typedef struct _CallSnapshot {
-    DWORD dwReturnAddr;
+  DWORD dwReturnAddr;
 } CallSnapshot;
 
 #define STACKSNAP_EXTENDED_INFO 2
@@ -572,147 +525,150 @@ typedef struct _CallSnapshot {
 #else // UNDER_CE
 
 typedef USHORT NTAPI RtlCaptureStackBackTrace_Function(
-    IN ULONG frames_to_skip,
-    IN ULONG frames_to_capture,
-    OUT PVOID *backtrace,
+    IN ULONG frames_to_skip, IN ULONG frames_to_capture, OUT PVOID *backtrace,
     OUT PULONG backtrace_hash);
 
-static RtlCaptureStackBackTrace_Function* const RtlCaptureStackBackTrace_fn =
-    (RtlCaptureStackBackTrace_Function*)
-    GetProcAddress(GetModuleHandleA("ntdll.dll"), "RtlCaptureStackBackTrace");
+static RtlCaptureStackBackTrace_Function *const RtlCaptureStackBackTrace_fn =
+    (RtlCaptureStackBackTrace_Function *)GetProcAddress(
+        GetModuleHandleA("ntdll.dll"), "RtlCaptureStackBackTrace");
 
 #endif // UNDER_CE
 
 #ifdef UNDER_CE
 #include <cmnintrin.h>
-extern "C" unsigned long* get_frame_pointer();
+extern "C" unsigned long *get_frame_pointer();
 #endif
 
-    bool AVMPI_captureStackTrace(uintptr_t *buffer, size_t bufferSize, uint32_t framesToSkip)
-    {
-        if(RtlCaptureStackBackTrace_fn == NULL)
-            return false;
+bool AVMPI_captureStackTrace(uintptr_t *buffer, size_t bufferSize,
+                             uint32_t framesToSkip) {
+  if (RtlCaptureStackBackTrace_fn == NULL)
+    return false;
 
 #ifdef UNDER_CE
 
-        CallSnapshot lpFrames[32];
-        DWORD dwCnt = RtlCaptureStackBackTrace_fn(GetCurrentThread(), bufferSize >= 32 ? 32 : bufferSize, (void*)&lpFrames,0, framesToSkip);
+  CallSnapshot lpFrames[32];
+  DWORD dwCnt = RtlCaptureStackBackTrace_fn(GetCurrentThread(),
+                                            bufferSize >= 32 ? 32 : bufferSize,
+                                            (void *)&lpFrames, 0, framesToSkip);
 
-        size_t i = 0;
-        for( ; i < dwCnt && i < bufferSize ; ++i )
-        {
-            buffer[i] = lpFrames[i].dwReturnAddr;
-        }
+  size_t i = 0;
+  for (; i < dwCnt && i < bufferSize; ++i) {
+    buffer[i] = lpFrames[i].dwReturnAddr;
+  }
 
 #else
 
-        int num = RtlCaptureStackBackTrace_fn(framesToSkip, (uint32_t)(bufferSize - 1), (PVOID*)buffer, NULL);
-        buffer[num] = 0;
+  int num = RtlCaptureStackBackTrace_fn(
+      framesToSkip, (uint32_t)(bufferSize - 1), (PVOID *)buffer, NULL);
+  buffer[num] = 0;
 
-#endif //UNDER_CE
-        return true;
-    }
-
-    bool AVMPI_getFileAndLineInfoFromPC(uintptr_t pc, char *filenameBuffer, size_t bufferSize, uint32_t* lineNumber)
-    {
-#ifdef UNDER_CE
-        (void)pc;
-        (void)lineNumber;
-        (void)filenameBuffer;
-        (void)bufferSize;
-
-        return false;
-#else
-        if(!InitDbgHelp())
-            return false;
-
-        // gleaned from IMAGEHLP_SYMBOL64 docs
-        IMAGEHLP_SYMBOL64 *pSym = (IMAGEHLP_SYMBOL64 *) alloca(sizeof(IMAGEHLP_SYMBOL64) + MaxNameLength);
-        pSym->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
-        pSym->MaxNameLength = MaxNameLength;
-
-        DWORD64 offsetFromSymbol;
-        if(!g_DbgHelpDll.m_SymGetSymFromAddr64 ||
-            !(*g_DbgHelpDll.m_SymGetSymFromAddr64)(GetCurrentProcess(), pc, &offsetFromSymbol, pSym)) {
-                return false;
-        }
-
-        // get line
-        IMAGEHLP_LINE64 line;
-        VMPI_memset(&line, 0, sizeof(IMAGEHLP_LINE64));
-        line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
-        DWORD offsetFromLine;
-        if(!g_DbgHelpDll.m_SymGetLineFromAddr64 ||
-            !(*g_DbgHelpDll.m_SymGetLineFromAddr64)(GetCurrentProcess(), pc, &offsetFromLine, &line)) {
-                return false;
-        }
-
-
-        // success!
-        char *fileName = line.FileName + VMPI_strlen(line.FileName);
-
-        // skip everything up to last slash
-        while(fileName > line.FileName && *fileName != '\\')
-            fileName--;
-        fileName++;
-
-        StringCchPrintfA(filenameBuffer, bufferSize, "%s", fileName);
-        *lineNumber = line.LineNumber;
-
-        return true;
 #endif // UNDER_CE
-    }
+  return true;
+}
 
-    bool AVMPI_getFunctionNameFromPC(uintptr_t pc, char *buffer, size_t bufferSize)
-    {
+bool AVMPI_getFileAndLineInfoFromPC(uintptr_t pc, char *filenameBuffer,
+                                    size_t bufferSize, uint32_t *lineNumber) {
 #ifdef UNDER_CE
-        (void)pc;
-        (void)buffer;
-        (void)bufferSize;
-        return false;
+  (void)pc;
+  (void)lineNumber;
+  (void)filenameBuffer;
+  (void)bufferSize;
+
+  return false;
+#else
+  if (!InitDbgHelp())
+    return false;
+
+  // gleaned from IMAGEHLP_SYMBOL64 docs
+  IMAGEHLP_SYMBOL64 *pSym =
+      (IMAGEHLP_SYMBOL64 *)alloca(sizeof(IMAGEHLP_SYMBOL64) + MaxNameLength);
+  pSym->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
+  pSym->MaxNameLength = MaxNameLength;
+
+  DWORD64 offsetFromSymbol;
+  if (!g_DbgHelpDll.m_SymGetSymFromAddr64 ||
+      !(*g_DbgHelpDll.m_SymGetSymFromAddr64)(GetCurrentProcess(), pc,
+                                             &offsetFromSymbol, pSym)) {
+    return false;
+  }
+
+  // get line
+  IMAGEHLP_LINE64 line;
+  VMPI_memset(&line, 0, sizeof(IMAGEHLP_LINE64));
+  line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+  DWORD offsetFromLine;
+  if (!g_DbgHelpDll.m_SymGetLineFromAddr64 ||
+      !(*g_DbgHelpDll.m_SymGetLineFromAddr64)(GetCurrentProcess(), pc,
+                                              &offsetFromLine, &line)) {
+    return false;
+  }
+
+  // success!
+  char *fileName = line.FileName + VMPI_strlen(line.FileName);
+
+  // skip everything up to last slash
+  while (fileName > line.FileName && *fileName != '\\')
+    fileName--;
+  fileName++;
+
+  StringCchPrintfA(filenameBuffer, bufferSize, "%s", fileName);
+  *lineNumber = line.LineNumber;
+
+  return true;
+#endif // UNDER_CE
+}
+
+bool AVMPI_getFunctionNameFromPC(uintptr_t pc, char *buffer,
+                                 size_t bufferSize) {
+#ifdef UNDER_CE
+  (void)pc;
+  (void)buffer;
+  (void)bufferSize;
+  return false;
 #else
 
-        if(!InitDbgHelp())
-            return false;
+  if (!InitDbgHelp())
+    return false;
 
-        // gleaned from IMAGEHLP_SYMBOL64 docs
-        IMAGEHLP_SYMBOL64 *pSym = (IMAGEHLP_SYMBOL64 *) alloca(sizeof(IMAGEHLP_SYMBOL64) + MaxNameLength);
-        pSym->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
-        pSym->MaxNameLength = MaxNameLength;
+  // gleaned from IMAGEHLP_SYMBOL64 docs
+  IMAGEHLP_SYMBOL64 *pSym =
+      (IMAGEHLP_SYMBOL64 *)alloca(sizeof(IMAGEHLP_SYMBOL64) + MaxNameLength);
+  pSym->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
+  pSym->MaxNameLength = MaxNameLength;
 
-        DWORD64 offsetFromSymbol;
-        if(!g_DbgHelpDll.m_SymGetSymFromAddr64 ||
-            !(*g_DbgHelpDll.m_SymGetSymFromAddr64)(GetCurrentProcess(), pc, &offsetFromSymbol, pSym)) {
-                return false;
-        }
+  DWORD64 offsetFromSymbol;
+  if (!g_DbgHelpDll.m_SymGetSymFromAddr64 ||
+      !(*g_DbgHelpDll.m_SymGetSymFromAddr64)(GetCurrentProcess(), pc,
+                                             &offsetFromSymbol, pSym)) {
+    return false;
+  }
 
-        StringCchPrintfA(buffer, bufferSize, "%s", pSym->Name);
-        //printf("%s\n", pSym->Name);
-        return true;
+  StringCchPrintfA(buffer, bufferSize, "%s", pSym->Name);
+  // printf("%s\n", pSym->Name);
+  return true;
 
-#endif //UNDER_CE
-    }
+#endif // UNDER_CE
+}
 
-    void AVMPI_setupPCResolution() { }
+void AVMPI_setupPCResolution() {}
 
-    void AVMPI_desetupPCResolution() { }
+void AVMPI_desetupPCResolution() {}
 
-    bool AVMPI_isMemoryProfilingEnabled()
-    {
-    #if defined (UNDER_CE) && defined(MMGC_MEMORY_PROFILER)
-        return true;
-    #else
-        //read the mmgc profiling option switch
-        const char *env = VMPI_getenv("MMGC_PROFILE");
-        return (env && (VMPI_strncmp(env, "1", 1) == 0));
-    #endif
-    }
+bool AVMPI_isMemoryProfilingEnabled() {
+#if defined(UNDER_CE) && defined(MMGC_MEMORY_PROFILER)
+  return true;
+#else
+  // read the mmgc profiling option switch
+  const char *env = VMPI_getenv("MMGC_PROFILE");
+  return (env && (VMPI_strncmp(env, "1", 1) == 0));
+#endif
+}
 
 #endif // MMGC_MEMORY_PROFILER
 
-// We believe that we may be failing to set code memory executable in some cases,
-// resulting in crashes.  Let's instead crash immediately upon such failures in a
-// way that the crash dump will tell us what happened.
+// We believe that we may be failing to set code memory executable in some
+// cases, resulting in crashes.  Let's instead crash immediately upon such
+// failures in a way that the crash dump will tell us what happened.
 VMPI_DEFINE_FAILFAST(CodeMemoryProtectionError)
 
 // Constraint: nbytes must be a multiple of the VM page size.
@@ -725,64 +681,63 @@ VMPI_DEFINE_FAILFAST(CodeMemoryProtectionError)
 // This function should be the same as for generic Posix platforms, if you
 // fix a bug here be sure to fix the bug there.
 
-void *AVMPI_allocateCodeMemory(size_t nbytes)
-{
-    MMgc::GCHeap* heap = MMgc::GCHeap::GetGCHeap();
-    size_t pagesize = VMPI_getVMPageSize();
-    
-    if (nbytes % pagesize != 0) {
+void *AVMPI_allocateCodeMemory(size_t nbytes) {
+  MMgc::GCHeap *heap = MMgc::GCHeap::GetGCHeap();
+  size_t pagesize = VMPI_getVMPageSize();
+
+  if (nbytes % pagesize != 0) {
 #ifdef DEBUG
-        char buf[256];
-        VMPI_snprintf(buf,
-                      sizeof(buf),
-                      "AVMPI_allocateCodeMemory invariants violated: request=%lu pagesize=%lu\nAborting.\n",
-                      (unsigned long)nbytes,
-                      (unsigned long)pagesize);
-        VMPI_log(buf);
+    char buf[256];
+    VMPI_snprintf(buf, sizeof(buf),
+                  "AVMPI_allocateCodeMemory invariants violated: request=%lu "
+                  "pagesize=%lu\nAborting.\n",
+                  (unsigned long)nbytes, (unsigned long)pagesize);
+    VMPI_log(buf);
 #endif
-        VMPI_abort();
-    }
-    
-    size_t nblocks = nbytes / MMgc::GCHeap::kBlockSize;
-    heap->SignalCodeMemoryAllocation(nblocks, true);
-	void *codePage = heap->GetPartition(MMgc::kCodePartition)->Alloc(nblocks, MMgc::GCHeap::flags_Alloc, pagesize / MMgc::GCHeap::kBlockSize);
+    VMPI_abort();
+  }
+
+  size_t nblocks = nbytes / MMgc::GCHeap::kBlockSize;
+  heap->SignalCodeMemoryAllocation(nblocks, true);
+  void *codePage = heap->GetPartition(MMgc::kCodePartition)
+                       ->Alloc(nblocks, MMgc::GCHeap::flags_Alloc,
+                               pagesize / MMgc::GCHeap::kBlockSize);
 #if defined(NANOJIT_WIN_CFG)
-	if (IsSupportedSetICallTarget())
-	{
-		if (!codePage)
-		{
-			// It should not happen!!
-			return NULL;
-		}
+  if (IsSupportedSetICallTarget()) {
+    if (!codePage) {
+      // It should not happen!!
+      return NULL;
+    }
 
-		void *curPage = codePage;
-		do {
-			MEMORY_BASIC_INFORMATION mbi;
-			VirtualQuery(curPage, &mbi, sizeof(MEMORY_BASIC_INFORMATION));
-			size_t markSize = nbytes > mbi.RegionSize ? mbi.RegionSize : nbytes;  // handle multiple adjoining regions
-			if (!VirtualAlloc(curPage,
-							  markSize,
-							  MEM_COMMIT,
-							  (PAGE_EXECUTE_READ | PAGE_TARGETS_INVALID)))
-			{
-				// It should not happen!!
-				CodeMemoryProtectionError();
-			}
+    void *curPage = codePage;
+    do {
+      MEMORY_BASIC_INFORMATION mbi;
+      VirtualQuery(curPage, &mbi, sizeof(MEMORY_BASIC_INFORMATION));
+      size_t markSize = nbytes > mbi.RegionSize
+                            ? mbi.RegionSize
+                            : nbytes; // handle multiple adjoining regions
+      if (!VirtualAlloc(curPage, markSize, MEM_COMMIT,
+                        (PAGE_EXECUTE_READ | PAGE_TARGETS_INVALID))) {
+        // It should not happen!!
+        CodeMemoryProtectionError();
+      }
 
-			DWORD oldProtectFlags = 0;
-			// PAGE_TARGETS_NO_UPDATE should not be required, as we are not changing *to* an executable mode.
-			// See https://msdn.microsoft.com/en-us/library/windows/desktop/aa366786%28v=vs.85%29.aspx .
-			if (!VirtualProtect(curPage, markSize, PAGE_READWRITE, &oldProtectFlags))
-			{
-				// It should not happen!!
-				CodeMemoryProtectionError();
-			}
-			curPage = (char*)curPage + markSize;
-			nbytes -= markSize;
-		} while (nbytes != 0);
-	}
+      DWORD oldProtectFlags = 0;
+      // PAGE_TARGETS_NO_UPDATE should not be required, as we are not changing
+      // *to* an executable mode. See
+      // https://msdn.microsoft.com/en-us/library/windows/desktop/aa366786%28v=vs.85%29.aspx
+      // .
+      if (!VirtualProtect(curPage, markSize, PAGE_READWRITE,
+                          &oldProtectFlags)) {
+        // It should not happen!!
+        CodeMemoryProtectionError();
+      }
+      curPage = (char *)curPage + markSize;
+      nbytes -= markSize;
+    } while (nbytes != 0);
+  }
 #endif
-	return codePage;
+  return codePage;
 }
 
 // Constraint: address must have been returned from AVMPI_allocateCodeMemory
@@ -799,116 +754,117 @@ void *AVMPI_allocateCodeMemory(size_t nbytes)
 // This function should be the same as for generic Posix platforms, if you
 // fix a bug here be sure to fix the bug there.
 
-void AVMPI_freeCodeMemory(void* address, size_t nbytes)
-{
-    MMgc::GCHeap* heap = MMgc::GCHeap::GetGCHeap();
-    size_t pagesize = VMPI_getVMPageSize();
-    size_t nblocks = heap->GetPartition(MMgc::kCodePartition)->Size(address);
-    size_t actualBytes = nblocks * MMgc::GCHeap::kBlockSize;
-    
-    if ((uintptr_t)address % pagesize != 0 || nbytes % pagesize != 0 || nbytes != actualBytes) {
+void AVMPI_freeCodeMemory(void *address, size_t nbytes) {
+  MMgc::GCHeap *heap = MMgc::GCHeap::GetGCHeap();
+  size_t pagesize = VMPI_getVMPageSize();
+  size_t nblocks = heap->GetPartition(MMgc::kCodePartition)->Size(address);
+  size_t actualBytes = nblocks * MMgc::GCHeap::kBlockSize;
+
+  if ((uintptr_t)address % pagesize != 0 || nbytes % pagesize != 0 ||
+      nbytes != actualBytes) {
 #ifdef DEBUG
-        char buf[256];
-        VMPI_snprintf(buf,
-                      sizeof(buf),
-                      "AVMPI_freeCodeMemory invariants violated: address=%llu provided=%llu actual=%llu\nAborting.\n",
-                      (unsigned long long)(uintptr_t)address,
-                      (unsigned long long)nbytes,
-                      (unsigned long long)actualBytes);
-        VMPI_log(buf);
+    char buf[256];
+    VMPI_snprintf(buf, sizeof(buf),
+                  "AVMPI_freeCodeMemory invariants violated: address=%llu "
+                  "provided=%llu actual=%llu\nAborting.\n",
+                  (unsigned long long)(uintptr_t)address,
+                  (unsigned long long)nbytes, (unsigned long long)actualBytes);
+    VMPI_log(buf);
 #endif
-        VMPI_abort();
-    }
-    
-    heap->GetPartition(MMgc::kCodePartition)->Free(address);
-    heap->SignalCodeMemoryDeallocated(nblocks, true);
+    VMPI_abort();
+  }
+
+  heap->GetPartition(MMgc::kCodePartition)->Free(address);
+  heap->SignalCodeMemoryDeallocated(nblocks, true);
 }
 
-// Constraint: address must point into a block returned from AVMPI_allocateCodeMemory
-// that has not been freed, it must point to a VM page boundary, and the number of
-// bytes to protect must be an integral number of VM pages.  We can't check that
-// the memory was returned from AVMPI_allocateCodeMemory though and we don't check
-// that the memory is currently allocated.
+// Constraint: address must point into a block returned from
+// AVMPI_allocateCodeMemory that has not been freed, it must point to a VM page
+// boundary, and the number of bytes to protect must be an integral number of VM
+// pages.  We can't check that the memory was returned from
+// AVMPI_allocateCodeMemory though and we don't check that the memory is
+// currently allocated.
 
-void AVMPI_makeCodeMemoryExecutable(void *address, size_t nbytes, bool makeItSo)
-{
-    size_t pagesize = VMPI_getVMPageSize();
-    
-    if ((uintptr_t)address % pagesize != 0 || nbytes % pagesize != 0) {
+void AVMPI_makeCodeMemoryExecutable(void *address, size_t nbytes,
+                                    bool makeItSo) {
+  size_t pagesize = VMPI_getVMPageSize();
+
+  if ((uintptr_t)address % pagesize != 0 || nbytes % pagesize != 0) {
 #ifdef DEBUG
-        char buf[256];
-        VMPI_snprintf(buf,
-                      sizeof(buf),
-                      "AVMPI_makeCodeMemoryExecutable invariants violated: address=%llu size=%llu pagesize=%llu\nAborting.\n",
-                      (unsigned long long)(uintptr_t)address,
-                      (unsigned long long)nbytes,
-                      (unsigned long long)pagesize);
-        VMPI_log(buf);
+    char buf[256];
+    VMPI_snprintf(buf, sizeof(buf),
+                  "AVMPI_makeCodeMemoryExecutable invariants violated: "
+                  "address=%llu size=%llu pagesize=%llu\nAborting.\n",
+                  (unsigned long long)(uintptr_t)address,
+                  (unsigned long long)nbytes, (unsigned long long)pagesize);
+    VMPI_log(buf);
 #endif
-        VMPI_abort();
-    }
-    
-    DWORD oldProtectFlags = 0;
-    DWORD newProtectFlags = 0;
-#if defined(NANOJIT_WIN_CFG)
-	if (IsSupportedSetICallTarget())
-	{
-		if (makeItSo)
-			newProtectFlags = PAGE_EXECUTE_READ | PAGE_TARGETS_NO_UPDATE;
-		else
-		    // According to MS docs, PAGE_TARGETS_NO_UPDATE is valid only when changing *to* an executable type.
-			newProtectFlags = PAGE_READWRITE;
-	}
-	else
-#endif
-	{
-		if (makeItSo)
-			newProtectFlags = PAGE_EXECUTE_READ;
-		else
-			newProtectFlags = PAGE_READWRITE;
-	}
+    VMPI_abort();
+  }
 
-    BOOL retval;
+  DWORD oldProtectFlags = 0;
+  DWORD newProtectFlags = 0;
+#if defined(NANOJIT_WIN_CFG)
+  if (IsSupportedSetICallTarget()) {
+    if (makeItSo)
+      newProtectFlags = PAGE_EXECUTE_READ | PAGE_TARGETS_NO_UPDATE;
+    else
+      // According to MS docs, PAGE_TARGETS_NO_UPDATE is valid only when
+      // changing *to* an executable type.
+      newProtectFlags = PAGE_READWRITE;
+  } else
+#endif
+  {
+    if (makeItSo)
+      newProtectFlags = PAGE_EXECUTE_READ;
+    else
+      newProtectFlags = PAGE_READWRITE;
+  }
+
+  BOOL retval;
+  do {
+    MEMORY_BASIC_INFORMATION mbi;
+    VirtualQuery(address, &mbi, sizeof(MEMORY_BASIC_INFORMATION));
+    size_t markSize = nbytes > mbi.RegionSize
+                          ? mbi.RegionSize
+                          : nbytes; // handle multiple adjoining regions
+
+    retval =
+        VirtualProtect(address, markSize, newProtectFlags, &oldProtectFlags);
+    AvmAssert(retval != 0);
+    if (retval == FALSE)
+      CodeMemoryProtectionError();
+
+    address = (char *)address + markSize;
+    nbytes -= markSize;
+  } while (nbytes != 0 && retval != 0);
+}
+
+#if defined(NANOJIT_WIN_CFG)
+void AVMPI_makeTargetValid(void *address, size_t pageSize, void *pFnc) {
+  if (IsSupportedSetICallTarget()) {
     do {
-        MEMORY_BASIC_INFORMATION mbi;
-        VirtualQuery(address, &mbi, sizeof(MEMORY_BASIC_INFORMATION));
-        size_t markSize = nbytes > mbi.RegionSize ? mbi.RegionSize : nbytes;  // handle multiple adjoining regions
-        
-        retval = VirtualProtect(address, markSize, newProtectFlags, &oldProtectFlags);
-        AvmAssert(retval != 0);
-		if (retval == FALSE) CodeMemoryProtectionError();
-        
-        address = (char*) address + markSize;
-        nbytes -= markSize;
-    } while(nbytes != 0 && retval != 0);
-}
+      MEMORY_BASIC_INFORMATION mbi;
+      VirtualQuery(address, &mbi, sizeof(MEMORY_BASIC_INFORMATION));
+      size_t markSize = pageSize > mbi.RegionSize
+                            ? mbi.RegionSize
+                            : pageSize; // handle multiple adjoining regions
+      if (((char *)mbi.BaseAddress + mbi.RegionSize) > pFnc) {
+        size_t offset = (size_t)((char *)pFnc - (char *)mbi.BaseAddress);
+        CFG_CALL_TARGET_INFO info;
+        info.Offset = offset;
+        info.Flags = CFG_CALL_TARGET_VALID;
+        if (!CallSetProcessValidCallTargets(
+                GetCurrentProcess(), mbi.BaseAddress, markSize, 1, &info)) {
+          // TODO: error handler
+          CodeMemoryProtectionError();
+        }
+        return;
+      }
 
-#if defined(NANOJIT_WIN_CFG)
-void AVMPI_makeTargetValid(void *address, size_t pageSize, void *pFnc)
-{
-	if (IsSupportedSetICallTarget())
-	{
-		do {
-			MEMORY_BASIC_INFORMATION mbi;
-			VirtualQuery(address, &mbi, sizeof(MEMORY_BASIC_INFORMATION));
-			size_t markSize = pageSize > mbi.RegionSize ? mbi.RegionSize : pageSize;  // handle multiple adjoining regions
-			if (((char *)mbi.BaseAddress + mbi.RegionSize) > pFnc)
-			{
-				size_t offset = (size_t)((char *)pFnc - (char *)mbi.BaseAddress);
-				CFG_CALL_TARGET_INFO info;
-				info.Offset = offset;
-				info.Flags = CFG_CALL_TARGET_VALID;
-				if (!CallSetProcessValidCallTargets(GetCurrentProcess(), mbi.BaseAddress, markSize, 1, &info))
-				{
-					// TODO: error handler
-					CodeMemoryProtectionError();
-				}
-				return;
-			}
-
-			address = (char*)address + markSize;
-			pageSize -= markSize;
-		} while (pageSize != 0);
-	}
+      address = (char *)address + markSize;
+      pageSize -= markSize;
+    } while (pageSize != 0);
+  }
 }
 #endif

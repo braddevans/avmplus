@@ -8,20 +8,21 @@
 #define HM_BAILOUTS_H
 
 namespace halfmoon {
-  struct SafepointData {
-    SlotStorageType*  local_types;
-    int   stack_ptr;
-    int   scope_ptr;
-  };
+struct SafepointData {
+  SlotStorageType *local_types;
+  int stack_ptr;
+  int scope_ptr;
+};
 
-  /// At a given savepoint, we have to store the state of the
-  /// locals, scope stack, and operand stack for temporaries.
-  /// At the moment, it's only limited to the native type represented by halfmoon
+/// At a given savepoint, we have to store the state of the
+/// locals, scope stack, and operand stack for temporaries.
+/// At the moment, it's only limited to the native type represented by halfmoon
 class BailoutData {
-  typedef HashMap<int, SafepointData*> StateMap;
+  typedef HashMap<int, SafepointData *> StateMap;
 
 public:
-  BailoutData(Allocator& alloc, MethodInfo* method, int scope_base, int stack_base);
+  BailoutData(Allocator &alloc, MethodInfo *method, int scope_base,
+              int stack_base);
   ~BailoutData();
 
   int getStackPointer(int abc_pc);
@@ -32,20 +33,19 @@ public:
   void clean();
 
 private:
-  SafepointData* getSafepointData(int abc_pc);
+  SafepointData *getSafepointData(int abc_pc);
 
 private:
   // Data
-  Allocator& alloc_;
-  MethodInfo* method_info_;
+  Allocator &alloc_;
+  MethodInfo *method_info_;
   StateMap state_map_;
-  SafepointData* current_state_;
+  SafepointData *current_state_;
   int frame_size_;
   int scope_base_;
   int stack_base_;
 };
 
-} // end namespace
+} // namespace halfmoon
 
 #endif
-

@@ -7,31 +7,27 @@
 #ifndef __avmplus_ClassClass__
 #define __avmplus_ClassClass__
 
+namespace avmplus {
+/**
+ * class Class - the builtin Class that defines the type of each user defined
+ * class and all other builtin classes.  (not to be confused with a superclass).
+ */
+class GC_AS3_EXACT(ClassClass, ClassClosure) {
+protected:
+  ClassClass(VTable *cvtable);
 
-namespace avmplus
-{
-    /**
-     * class Class - the builtin Class that defines the type of each user defined class
-     * and all other builtin classes.  (not to be confused with a superclass).
-     */
-    class GC_AS3_EXACT(ClassClass, ClassClosure)
-    {
-    protected:
-        ClassClass(VTable* cvtable);
+public:
+  REALLY_INLINE static ClassClass *create(MMgc::GC *gc, VTable *cvtable) {
+    return new (gc, MMgc::kExact, cvtable->getExtraSize()) ClassClass(cvtable);
+  }
 
-    public:
-        REALLY_INLINE static ClassClass* create(MMgc::GC* gc, VTable* cvtable)
-        {
-            return new (gc, MMgc::kExact, cvtable->getExtraSize()) ClassClass(cvtable);
-        }
+  // ------------------------ DATA SECTION BEGIN
+  GC_NO_DATA(ClassClass)
 
-    // ------------------------ DATA SECTION BEGIN
-        GC_NO_DATA(ClassClass)
-
-    private:
-        DECLARE_SLOTS_ClassClass;
-    // ------------------------ DATA SECTION END
-    };
-}
+private:
+  DECLARE_SLOTS_ClassClass;
+  // ------------------------ DATA SECTION END
+};
+} // namespace avmplus
 
 #endif /* __avmplus_ClassClass__ */

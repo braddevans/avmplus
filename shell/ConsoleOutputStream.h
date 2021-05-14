@@ -7,26 +7,24 @@
 #ifndef __avmshell_ConsoleOutputStream__
 #define __avmshell_ConsoleOutputStream__
 
+namespace avmshell {
+/**
+ * ConsoleOutputStream is a subclass of OutputStream
+ * that writes output to the standard output.
+ *
+ * This is used for routing print() statements and
+ * exception messages to stdout in the AVM+
+ * command-line shell.
+ */
+class ConsoleOutputStream : public avmplus::GCOutputStream {
+public:
+  ConsoleOutputStream(avmplus::AvmCore *core) : buffer(core) {}
+  void write(const char *utf8);
+  void writeN(const char *utf8, size_t count);
 
-namespace avmshell
-{
-    /**
-     * ConsoleOutputStream is a subclass of OutputStream
-     * that writes output to the standard output.
-     *
-     * This is used for routing print() statements and
-     * exception messages to stdout in the AVM+
-     * command-line shell.
-     */
-    class ConsoleOutputStream : public avmplus::GCOutputStream
-    {
-    public:
-        ConsoleOutputStream(avmplus::AvmCore* core) : buffer(core) {}
-        void write(const char* utf8);
-        void writeN(const char* utf8, size_t count);
-    private:
-        avmplus::StringBuffer buffer;
-    };
-}
+private:
+  avmplus::StringBuffer buffer;
+};
+} // namespace avmshell
 
 #endif /* __avmshell_ConsoleOutputStream__ */

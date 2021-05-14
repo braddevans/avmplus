@@ -9,32 +9,29 @@
 
 namespace halfmoon {
 
-ProfiledInformation::ProfiledInformation() :
-    branch_probability_(alloc_)
-{
+ProfiledInformation::ProfiledInformation() : branch_probability_(alloc_) {}
 
-}
-
-ProfiledInformation::~ProfiledInformation() {
-}
+ProfiledInformation::~ProfiledInformation() {}
 
 /// Maps an arm instr to the probability that the arm is actually taken.
 ///
-void ProfiledInformation::addBranchProbability(ArmInstr* armInstr, double takenProbability) {
-    branch_probability_.put(armInstr, takenProbability);
+void ProfiledInformation::addBranchProbability(ArmInstr *armInstr,
+                                               double takenProbability) {
+  branch_probability_.put(armInstr, takenProbability);
 }
 
 /// Retrieves the probability that the arm is taken
 ///
-double ProfiledInformation::getBranchProbability(ArmInstr* armInstr) {
-    AvmAssert (branch_probability_.containsKey(armInstr));
-    return branch_probability_.get(armInstr);
+double ProfiledInformation::getBranchProbability(ArmInstr *armInstr) {
+  AvmAssert(branch_probability_.containsKey(armInstr));
+  return branch_probability_.get(armInstr);
 }
 
 /// Returns true if firstArm is taken more than the second arm.
-bool ProfiledInformation::isHotterArm(ArmInstr* thinkHotArm, ArmInstr* thinkSlowArm) {
-    return getBranchProbability(thinkHotArm) > getBranchProbability(thinkSlowArm);
+bool ProfiledInformation::isHotterArm(ArmInstr *thinkHotArm,
+                                      ArmInstr *thinkSlowArm) {
+  return getBranchProbability(thinkHotArm) > getBranchProbability(thinkSlowArm);
 }
 
-}
+} // namespace halfmoon
 #endif // VMCFG_HALFMOON

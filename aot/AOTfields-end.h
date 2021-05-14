@@ -37,12 +37,13 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-
 //
-// In symmetry with AOTfields-begin.h, this wraps up the set of definitions begun there.
+// In symmetry with AOTfields-begin.h, this wraps up the set of definitions
+// begun there.
 //
 
-        FIELD_DATA_END,
-    };
-    saveLayoutData = field_data;
+FIELD_DATA_END,
+}
+;
+saveLayoutData = field_data;
 }

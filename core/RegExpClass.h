@@ -7,35 +7,31 @@
 #ifndef __avmplus_RegExpClass__
 #define __avmplus_RegExpClass__
 
+namespace avmplus {
+/**
+ * class RegExpClass.
+ */
+class GC_AS3_EXACT(RegExpClass, ClassClosure) {
+protected:
+  RegExpClass(VTable *cvtable);
 
-namespace avmplus
-{
-    /**
-     * class RegExpClass.
-     */
-    class GC_AS3_EXACT(RegExpClass, ClassClosure)
-    {
-    protected:
-        RegExpClass(VTable* cvtable);
-        
-    public:
-        REALLY_INLINE static RegExpClass* create(MMgc::GC* gc, VTable* cvtable)
-        {
-            return new (gc, MMgc::kExact, cvtable->getExtraSize()) RegExpClass(cvtable);
-        }
+public:
+  REALLY_INLINE static RegExpClass *create(MMgc::GC *gc, VTable *cvtable) {
+    return new (gc, MMgc::kExact, cvtable->getExtraSize()) RegExpClass(cvtable);
+  }
 
-        // this = argv[0]
-        // arg1 = argv[1]
-        // argN = argv[argc]
-        Atom call(int argc, Atom* argv);
+  // this = argv[0]
+  // arg1 = argv[1]
+  // argN = argv[argc]
+  Atom call(int argc, Atom *argv);
 
-    // ------------------------ DATA SECTION BEGIN
-    private:
-        GC_NO_DATA(RegExpClass)
+  // ------------------------ DATA SECTION BEGIN
+private:
+  GC_NO_DATA(RegExpClass)
 
-        DECLARE_SLOTS_RegExpClass;
-    // ------------------------ DATA SECTION END
-    };
-}
+  DECLARE_SLOTS_RegExpClass;
+  // ------------------------ DATA SECTION END
+};
+} // namespace avmplus
 
 #endif /* __avmplus_RegExpClass__ */

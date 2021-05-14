@@ -27,13 +27,20 @@
 #define WTF_Compiler_h
 
 /* COMPILER() - the compiler being used to build the project */
-#define COMPILER(WTF_FEATURE) (defined WTF_COMPILER_##WTF_FEATURE  && WTF_COMPILER_##WTF_FEATURE)
+#define COMPILER(WTF_FEATURE)                                                  \
+  (defined WTF_COMPILER_##WTF_FEATURE && WTF_COMPILER_##WTF_FEATURE)
 
-/* COMPILER_SUPPORTS() - whether the compiler being used to build the project supports the given feature. */
-#define COMPILER_SUPPORTS(WTF_COMPILER_FEATURE) (defined WTF_COMPILER_SUPPORTS_##WTF_COMPILER_FEATURE  && WTF_COMPILER_SUPPORTS_##WTF_COMPILER_FEATURE)
+/* COMPILER_SUPPORTS() - whether the compiler being used to build the project
+ * supports the given feature. */
+#define COMPILER_SUPPORTS(WTF_COMPILER_FEATURE)                                \
+  (defined WTF_COMPILER_SUPPORTS_##WTF_COMPILER_FEATURE &&                     \
+   WTF_COMPILER_SUPPORTS_##WTF_COMPILER_FEATURE)
 
-/* COMPILER_QUIRK() - whether the compiler being used to build the project requires a given quirk. */
-#define COMPILER_QUIRK(WTF_COMPILER_QUIRK) (defined WTF_COMPILER_QUIRK_##WTF_COMPILER_QUIRK  && WTF_COMPILER_QUIRK_##WTF_COMPILER_QUIRK)
+/* COMPILER_QUIRK() - whether the compiler being used to build the project
+ * requires a given quirk. */
+#define COMPILER_QUIRK(WTF_COMPILER_QUIRK)                                     \
+  (defined WTF_COMPILER_QUIRK_##WTF_COMPILER_QUIRK &&                          \
+   WTF_COMPILER_QUIRK_##WTF_COMPILER_QUIRK)
 
 /* ==== COMPILER() - the compiler being used to build the project ==== */
 
@@ -50,15 +57,17 @@
 /* COMPILER(GCC) - GNU Compiler Collection */
 #if defined(__GNUC__)
 #define WTF_COMPILER_GCC 1
-#define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
-#define GCC_VERSION_AT_LEAST(major, minor, patch) (GCC_VERSION >= (major * 10000 + minor * 100 + patch))
+#define GCC_VERSION                                                            \
+  (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
+#define GCC_VERSION_AT_LEAST(major, minor, patch)                              \
+  (GCC_VERSION >= (major * 10000 + minor * 100 + patch))
 #else
-/* Define this for !GCC compilers, just so we can write things like GCC_VERSION_AT_LEAST(4, 1, 0). */
+/* Define this for !GCC compilers, just so we can write things like
+ * GCC_VERSION_AT_LEAST(4, 1, 0). */
 #define GCC_VERSION_AT_LEAST(major, minor, patch) 0
 #endif
 
 /* ==== Compiler features ==== */
-
 
 /* ALWAYS_INLINE */
 
@@ -72,7 +81,6 @@
 #endif
 #endif
 
-
 /* NEVER_INLINE */
 
 #ifndef NEVER_INLINE
@@ -85,7 +93,6 @@
 #endif
 #endif
 
-
 /* UNLIKELY */
 
 #ifndef UNLIKELY
@@ -96,7 +103,6 @@
 #endif
 #endif
 
-
 /* LIKELY */
 
 #ifndef LIKELY
@@ -106,7 +112,6 @@
 #define LIKELY(x) (x)
 #endif
 #endif
-
 
 /* NO_RETURN */
 
@@ -120,20 +125,17 @@
 #endif
 #endif
 
-
 /* WARN_UNUSED_RETURN */
 
 #if COMPILER(GCC)
-#define WARN_UNUSED_RETURN __attribute__ ((warn_unused_result))
+#define WARN_UNUSED_RETURN __attribute__((warn_unused_result))
 #else
 #define WARN_UNUSED_RETURN
 #endif
 
-
 /* ALLOW_UNUSED_LOCAL */
 
 #define ALLOW_UNUSED_LOCAL(x) false ? (void)x : (void)0
-
 
 /* OBJC_CLASS */
 
@@ -144,7 +146,6 @@
 #define OBJC_CLASS class
 #endif
 #endif
-
 
 /* WTF_PRETTY_FUNCTION */
 

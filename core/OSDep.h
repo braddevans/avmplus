@@ -7,21 +7,18 @@
 #ifndef __avmplus_OSDep__
 #define __avmplus_OSDep__
 
-
-namespace avmplus
-{
-    /**
-     * The OSDep class is used to provide an abstraction layer
-     * over OS-dependent code required by the VM.  This is
-     * typically code that accesses system services, such
-     * as date/time.
-     */
-    class OSDep
-    {
-    public:
-        static uintptr_t startIntWriteTimer(uint32_t millis, volatile int *addr);
-        static void stopTimer(uintptr_t handle);
-    };
-}
+namespace avmplus {
+/**
+ * The OSDep class is used to provide an abstraction layer
+ * over OS-dependent code required by the VM.  This is
+ * typically code that accesses system services, such
+ * as date/time.
+ */
+class OSDep {
+public:
+  static uintptr_t startIntWriteTimer(uint32_t millis, volatile int *addr);
+  static void stopTimer(uintptr_t handle);
+};
+} // namespace avmplus
 
 #endif /* __avmplus_OSDep__ */

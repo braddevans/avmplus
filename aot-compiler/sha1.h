@@ -14,18 +14,17 @@ namespace base {
 // This function performs SHA-1 operations.
 
 enum {
-  SHA1_LENGTH = 20  // Length in bytes of a SHA-1 hash.
+  SHA1_LENGTH = 20 // Length in bytes of a SHA-1 hash.
 };
 
 // Computes the SHA-1 hash of the input string |str| and returns the full
 // hash.
-std::string SHA1HashString(const std::string& str);
+std::string SHA1HashString(const std::string &str);
 
 // Computes the SHA-1 hash of the |len| bytes in |data| and puts the hash
 // in |hash|. |hash| must be SHA1_LENGTH bytes long.
-void SHA1HashBytes(const unsigned char* data, size_t len,
-                            unsigned char* hash);
+void SHA1HashBytes(const unsigned char *data, size_t len, unsigned char *hash);
 
-}  // namespace base
+} // namespace base
 
-#endif  // BASE_SHA1_H_
+#endif // BASE_SHA1_H_

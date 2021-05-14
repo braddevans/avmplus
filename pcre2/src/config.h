@@ -1,7 +1,6 @@
 /* src/config.h.  Generated from config.h.in by configure.  */
 /* src/config.h.in.  Generated from configure.ac by autoheader.  */
 
-
 /* PCRE2 is written in Standard C, but there are a few non-standard things it
 can cope with, allowing it to run on SunOS4 and other "close to standard"
 systems.
@@ -19,9 +18,9 @@ to set the macro values. In this case, you do not have to set -DHAVE_CONFIG_H,
 but if you do, default values will be taken from config.h for non-boolean
 macros that are not defined on the command line.
 
-Boolean macros such as HAVE_STDLIB_H and SUPPORT_PCRE2_8 should either be defined
-(conventionally to 1) for TRUE, and not defined at all for FALSE. All such
-macros are listed as a commented #undef in config.h.generic. Macros such as
+Boolean macros such as HAVE_STDLIB_H and SUPPORT_PCRE2_8 should either be
+defined (conventionally to 1) for TRUE, and not defined at all for FALSE. All
+such macros are listed as a commented #undef in config.h.generic. Macros such as
 MATCH_LIMIT, whose actual value is relevant, have defaults defined, but are
 surrounded by #ifndef/#endif lines so that the value can be overridden by -D.
 
@@ -35,7 +34,7 @@ sure both macros are undefined; an emulation function will then be used. */
    The build-time default can be overridden by the user of PCRE2 at runtime.
    */
 /* #undef BSR_ANYCRLF */
-   #define BSR_ANYCRLF
+#define BSR_ANYCRLF
 
 /* If you are compiling for a system that uses EBCDIC instead of ASCII
    character codes, define this macro to any value. When EBCDIC is set, PCRE2
@@ -211,17 +210,17 @@ sure both macros are undefined; an emulation function will then be used. */
 #define PCRE2GREP_BUFSIZE 20480
 
 /* to make a symbol visible */
-#define PCRE2POSIX_EXP_DECL extern __attribute__ ((visibility ("default")))
+#define PCRE2POSIX_EXP_DECL extern __attribute__((visibility("default")))
 
 /* to make a symbol visible */
-#define PCRE2POSIX_EXP_DEFN extern __attribute__ ((visibility ("default")))
+#define PCRE2POSIX_EXP_DEFN extern __attribute__((visibility("default")))
 
 /* Define to any value to include debugging code. */
 /* #undef PCRE2_DEBUG */
 
 /* to make a symbol visible */
 #ifndef _WIN32
-#define PCRE2_EXP_DECL extern __attribute__ ((visibility ("default")))
+#define PCRE2_EXP_DECL extern __attribute__((visibility("default")))
 //#else
 //#define PCRE2_EXP_DECL __declspec(dllexport)
 #endif
@@ -236,7 +235,7 @@ sure both macros are undefined; an emulation function will then be used. */
    of the external API. It does not appear on functions that are "external"
    in the C sense, but which are internal to the library. */
 #ifndef _WIN32
-#define PCRE2_EXP_DEFN __attribute__ ((visibility ("default")))
+#define PCRE2_EXP_DEFN __attribute__((visibility("default")))
 //#else
 //#define PCRE2_EXP_DEFN __declspec(dllexport)
 #endif

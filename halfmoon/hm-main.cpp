@@ -20,7 +20,7 @@ int enable_dvn = 1;
 int enable_deopt = 0;
 int enable_gml = 0;
 int enable_inline = 0;
-int enable_mode = 0;			// disabled by default, use -Dhalfmoon or env var
+int enable_mode = 0; // disabled by default, use -Dhalfmoon or env var
 int enable_optional = 1;
 int enable_peephole = 0;
 int enable_printir = 0;
@@ -66,17 +66,21 @@ void init() {
   if (enable_welcome) {
     printf("Halfmoon environment:\n");
     printf("  BUILTINS  %d  Also look at the builtins\n", enable_builtins);
-    printf("  DEOPT     %d  Enable deoptimization support (incomplete)\n", enable_deopt);
+    printf("  DEOPT     %d  Enable deoptimization support (incomplete)\n",
+           enable_deopt);
     printf("  DVN       %d  Dominator Value Numbering\n", enable_dvn);
     printf("  GML       %d  Generate GML graph output for yEd\n", enable_gml);
     printf("  INLINE    %d  Enable inlining\n", enable_inline);
     printf("  MODE      %d  Halfmoon mode. 0=none, 1=analyze, 2=interpret,"
-           " 3=lir-stubs, 4=lir\n", enable_mode);
-    printf("  OPTIONAL  %d  Enable optional-argument support\n", enable_optional);
+           " 3=lir-stubs, 4=lir\n",
+           enable_mode);
+    printf("  OPTIONAL  %d  Enable optional-argument support\n",
+           enable_optional);
     printf("  PEEPHOLE  %d  Enable ABC peephole optimizer\n", enable_peephole);
     printf("  PRINTIR   %d  Print final IR\n", enable_printir);
     printf("  PROFILER  %d  Enable runtime profiling\n", enable_profiler);
-    printf("  SCHEDULE  %d  Scheduler 0=none, 1=early, 2=late, 3=middle\n", enable_schedule);
+    printf("  SCHEDULE  %d  Scheduler 0=none, 1=early, 2=late, 3=middle\n",
+           enable_schedule);
     printf("  SELFTEST  %d  Enable self-test\n", enable_selftest);
     printf("  TRACE     %d  Print execution trace\n", enable_trace);
     printf("  TRY       %d  Consider methods with try/catch.\n", enable_try);
@@ -103,15 +107,13 @@ void init() {
 /** iterate over the abc instructions in a method, in linear order */
 class AbcRange {
 public:
-  AbcRange(MethodInfo* method);
+  AbcRange(MethodInfo *method);
 
-  bool empty() const {
-    return pc >= end;
-  }
+  bool empty() const { return pc >= end; }
 
   AbcOpcode front() const {
     AvmAssert(!empty());
-    return (AbcOpcode) *pc;
+    return (AbcOpcode)*pc;
   }
 
   void popFront() {
@@ -123,12 +125,12 @@ private:
   void read();
 
 private:
-  const uint8_t* pc;
-  const uint8_t* next;
-  const uint8_t* end;
+  const uint8_t *pc;
+  const uint8_t *next;
+  const uint8_t *end;
 };
 
-AbcRange::AbcRange(MethodInfo* method) {
+AbcRange::AbcRange(MethodInfo *method) {
   pc = method->abc_body_pos();
   AvmCore::skipU32(pc, 4);
   int len = AvmCore::readU32(pc);
@@ -146,7 +148,7 @@ void AbcRange::read() {
     next += 3 * (imm30b + 1);
 }
 
-bool canCompile(MethodInfo* m) {
+bool canCompile(MethodInfo *m) {
   init();
 
   if (enable_mode == kModeNone)
@@ -171,28 +173,27 @@ bool canCompile(MethodInfo* m) {
   }
 
   if (enable_profiler) {
-    MethodProfile* profile = JitManager::getProfile(m);
-    if (!profile || (!profile->hasBailedOut() && !profile->hasGatheredAllData()))
+    MethodProfile *profile = JitManager::getProfile(m);
+    if (!profile ||
+        (!profile->hasBailedOut() && !profile->hasGatheredAllData()))
       return false;
   }
 
   return true;
 }
 
-bool isProfilerEnabled() {
-  return enable_profiler != 0;
-}
+bool isProfilerEnabled() { return enable_profiler != 0; }
 
 /// Recursively mark instr and all the CondInstr's in its reverse dominance
 /// frontier, which are the instructions it is control dependent on.
-void markEffectRdf(BitSet* marks, DominatorTree* rdoms,
-                   Instr* instr, BlockStartInstr* block) {
+void markEffectRdf(BitSet *marks, DominatorTree *rdoms, Instr *instr,
+                   BlockStartInstr *block) {
   if (marks->get(instr->id))
     return;
   marks->set(instr->id);
   // recursively visit each block in RDF(block)
-  for (SeqRange<BlockStartInstr*> r(rdoms->df(block)); !r.empty();) {
-    BlockStartInstr* rdf_block = r.popFront();
+  for (SeqRange<BlockStartInstr *> r(rdoms->df(block)); !r.empty();) {
+    BlockStartInstr *rdf_block = r.popFront();
     markEffectRdf(marks, rdoms, InstrGraph::blockEnd(rdf_block), rdf_block);
   }
 }
@@ -201,15 +202,15 @@ void markEffectRdf(BitSet* marks, DominatorTree* rdoms,
 /// as any branches that control whether or not the effectful instruction
 /// will run.  Those branches are the control dependencies, or equivalently,
 /// they are the branches in the instruction's reverse dominance frontier.
-void markEffects(InstrGraph* ir, BitSet* marks) {
+void markEffects(InstrGraph *ir, BitSet *marks) {
   Allocator scratch;
-  DominatorTree* rdoms = reverseDoms(scratch, ir);
+  DominatorTree *rdoms = reverseDoms(scratch, ir);
   for (EachBlock b(ir); !b.empty();) {
-    BlockStartInstr* block = b.popFront();
+    BlockStartInstr *block = b.popFront();
     /// search for effectful instructions in this block and stop early
     /// when/if this block gets marked.
     for (InstrRange i(block); !i.empty();) {
-      Instr* instr = i.popFront();
+      Instr *instr = i.popFront();
       if (isBlockStart(instr) || isBlockEnd(instr))
         continue; // skip block delimiters
       for (ArrayRange<Def> d = defRange(instr); !d.empty();) {
@@ -223,8 +224,8 @@ void markEffects(InstrGraph* ir, BitSet* marks) {
 
   if (enable_verbose) {
     for (EachBlock b(ir); !b.empty(); b.popFront()) {
-      BlockStartInstr* block = b.front();
-      BlockEndInstr* end = ir->blockEnd(block);
+      BlockStartInstr *block = b.front();
+      BlockEndInstr *end = ir->blockEnd(block);
       if (kind(end) == HR_if && !marks->get(end->id))
         if (enable_verbose)
           printf("dead: useless i%d %s\n", end->id, name(end));
@@ -235,8 +236,8 @@ void markEffects(InstrGraph* ir, BitSet* marks) {
 /// if a conditional instruction splits EFFECT, but no effectful
 /// instructions are control-dependent on it, then unsplit effect
 /// because its an unnecessary data dependency.
-Def* unsplit(ArmInstr* arm, Def* d, BitSet* marks) {
-  CondInstr* cond = arm->owner;
+Def *unsplit(ArmInstr *arm, Def *d, BitSet *marks) {
+  CondInstr *cond = arm->owner;
   if (isLinear(type(d)) && !marks->get(cond->id)) {
     // nothing is control-dependent on cond, so we can unsplit d.
     return def(cond->arg(pos(d)));
@@ -246,7 +247,7 @@ Def* unsplit(ArmInstr* arm, Def* d, BitSet* marks) {
 
 /// Replace references to instructions with references to the instruction's
 /// identity instr (if different).
-void computeIdentities(InstrGraph* ir, bool preserveModels) {
+void computeIdentities(InstrGraph *ir, bool preserveModels) {
   AvmAssert(checkPruned(ir) && checkSSA(ir));
   Allocator scratch;
   BitSet marks(scratch, ir->size());
@@ -258,32 +259,31 @@ void computeIdentities(InstrGraph* ir, bool preserveModels) {
   do {
     changed = false;
     for (AllInstrRange i(ir); !i.empty();) {
-      if(reconstructInstrRange)
-      {
-          reconstructInstrRange = false;
-          break;
+      if (reconstructInstrRange) {
+        reconstructInstrRange = false;
+        break;
       }
-      Instr* instr = i.popFront();
+      Instr *instr = i.popFront();
       InstrKind k = kind(instr);
       for (ArrayRange<Def> d = defRange(instr); !d.empty();) {
-        Def* d1 = &d.popFront();
+        Def *d1 = &d.popFront();
         if (!d1->isUsed())
           continue;
-        Def* d2 = peephole(d1, ir, &factory);
-          
+        Def *d2 = peephole(d1, ir, &factory);
+
         if (k == HR_cknull || k == HR_cknullobject) {
-              UnaryStmt* cknull_inst = cast<UnaryStmt>(instr);
-              if (type(cknull_inst->value_in())->isNull()) {
-                  reconstructInstrRange = true;
-                  changed = true;
-                  break;
-              }
+          UnaryStmt *cknull_inst = cast<UnaryStmt>(instr);
+          if (type(cknull_inst->value_in())->isNull()) {
+            reconstructInstrRange = true;
+            changed = true;
+            break;
+          }
         }
         if (k == HR_arm && d1 == d2)
           d2 = unsplit(cast<ArmInstr>(instr), d1, &marks);
         if (d1 != d2) {
-          //AvmAssert(subtypeof(type(d2), type(d1)));
-          if(!preserveModels || model(type(d1)) == model(type(d2))) {
+          // AvmAssert(subtypeof(type(d2), type(d1)));
+          if (!preserveModels || model(type(d1)) == model(type(d2))) {
             copyUses(d1, d2);
             changed = true;
           }
@@ -296,24 +296,24 @@ void computeIdentities(InstrGraph* ir, bool preserveModels) {
 
 /// TODO splain
 ///
-Def* peephole(Def* def, InstrGraph* ir, InstrFactory* factory) {
+Def *peephole(Def *def, InstrGraph *ir, InstrFactory *factory) {
   AvmAssert(definerId(def) != -1 && "Instruction is not initialized");
-  Instr* instr = definer(def);
+  Instr *instr = definer(def);
 
-  const Type* t = type(def);
+  const Type *t = type(def);
   if (isConst(t) && kind(instr) != HR_const) {
     // fixme: need value numbering here to reuse consts
-    ConstantExpr* const_instr = factory->newConstantExpr(HR_const, t);
+    ConstantExpr *const_instr = factory->newConstantExpr(HR_const, t);
     ir->addInstrAfter(instr, const_instr);
     if (enable_verbose) {
-      printf("replaced i%d d%d with i%d\n",
-             definerId(def), pos(def), const_instr->id);
+      printf("replaced i%d d%d with i%d\n", definerId(def), pos(def),
+             const_instr->id);
     }
     return const_instr->value();
   }
-    
+
   if (kind(instr) == HR_cknull || kind(instr) == HR_cknullobject) {
-    UnaryStmt* cknull_inst = cast<UnaryStmt>(instr);
+    UnaryStmt *cknull_inst = cast<UnaryStmt>(instr);
     if (type(cknull_inst->value_in())->isNull()) {
       // Handle an awkward situation: nullcheck of a known-to-be-null value.
       // Rewrite:
@@ -327,52 +327,59 @@ Def* peephole(Def* def, InstrGraph* ir, InstrFactory* factory) {
       //      more stuff
       //   }
       //
-      // The condition ensures that the code in the "more stuff" block is still dominated
-      // by the blocks containing any defs it uses. Then, the dead code eliminator will
-      // get rid of the unnecessary code. That's easier than trying to chase down
-      // all of the uses of defs in the "more stuff" block.
+      // The condition ensures that the code in the "more stuff" block is still
+      // dominated by the blocks containing any defs it uses. Then, the dead
+      // code eliminator will get rid of the unnecessary code. That's easier
+      // than trying to chase down all of the uses of defs in the "more stuff"
+      // block.
       //
-      // Type computations will assign type "bottom" to the cknull, but this doesn't
-      // bother anyone.
-            
+      // Type computations will assign type "bottom" to the cknull, but this
+      // doesn't bother anyone.
+
       // Split block before the cknull
-      BlockStartInstr* blk1 = InstrGraph::findBlockStart(cknull_inst);
+      BlockStartInstr *blk1 = InstrGraph::findBlockStart(cknull_inst);
       InstrGraph::splitBlock(blk1, cknull_inst);
-            
+
       // append "if (true)" to the first half
-      ConstantExpr* true_instr = factory->newConstantExpr(HR_const, ir->lattice.makeBoolConst(true));
+      ConstantExpr *true_instr =
+          factory->newConstantExpr(HR_const, ir->lattice.makeBoolConst(true));
       ir->addInstrBefore(blk1, true_instr); // adds to end!
-      IfInstr* if_instr = factory->newIfInstr(true_instr->value(), 1, halfmoon::def(cknull_inst->effect_in()));
+      IfInstr *if_instr = factory->newIfInstr(
+          true_instr->value(), 1, halfmoon::def(cknull_inst->effect_in()));
       ir->addInstrAfter(true_instr, if_instr);
-            
+
       // create the "throw" arm
-      ArmInstr* throw_arm = if_instr->arm(true);
+      ArmInstr *throw_arm = if_instr->arm(true);
       ir->addBlock(throw_arm);
-      UnaryStmt* null_ref_exception = factory->newUnaryStmt(HR_makenullrefexception,
-                                                            halfmoon::def(cknull_inst->effect_in()),
-                                                            halfmoon::def(cknull_inst->value_in()));
+      UnaryStmt *null_ref_exception = factory->newUnaryStmt(
+          HR_makenullrefexception, halfmoon::def(cknull_inst->effect_in()),
+          halfmoon::def(cknull_inst->value_in()));
       ir->addInstrAfter(throw_arm, null_ref_exception);
-      GotoInstr* goto_instr = factory->newGotoStmt(ir->ensureThrowBlock(*factory));
+      GotoInstr *goto_instr =
+          factory->newGotoStmt(ir->ensureThrowBlock(*factory));
       goto_instr->args[0] = null_ref_exception->effect_out();
       goto_instr->args[1] = null_ref_exception->value_out();
       ir->addInstrAfter(null_ref_exception, goto_instr);
 
-       //Bug#3951436 The cknull_instr was introducing an infinite loop as it was not getting removed from the IR.
-      //Removing all uses of cknull_instr defs and connecting them to the inputs into cknull instr directly. This makes cknull_instr unused and thus gets removed as dead code later.
-      for(UseRange effectRange(*cknull_inst->effect_out()); !effectRange.empty(); effectRange.popFront())
-      {
-          Use& use = effectRange.front();
-          use = cknull_inst->effect_in();
+      // Bug#3951436 The cknull_instr was introducing an infinite loop as it was
+      // not getting removed from the IR.
+      // Removing all uses of cknull_instr defs and connecting them to the
+      // inputs into cknull instr directly. This makes cknull_instr unused and
+      // thus gets removed as dead code later.
+      for (UseRange effectRange(*cknull_inst->effect_out());
+           !effectRange.empty(); effectRange.popFront()) {
+        Use &use = effectRange.front();
+        use = cknull_inst->effect_in();
       }
-        
-      for(UseRange valueRange(*cknull_inst->value_out()); !valueRange.empty(); valueRange.popFront())
-      {
-          Use& use = valueRange.front();
-          use = cknull_inst->value_in();
+
+      for (UseRange valueRange(*cknull_inst->value_out()); !valueRange.empty();
+           valueRange.popFront()) {
+        Use &use = valueRange.front();
+        use = cknull_inst->value_in();
       }
 
       // Create the "more-stuff" arm that will be dead-code eliminated.
-      ArmInstr* more_arm = if_instr->arm(false);
+      ArmInstr *more_arm = if_instr->arm(false);
       ir->addBlock(more_arm);
       ir->appendList(more_arm, InstrRange(cknull_inst));
     }
@@ -384,7 +391,7 @@ Def* peephole(Def* def, InstrGraph* ir, InstrFactory* factory) {
 /// Redirect uses of new_start's defs to outer_stmt's inputs.
 /// new_start's defs are the inlined code's formal parameters.
 ///
-void connectInnerUsesToOuterUses(Instr* new_start, Instr* outer_stmt) {
+void connectInnerUsesToOuterUses(Instr *new_start, Instr *outer_stmt) {
   AvmAssert(numDefs(new_start) == numUses(outer_stmt));
   ArrayRange<Def> start_defs = defRange(new_start);
   ArrayRange<Use> outer_inputs = useRange(outer_stmt);
@@ -394,7 +401,7 @@ void connectInnerUsesToOuterUses(Instr* new_start, Instr* outer_stmt) {
 
 /// Redirect uses of callsite defs to the defs that are inputs to ret_stmt.
 ///
-void connectOuterUsesToInnerUses(Instr* ret_stmt, Instr* callsite) {
+void connectOuterUsesToInnerUses(Instr *ret_stmt, Instr *callsite) {
   AvmAssert(numUses(ret_stmt) == numDefs(callsite));
   // For each value defined by the callsite, change every use to refer to the
   // correspnding value **used** by the return statement.  The return statement
@@ -407,17 +414,17 @@ void connectOuterUsesToInnerUses(Instr* ret_stmt, Instr* callsite) {
 
 ///
 ///
-void replaceStop(InstrGraph* ir, InstrFactory* factory, StopInstr* stop,
-                 LabelInstr* target) {
-  GotoInstr* go = factory->newGotoStmt(target);
+void replaceStop(InstrGraph *ir, InstrFactory *factory, StopInstr *stop,
+                 LabelInstr *target) {
+  GotoInstr *go = factory->newGotoStmt(target);
   copyRange(useRange(stop), useRange(go));
   ir->replaceInstr(stop, go);
 }
 
 ///
 ///
-StopInstr* joinStops(InstrGraph* ir, InstrFactory* factory, StopInstr* stop1,
-                     StopInstr* stop2) {
+StopInstr *joinStops(InstrGraph *ir, InstrFactory *factory, StopInstr *stop1,
+                     StopInstr *stop2) {
   // If either stop is null, return the other one.
   if (!stop1)
     return stop2;
@@ -425,7 +432,7 @@ StopInstr* joinStops(InstrGraph* ir, InstrFactory* factory, StopInstr* stop1,
     return stop1;
 
   AvmAssert(kind(stop1) == kind(stop2));
-  LabelInstr* label = factory->newLabelInstr(numUses(stop1));
+  LabelInstr *label = factory->newLabelInstr(numUses(stop1));
   ir->addBlock(label);
 
   replaceStop(ir, factory, stop1, label);
@@ -453,8 +460,8 @@ StopInstr* joinStops(InstrGraph* ir, InstrFactory* factory, StopInstr* stop1,
 /// \param inner_ir
 /// \param outer_stmt the statement in the outer_ir that is being inlined.
 ///
-void expandStmt(Context*, InstrGraph* outer_ir, InstrGraph* inner_ir,
-                Instr* outer_stmt) {
+void expandStmt(Context *, InstrGraph *outer_ir, InstrGraph *inner_ir,
+                Instr *outer_stmt) {
   PrintWriter &pw = outer_ir->lattice.console();
   if (enable_verbose) {
     pw << "expandStmt ";
@@ -469,12 +476,12 @@ void expandStmt(Context*, InstrGraph* outer_ir, InstrGraph* inner_ir,
   Copier copier(inner_ir, outer_ir);
   AvmAssert(kind(inner_ir->begin) == HR_template);
   InstrRange start_block(copier.copy(inner_ir->begin));
-  InstrRange return_block = outer_ir->blockRange(copier.copy(
-      inner_ir->returnStmt()));
+  InstrRange return_block =
+      outer_ir->blockRange(copier.copy(inner_ir->returnStmt()));
 
   if (enable_verbose)
     printTerseInstrList(start_block, inner_ir,
-        "begin: block cloned from begin of template");
+                        "begin: block cloned from begin of template");
 
   // 2. Connect inputs to inputs.
   // Connect uses of inner_ir's formal parameters (defs in its start node)
@@ -484,7 +491,7 @@ void expandStmt(Context*, InstrGraph* outer_ir, InstrGraph* inner_ir,
   // 3. Connect outputs to outputs.  Inner_ir ends with a return instruction,
   // bug we dont want the return; uses of outer_stmt's defs are redirected to
   // these defs.
-  Instr* return_instr = return_block.back();
+  Instr *return_instr = return_block.back();
   InstrFactory factory(outer_ir);
   InstrGraphBuilder builder(outer_ir, &factory, return_instr);
   connectOuterUsesToInnerUses(return_instr, outer_stmt);
@@ -507,52 +514,52 @@ void expandStmt(Context*, InstrGraph* outer_ir, InstrGraph* inner_ir,
 
 /// Expand fat templates and perform early binding.
 ///
-    void expandTemplates(Context* context, InstrGraph* ir) {
-        AvmAssert(checkPruned(ir) && checkSSA(ir));
-        Specializer specializer(ir);
-        for (AllInstrRange i(ir); !i.empty();) {
-            Instr* instr = i.popFront();
-            specializer.specialize(instr);
-            if (ir->isLinked(instr) && hasSubgraph(instr))
-                expandStmt(context, ir, subgraph(instr), instr);
-        }
-        // Either specialization or template expansion can have resulted in new
-        // templates.
-        bool hasTemplates = false;
-        for (AllInstrRange i(ir); !i.empty();) {
-            Instr* instr = i.popFront();
-            if (ir->isLinked(instr) && hasSubgraph(instr)) {
-                hasTemplates = true;
-                break;
-            }
-        }
-        // Keep expanding until they are all expanded
-        while (hasTemplates) {
-            hasTemplates = false;
-            for (AllInstrRange i(ir); !i.empty();) {
-                Instr* instr = i.popFront();
-                // Do NOT call the specializer here since it can add templates we don't
-                // know about. And it will also add templates to dead code from earlier
-                // specializations, resulting in infinitely-repeated specialization of the
-                // (now dead) instructions.
-                if (ir->isLinked(instr) && hasSubgraph(instr)) {
-                    expandStmt(context, ir, subgraph(instr), instr);
-                    hasTemplates = true;
-                }
-            }
-        }
-        pruneGraph(ir);
-        AvmAssert(checkPruned(ir) && checkSSA(ir));
+void expandTemplates(Context *context, InstrGraph *ir) {
+  AvmAssert(checkPruned(ir) && checkSSA(ir));
+  Specializer specializer(ir);
+  for (AllInstrRange i(ir); !i.empty();) {
+    Instr *instr = i.popFront();
+    specializer.specialize(instr);
+    if (ir->isLinked(instr) && hasSubgraph(instr))
+      expandStmt(context, ir, subgraph(instr), instr);
+  }
+  // Either specialization or template expansion can have resulted in new
+  // templates.
+  bool hasTemplates = false;
+  for (AllInstrRange i(ir); !i.empty();) {
+    Instr *instr = i.popFront();
+    if (ir->isLinked(instr) && hasSubgraph(instr)) {
+      hasTemplates = true;
+      break;
     }
+  }
+  // Keep expanding until they are all expanded
+  while (hasTemplates) {
+    hasTemplates = false;
+    for (AllInstrRange i(ir); !i.empty();) {
+      Instr *instr = i.popFront();
+      // Do NOT call the specializer here since it can add templates we don't
+      // know about. And it will also add templates to dead code from earlier
+      // specializations, resulting in infinitely-repeated specialization of the
+      // (now dead) instructions.
+      if (ir->isLinked(instr) && hasSubgraph(instr)) {
+        expandStmt(context, ir, subgraph(instr), instr);
+        hasTemplates = true;
+      }
+    }
+  }
+  pruneGraph(ir);
+  AvmAssert(checkPruned(ir) && checkSSA(ir));
+}
 
-void optimizePass(Context* cxt, InstrGraph* ir, const char* title) {
+void optimizePass(Context *cxt, InstrGraph *ir, const char *title) {
   AvmAssert(checkPruned(ir) && checkSSA(ir));
   propagateTypes(ir);
   if (enable_verbose) {
     printf("BEFORE pass %s\n", title);
     listCfg(cxt->out, ir);
   }
-  computeIdentities(ir, false/*preserveModels*/);
+  computeIdentities(ir, false /*preserveModels*/);
   removeDeadCode(cxt, ir);
   if (enable_dvn) {
     dominatorValueNumbering(cxt, ir);
@@ -565,7 +572,7 @@ void optimizePass(Context* cxt, InstrGraph* ir, const char* title) {
     bool ir_changed = inlineGraph(cxt, ir, title);
     printGraph(cxt, ir, "after-inlining");
     removeDeadCode(cxt, ir);
-    if (ir_changed){
+    if (ir_changed) {
       printGraph(cxt, ir, "after-inlining-deadcode");
     }
   }
@@ -573,7 +580,7 @@ void optimizePass(Context* cxt, InstrGraph* ir, const char* title) {
   AvmAssert(checkSSA(ir));
 }
 
-void optimize(Context* cxt, InstrGraph* ir) {
+void optimize(Context *cxt, InstrGraph *ir) {
   optimizePass(cxt, ir, "1");
   optimizePass(cxt, ir, "2");
   optimizePass(cxt, ir, "3");
@@ -583,21 +590,21 @@ void optimize(Context* cxt, InstrGraph* ir) {
   printGraph(cxt, ir, "5-fixmodels");
 
   switch (enable_schedule) {
-    default:
-    case kScheduleNone:
-      break;
-    case kScheduleEarly:
-      scheduleEarly(ir);
-      printGraph(cxt, ir, "6-early");
-      break;
-    case kScheduleLate:
-      scheduleLate(ir);
-      printGraph(cxt, ir, "6-late");
-      break;
-    case kScheduleMiddle:
-      scheduleMiddle(ir);
-      printGraph(cxt, ir, "6-middle");
-      break;
+  default:
+  case kScheduleNone:
+    break;
+  case kScheduleEarly:
+    scheduleEarly(ir);
+    printGraph(cxt, ir, "6-early");
+    break;
+  case kScheduleLate:
+    scheduleLate(ir);
+    printGraph(cxt, ir, "6-late");
+    break;
+  case kScheduleMiddle:
+    scheduleMiddle(ir);
+    printGraph(cxt, ir, "6-middle");
+    break;
   }
 }
 
@@ -606,12 +613,12 @@ void optimize(Context* cxt, InstrGraph* ir) {
  * finished blocks in list, so list ends up in reverse postorder.  Visit either
  * all edges or only normal edges, depending on visit_all param.
  */
-static void dfs(AbcBlock* b, int& post_id, bool& has_reachable_exceptions, SeqBuilder<AbcBlock*> &list,
-                bool visit_all) {
+static void dfs(AbcBlock *b, int &post_id, bool &has_reachable_exceptions,
+                SeqBuilder<AbcBlock *> &list, bool visit_all) {
   b->post_id = -1;
   // visit ordinary successors.
   for (int i = 0, n = b->num_succ_blocks; i < n; ++i) {
-    AbcBlock* succ = b->succ_blocks[i];
+    AbcBlock *succ = b->succ_blocks[i];
     if (!succ->post_id)
       dfs(succ, post_id, has_reachable_exceptions, list, visit_all);
     else if (succ->post_id == -1)
@@ -620,10 +627,10 @@ static void dfs(AbcBlock* b, int& post_id, bool& has_reachable_exceptions, SeqBu
   if (visit_all) {
     // visit catch blocks reachable from this block.
     for (int i = 0, n = b->max_catch_blocks; i < n; ++i) {
-      AbcBlock* succ = b->catch_blocks[i];
+      AbcBlock *succ = b->catch_blocks[i];
       if (!succ)
         continue;
-      if (succ->start_types == NULL)  // Unreachable catch block
+      if (succ->start_types == NULL) // Unreachable catch block
         continue;
       has_reachable_exceptions = true;
       if (!succ->post_id)
@@ -637,24 +644,24 @@ static void dfs(AbcBlock* b, int& post_id, bool& has_reachable_exceptions, SeqBu
 }
 
 /// TODO comment
-///matz: could add parm here to pass calling context when inlining.
-InstrGraph* parseAbc(MethodInfo* method, Lattice* lattice, InfoManager* infos,
-                     Allocator& ir_alloc, AbcGraph* abc, Toplevel *toplevel,
-                     AbcEnv *abc_env, ProfiledInformation* profiled_info,
+/// matz: could add parm here to pass calling context when inlining.
+InstrGraph *parseAbc(MethodInfo *method, Lattice *lattice, InfoManager *infos,
+                     Allocator &ir_alloc, AbcGraph *abc, Toplevel *toplevel,
+                     AbcEnv *abc_env, ProfiledInformation *profiled_info,
                      Context &cxt) {
-  (void)abc_env; //TODO: change protocol of parseAbc
+  (void)abc_env; // TODO: change protocol of parseAbc
   // First, sort AbcBlocks in reverse postorder.
   Allocator scratch;
-  SeqBuilder<AbcBlock*> list(scratch);
+  SeqBuilder<AbcBlock *> list(scratch);
   int post_id = 0;
   bool has_reachable_exceptions = false;
   dfs(abc->entry(), post_id, has_reachable_exceptions, list, true);
 
   // Then visit the AbcBlocks and build an InstrGraph.
   InstrFactory factory(ir_alloc, lattice, infos);
-  AbcBuilder builder(method, abc, &factory, toplevel, profiled_info, has_reachable_exceptions);
-  InstrGraph* ir = builder.visitBlocks(list.get());
-
+  AbcBuilder builder(method, abc, &factory, toplevel, profiled_info,
+                     has_reachable_exceptions);
+  InstrGraph *ir = builder.visitBlocks(list.get());
 
   if (enable_gml)
     printAbcCfg(method, list.get(), ir, "0-abc");
@@ -671,8 +678,8 @@ InstrGraph* parseAbc(MethodInfo* method, Lattice* lattice, InfoManager* infos,
 
 #ifdef AVMPLUS_VERBOSE
   if (enable_printir || enable_verbose) {
-    cxt.out << "final IR for " << cxt.method << " method_id=" <<
-        cxt.method->method_id() << " ";
+    cxt.out << "final IR for " << cxt.method
+            << " method_id=" << cxt.method->method_id() << " ";
     listCfg(cxt.out, ir);
   }
 #endif

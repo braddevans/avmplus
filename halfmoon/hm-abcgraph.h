@@ -19,30 +19,30 @@ using nanojit::BitSet;
  */
 class AbcBlock {
 public:
-  AbcBlock(const uint8_t* pc)
-  : start(pc), start_withbase(-1) {
+  AbcBlock(const uint8_t *pc) : start(pc), start_withbase(-1) {
     // Everything else is zero'd in newAbcBlock()
   }
 
-  template<class E> FrameRange<E> startRange(E* frame, int stack_base) {
-    return FrameRange < E > (frame, start_sp, start_scopep, stack_base);
+  template <class E> FrameRange<E> startRange(E *frame, int stack_base) {
+    return FrameRange<E>(frame, start_sp, start_scopep, stack_base);
   }
-  FrameRange<const Type*> startTypesRange(int stack_base) {
+  FrameRange<const Type *> startTypesRange(int stack_base) {
     return startRange(start_types, stack_base);
   }
 
 public:
   const uint8_t *start, *end; // ABC boundaries for this label.
-  AbcBlock** succ_blocks; // Successor blocks from this label.
-  AbcBlock** catch_blocks; // Catch blocks reachable from here (some may be null)
-  int num_succ_blocks; // size of succ_blocks[] array.
+  AbcBlock **succ_blocks;     // Successor blocks from this label.
+  AbcBlock *
+      *catch_blocks;    // Catch blocks reachable from here (some may be null)
+  int num_succ_blocks;  // size of succ_blocks[] array.
   int max_catch_blocks; // size of catch_blocks[] array.
   int post_id;
-  int num_preds; // Number of incoming normal and exception edges.
-  bool dfs_loop; // True if target of DFS back-edge.
-  bool abc_loop; // True if target of ABC back-edge.
-  const Type** start_types; // Verifier-derived types at label start.
-  BlockStartInstr* label; // BlockStartInstr for this AbcBlock
+  int num_preds;              // Number of incoming normal and exception edges.
+  bool dfs_loop;              // True if target of DFS back-edge.
+  bool abc_loop;              // True if target of ABC back-edge.
+  const Type **start_types;   // Verifier-derived types at label start.
+  BlockStartInstr *label;     // BlockStartInstr for this AbcBlock
   int start_sp, start_scopep; // stackp_ and scope at label start
   int start_withbase;
 };
@@ -66,61 +66,52 @@ struct AbcInstr {
  */
 class AbcGraph {
 public:
-  AbcGraph(MethodInfo* method);
+  AbcGraph(MethodInfo *method);
 
-  void analyzeBranch(AbcBlock* blk, AbcOpcode abcop,
-                     const uint8_t* nextpc, int32_t offset);
-  void analyzeSwitch(AbcBlock* blk, const uint8_t* abc_pc,
-                     const uint8_t* nextpc, int32_t default_offset,
+  void analyzeBranch(AbcBlock *blk, AbcOpcode abcop, const uint8_t *nextpc,
+                     int32_t offset);
+  void analyzeSwitch(AbcBlock *blk, const uint8_t *abc_pc,
+                     const uint8_t *nextpc, int32_t default_offset,
                      uint32_t num_cases);
-  AbcBlock* newAbcBlock(const uint8_t* pc);
-  void analyzeEnd(AbcBlock* blk, const uint8_t* nextpc);
+  AbcBlock *newAbcBlock(const uint8_t *pc);
+  void analyzeEnd(AbcBlock *blk, const uint8_t *nextpc);
 
   /// Add a pointer in catch_blocks to each catch label reachable from
   /// this label, regardless of whether or not any instructions actually throw.
   ///
-  void analyzeExceptions(AbcBlock* fm);
+  void analyzeExceptions(AbcBlock *fm);
 
-  AbcBlock* entry() {
-    return entry_;
-  }
-  Allocator0& alloc0() {
-    return alloc0_;
-  }
-  bool haveBlock(const uint8_t* pc) {
-    return blockmap_.containsKey(pc);
-  }
-  AbcBlock* handler(int i) {
-    AvmAssert(handlers_[i] == blockmap_.get(code_pos_ + table_->exceptions[i].target));
+  AbcBlock *entry() { return entry_; }
+  Allocator0 &alloc0() { return alloc0_; }
+  bool haveBlock(const uint8_t *pc) { return blockmap_.containsKey(pc); }
+  AbcBlock *handler(int i) {
+    AvmAssert(handlers_[i] ==
+              blockmap_.get(code_pos_ + table_->exceptions[i].target));
     return handlers_[i];
   }
-  int handler_count() {
-    return handler_count_;
-  }
-  const uint8_t* code_pos() {
-    return code_pos_;
-  }
-  AbcInstr* abc_instr(const uint8_t* pc) {
+  int handler_count() { return handler_count_; }
+  const uint8_t *code_pos() { return code_pos_; }
+  AbcInstr *abc_instr(const uint8_t *pc) {
     AvmAssert(abc_instrs.containsKey(pc));
     return abc_instrs.get(pc);
   }
 
 private:
-  void addAbcEdge(AbcBlock* fm, const uint8_t* target_pc, int edge_index);
-  void newSuccEdges(AbcBlock* fm, int count);
+  void addAbcEdge(AbcBlock *fm, const uint8_t *target_pc, int edge_index);
+  void newSuccEdges(AbcBlock *fm, int count);
   void createTryCatchBlocks();
 
 private:
   Allocator alloc_;
   Allocator0 alloc0_;
-  HashMap<const uint8_t*, AbcBlock*> blockmap_;
-  HashMap<const uint8_t*, AbcInstr*> abc_instrs;
-  AbcBlock* entry_;
-  AbcBlock** handlers_;
+  HashMap<const uint8_t *, AbcBlock *> blockmap_;
+  HashMap<const uint8_t *, AbcInstr *> abc_instrs;
+  AbcBlock *entry_;
+  AbcBlock **handlers_;
   int handler_count_; // number of handlers.
-  ExceptionHandlerTable* table_;
-  const uint8_t* code_pos_;
-  MethodInfo* method;
+  ExceptionHandlerTable *table_;
+  const uint8_t *code_pos_;
+  MethodInfo *method;
 
   friend class JitWriter;
 };
@@ -136,8 +127,9 @@ inline bool isEndOpcode(AbcOpcode abcop) {
 }
 
 inline bool isBlockEnd(AbcOpcode abcop) {
-  return isBranchOpcode(abcop) || isEndOpcode(abcop) || abcop == OP_lookupswitch;
+  return isBranchOpcode(abcop) || isEndOpcode(abcop) ||
+         abcop == OP_lookupswitch;
 }
 
-} // namespace avmplus
+} // namespace halfmoon
 #endif // #define HALFMOON_ABCGRAPH_H_

@@ -29,10 +29,11 @@
 
 // NOTE sorted by warning number
 // TODO remove as time/code allow
-#pragma warning(disable:4065)   // switch contains default but no cases
-#pragma warning(disable:4200)   // zero-length array
-#pragma warning(disable:4355)   // 'this' used in base member initializer list
-#pragma warning(disable:4640)   // construction of local static object is not thread-safe
+#pragma warning(disable : 4065) // switch contains default but no cases
+#pragma warning(disable : 4200) // zero-length array
+#pragma warning(disable : 4355) // 'this' used in base member initializer list
+#pragma warning(                                                               \
+    disable : 4640) // construction of local static object is not thread-safe
 
 #endif
 
@@ -42,33 +43,26 @@ using nanojit::Seq;
 using nanojit::SeqBuilder;
 
 namespace halfmoon {
-using avmplus::String;
-using avmplus::ScriptObject;
 using avmplus::Atom;
+using avmplus::ScriptObject;
 using avmplus::SST_atom;
+using avmplus::String;
 
 /**
  * Range that accesses each active position in an ABC stack frame.
  */
-template<class E>
-class FrameRange {
+template <class E> class FrameRange {
 public:
-  FrameRange(E* frame, int stackp, int scopep, int stack_base) :
-      frame(frame), stack_base(stack_base), stackp(stackp), scopep(scopep), i(0) {
-  }
+  FrameRange(E *frame, int stackp, int scopep, int stack_base)
+      : frame(frame), stack_base(stack_base), stackp(stackp), scopep(scopep),
+        i(0) {}
 
-  bool empty() const {
-    return i > stackp;
-  }
-  E& front() const {
-    return frame[i];
-  }
-  void popFront() {
-    i = (i != scopep) ? i + 1 : stack_base;
-  }
+  bool empty() const { return i > stackp; }
+  E &front() const { return frame[i]; }
+  void popFront() { i = (i != scopep) ? i + 1 : stack_base; }
 
 private:
-  E* const frame;
+  E *const frame;
   const int stack_base;
   const int stackp;
   const int scopep;
@@ -80,19 +74,12 @@ private:
  */
 class FrameIndexRange {
 public:
-  FrameIndexRange(int stackp, int scopep, int stack_base) :
-    stack_base(stack_base), stackp(stackp), scopep(scopep), i(0) {
-  }
+  FrameIndexRange(int stackp, int scopep, int stack_base)
+      : stack_base(stack_base), stackp(stackp), scopep(scopep), i(0) {}
 
-  bool empty() const {
-    return i > stackp;
-  }
-  int front() const {
-    return i;
-  }
-  void popFront() {
-    i = (i != scopep) ? i + 1 : stack_base;
-  }
+  bool empty() const { return i > stackp; }
+  int front() const { return i; }
+  void popFront() { i = (i != scopep) ? i + 1 : stack_base; }
 
 private:
   const int stack_base;
@@ -101,10 +88,11 @@ private:
   int i;
 };
 
-/// Return a FrameRange for frame, given the dimensions from state and signature.
+/// Return a FrameRange for frame, given the dimensions from state and
+/// signature.
 ///
-template<class E>
-FrameRange<E> range(E* frame, const FrameState* state,
+template <class E>
+FrameRange<E> range(E *frame, const FrameState *state,
                     MethodSignaturep signature) {
   int stack_base = signature->stack_base();
   int sp = stack_base + state->stackDepth - 1;
@@ -112,7 +100,7 @@ FrameRange<E> range(E* frame, const FrameState* state,
   return FrameRange<E>(frame, sp, scopep, stack_base);
 }
 
-}
+} // namespace halfmoon
 
 // These extensions to nanojit allocators and containers could be moved
 // into nanojit proper.
@@ -120,10 +108,8 @@ namespace halfmoon {
 
 /** Wrapper for Allocator to enable an overloaded operator new that zeros */
 struct Allocator0 {
-  Allocator& alloc;
-  Allocator0(Allocator& alloc) :
-      alloc(alloc) {
-  }
+  Allocator &alloc;
+  Allocator0(Allocator &alloc) : alloc(alloc) {}
 };
 
 /**
@@ -134,36 +120,28 @@ struct Allocator0 {
  *   ...
  * }
  */
-template<class T>
-class SeqRange {
+template <class T> class SeqRange {
 public:
-  SeqRange(Seq<T>* n) :
-      n_(n) {
-  }
+  SeqRange(Seq<T> *n) : n_(n) {}
 
-  SeqRange(SeqBuilder<T> &seq) :
-      n_(seq.get()) {
-  }
+  SeqRange(SeqBuilder<T> &seq) : n_(seq.get()) {}
 
-  SeqRange(int i) :
-      n_(0) {
+  SeqRange(int i) : n_(0) {
     AvmAssert(i == 0);
-    (void) i;
+    (void)i;
   }
 
 public:
   // Range api
-  bool empty() const {
-    return n_ == NULL;
-  }
+  bool empty() const { return n_ == NULL; }
 
-  T& front() const {
+  T &front() const {
     AvmAssert(!empty());
     return n_->head;
   }
 
-  T& popFront() {
-    T& t = front();
+  T &popFront() {
+    T &t = front();
     n_ = n_->tail;
     return t;
   }
@@ -172,24 +150,24 @@ private:
   Seq<T> *n_;
 };
 
-} // end namespace nanojit
+} // namespace halfmoon
 
 /** Global new overload enabling this pattern:  new (alloc, xtra) T(...) */
-inline void* operator new(size_t size, Allocator &a, size_t count,
+inline void *operator new(size_t size, Allocator &a, size_t count,
                           size_t elem_size) {
   return a.alloc(size + count * elem_size);
 }
 
 /** global operator new that returns a zero'd object */
-inline void* operator new(size_t size, halfmoon::Allocator0& a) {
-  void* p = a.alloc.alloc(size);
+inline void *operator new(size_t size, halfmoon::Allocator0 &a) {
+  void *p = a.alloc.alloc(size);
   VMPI_memset(p, 0, size);
   return p;
 }
 
 /** global operator new that returns an array of zero'd objects */
-inline void* operator new[](size_t size, halfmoon::Allocator0& a) {
-  void* p = a.alloc.alloc(size);
+inline void *operator new[](size_t size, halfmoon::Allocator0 &a) {
+  void *p = a.alloc.alloc(size);
   VMPI_memset(p, 0, size);
   return p;
 }
@@ -205,17 +183,15 @@ using nanojit::BitSet;
  * as the stack grows and shrinks.  List nodes are allocated from a
  * dedicated arena.
  */
-template<class T> struct SeqStack {
+template <class T> struct SeqStack {
   Allocator alloc;
-  Seq<T>* stack;
-  Seq<T>* free; // instr recycler
+  Seq<T> *stack;
+  Seq<T> *free; // instr recycler
 
-  SeqStack() :
-      stack(0), free(0) {
-  }
+  SeqStack() : stack(0), free(0) {}
 
-  void push(const T& elem) {
-    Seq<T>* s = free;
+  void push(const T &elem) {
+    Seq<T> *s = free;
     if (s) {
       free = s->tail;
       stack = new (s) Seq<T>(elem, stack); // Placement new.
@@ -226,27 +202,24 @@ template<class T> struct SeqStack {
 
   T pop() {
     NanoAssert(!empty());
-    Seq<T>* s = stack;
+    Seq<T> *s = stack;
     stack = s->tail;
     s->tail = free;
     free = s;
     return s->head;
   }
 
-  T& peek() const {
+  T &peek() const {
     NanoAssert(!empty());
     return stack->head;
   }
 
-  bool empty() const {
-    return !stack;
-  }
+  bool empty() const { return !stack; }
 };
 
 /// cons head and tail using passed allocator, return new list
 ///
-template<class T>
-Seq<T>* cons(Allocator& alloc, T head, Seq<T>* tail) {
+template <class T> Seq<T> *cons(Allocator &alloc, T head, Seq<T> *tail) {
   return new (alloc) Seq<T>(head, tail);
 }
 
@@ -260,32 +233,27 @@ inline int parseEnv(const char *name, int default_val) {
 
 /// ArrayRange implements the DoubleEndedRange pattern for an E[] Array.
 ///
-template<class E> class ArrayRange {
+template <class E> class ArrayRange {
 public:
-  ArrayRange(E* ptr, int count) :
-      front_(ptr), back_(ptr + count) {
-  }
-  ArrayRange(const ArrayRange& other) :
-      front_(other.front_), back_(other.back_) {
-  }
+  ArrayRange(E *ptr, int count) : front_(ptr), back_(ptr + count) {}
+  ArrayRange(const ArrayRange &other)
+      : front_(other.front_), back_(other.back_) {}
 
 public:
-  bool empty() const {
-    return front_ >= back_;
-  }
-  E& front() const {
+  bool empty() const { return front_ >= back_; }
+  E &front() const {
     AvmAssert(!empty());
     return front_[0];
   }
-  E& back() const {
+  E &back() const {
     AvmAssert(!empty());
     return back_[-1];
   }
-  E& popFront() {
+  E &popFront() {
     AvmAssert(!empty());
     return *front_++;
   }
-  E& popBack() {
+  E &popBack() {
     AvmAssert(!empty());
     return *(--back_);
   }
@@ -297,18 +265,14 @@ private:
 /// A Chain range concatinates to unrelated ranges that have the same
 /// element type.
 ///
-template<class E, class R1, class R2> class Chain {
+template <class E, class R1, class R2> class Chain {
 public:
-  Chain(R1 r1, R2 r2) :
-    r1(r1), r2(r2) {
-  }
+  Chain(R1 r1, R2 r2) : r1(r1), r2(r2) {}
 
 public:
-  bool empty() const {
-    return r1.empty() && r2.empty();
-  }
+  bool empty() const { return r1.empty() && r2.empty(); }
 
-  E& front() const {
+  E &front() const {
     AvmAssert(!empty());
     return !r1.empty() ? r1.front() : r2.front();
   }

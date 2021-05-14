@@ -72,5 +72,5 @@ void testRangeConstraints() {
 }
 #endif
 
-}
+} // namespace halfmoon
 #endif // #ifdef VMCFG_HALFMOON

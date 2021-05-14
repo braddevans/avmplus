@@ -4,208 +4,195 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
-#include "avmplus.h"
 #include "BuiltinNatives.h"
+#include "avmplus.h"
 
-namespace avmplus
-{
-    // ---------------------------
-    
-    FunctionClass::FunctionClass(VTable* cvtable)
-        : ClassClosure(cvtable)
-    {
-        Toplevel* toplevel = this->toplevel();
-        toplevel->_functionClass = this;
+namespace avmplus {
+// ---------------------------
 
-        AvmAssert(traits()->getSizeOfInstance() == sizeof(FunctionClass));
+FunctionClass::FunctionClass(VTable *cvtable) : ClassClosure(cvtable) {
+  Toplevel *toplevel = this->toplevel();
+  toplevel->_functionClass = this;
 
-        setPrototypePtr(call_createEmptyFunction());
-        prototypePtr()->setDelegate(toplevel->objectClass->prototypePtr());
+  AvmAssert(traits()->getSizeOfInstance() == sizeof(FunctionClass));
 
-        //
-        // now that Object, Class, and Function are initialized, we
-        // can set up Object.prototype.  other classes will init normally.
-        //
+  setPrototypePtr(call_createEmptyFunction());
+  prototypePtr()->setDelegate(toplevel->objectClass->prototypePtr());
 
-        // init Object prototype
-        toplevel->objectClass->initPrototype();
-    }
+  //
+  // now that Object, Class, and Function are initialized, we
+  // can set up Object.prototype.  other classes will init normally.
+  //
 
-    // Function called as constructor ... not supported from user code
-    // this = argv[0] (ignored)
-    // arg1 = argv[1]
-    // argN = argv[argc]
-    Atom FunctionClass::construct(int argc, Atom* /*argv*/)
-    {
-        // ISSUE do we need an exception here?
-        // cn: if argc is 0, this is harmless and we have to return an anonymous
-        // function that itself if its > 0, then we can't support it
+  // init Object prototype
+  toplevel->objectClass->initPrototype();
+}
 
-        /*
-        from ECMA 327 5.1 Runtime Compilation
-        An implementation that does not support global eval() or calling Function as a function or constructor
-        SHALL throw an EvalError exception whenever global eval() (ES3 section 15.1.2.1), Function(p1,
-        p2, ..., pn, body) (ES3 section 15.3.1.1), or new Function(p1, p2, ..., pn, body) (ES3 section 15.3.2.1) is
-        called.
-        */
+// Function called as constructor ... not supported from user code
+// this = argv[0] (ignored)
+// arg1 = argv[1]
+// argN = argv[argc]
+Atom FunctionClass::construct(int argc, Atom * /*argv*/) {
+  // ISSUE do we need an exception here?
+  // cn: if argc is 0, this is harmless and we have to return an anonymous
+  // function that itself if its > 0, then we can't support it
 
-        if (argc != 0)
-        {
-            toplevel()->evalErrorClass()->throwError(kFunctionConstructorError);
-        }
+  /*
+  from ECMA 327 5.1 Runtime Compilation
+  An implementation that does not support global eval() or calling Function as a
+  function or constructor SHALL throw an EvalError exception whenever global
+  eval() (ES3 section 15.1.2.1), Function(p1, p2, ..., pn, body) (ES3
+  section 15.3.1.1), or new Function(p1, p2, ..., pn, body) (ES3
+  section 15.3.2.1) is called.
+  */
 
-        return call_createEmptyFunction()->atom();
-    }
+  if (argc != 0) {
+    toplevel()->evalErrorClass()->throwError(kFunctionConstructorError);
+  }
 
-    int32_t FunctionObject::get_length()
-    {
-        AvmAssert(get_callEnv() != NULL);
-        return get_callEnv()->method->getMethodSignature()->param_count();
-    }
+  return call_createEmptyFunction()->atom();
+}
 
-    FunctionObject::FunctionObject(VTable* cvtable, MethodEnv* call)
-        : ClassClosure(cvtable, ClassClosure::createScriptObjectProc)
-        , m_call_ptr(FunctionObject::callFunction)
-        , m_callEnv(call)
-    {
-        // Bugzilla 753120, 767410: it would be nice to assert
-        // m_callEnv is non-null, at least for classes that require it
-        // be non-null.  (For now, WeakMethodClosure and
-        // HostFunctionObject require we allow null m_callEnv.)
+int32_t FunctionObject::get_length() {
+  AvmAssert(get_callEnv() != NULL);
+  return get_callEnv()->method->getMethodSignature()->param_count();
+}
 
-        // Since FunctionObject is (pseudo)final, we shouldn't need to calculate this every time,
-        // but let's reality-check here just in case.
-        AvmAssert(calcCreateInstanceProc(cvtable) == ClassClosure::createScriptObjectProc);
-    }
+FunctionObject::FunctionObject(VTable *cvtable, MethodEnv *call)
+    : ClassClosure(cvtable, ClassClosure::createScriptObjectProc),
+      m_call_ptr(FunctionObject::callFunction), m_callEnv(call) {
+  // Bugzilla 753120, 767410: it would be nice to assert
+  // m_callEnv is non-null, at least for classes that require it
+  // be non-null.  (For now, WeakMethodClosure and
+  // HostFunctionObject require we allow null m_callEnv.)
 
-    REALLY_INLINE Atom FunctionObject::getFunctionReceiver(Atom a) const
-    {
-        AvmAssert(get_callEnv() != NULL);
-        if (AvmCore::isNullOrUndefined(a)) {
-            // use callee's global object as this.
-            // see E3 15.3.4.4
-            a = get_callEnv()->scope()->getScope(0);
-        }
-        MethodSignaturep ms = get_callEnv()->method->getMethodSignature();
-        return toplevel()->coerce(a, ms->paramTraits(0));
-    }
+  // Since FunctionObject is (pseudo)final, we shouldn't need to calculate this
+  // every time, but let's reality-check here just in case.
+  AvmAssert(calcCreateInstanceProc(cvtable) ==
+            ClassClosure::createScriptObjectProc);
+}
 
-    /**
-     * Function.prototype.call()
-     */
-    Atom FunctionObject::AS3_call(Atom thisArg, Atom *argv, int argc)
-    {
-        thisArg = get_coerced_receiver(thisArg);
-        return core()->exec->call(get_callEnv(), thisArg, argc, argv);
-    }
+REALLY_INLINE Atom FunctionObject::getFunctionReceiver(Atom a) const {
+  AvmAssert(get_callEnv() != NULL);
+  if (AvmCore::isNullOrUndefined(a)) {
+    // use callee's global object as this.
+    // see E3 15.3.4.4
+    a = get_callEnv()->scope()->getScope(0);
+  }
+  MethodSignaturep ms = get_callEnv()->method->getMethodSignature();
+  return toplevel()->coerce(a, ms->paramTraits(0));
+}
 
-    /**
-     * Function.prototype.apply()
-     */
-    Atom FunctionObject::AS3_apply(Atom thisArg, Atom argArray)
-    {
-        thisArg = get_coerced_receiver(thisArg);
+/**
+ * Function.prototype.call()
+ */
+Atom FunctionObject::AS3_call(Atom thisArg, Atom *argv, int argc) {
+  thisArg = get_coerced_receiver(thisArg);
+  return core()->exec->call(get_callEnv(), thisArg, argc, argv);
+}
 
-        // when argArray == undefined or null, same as not being there at all
-        // see Function/e15_3_4_3_1.as
+/**
+ * Function.prototype.apply()
+ */
+Atom FunctionObject::AS3_apply(Atom thisArg, Atom argArray) {
+  thisArg = get_coerced_receiver(thisArg);
 
-        if (!AvmCore::isNullOrUndefined(argArray))
-        {
-            AvmCore* core = this->core();
+  // when argArray == undefined or null, same as not being there at all
+  // see Function/e15_3_4_3_1.as
 
-            // FIXME: why not declare argArray as Array in Function.as?
-            if (!AvmCore::istype(argArray, ARRAY_TYPE))
-                toplevel()->throwTypeError(kApplyError);
+  if (!AvmCore::isNullOrUndefined(argArray)) {
+    AvmCore *core = this->core();
 
-            return core->exec->apply(get_callEnv(), thisArg, (ArrayObject*)AvmCore::atomToScriptObject(argArray));
-        }
-        else
-        {
-            AvmAssert(get_callEnv() != NULL);
-            return get_callEnv()->coerceEnter(thisArg);
-        }
-    }
+    // FIXME: why not declare argArray as Array in Function.as?
+    if (!AvmCore::istype(argArray, ARRAY_TYPE))
+      toplevel()->throwTypeError(kApplyError);
 
-    /* virtual */ Atom FunctionObject::get_coerced_receiver(Atom a) const
-    {
-        return getFunctionReceiver(a);
-    }
+    return core->exec->apply(
+        get_callEnv(), thisArg,
+        (ArrayObject *)AvmCore::atomToScriptObject(argArray));
+  } else {
+    AvmAssert(get_callEnv() != NULL);
+    return get_callEnv()->coerceEnter(thisArg);
+  }
+}
 
-    // this = argv[0] (ignored)
-    // arg1 = argv[1]
-    // argN = argv[argc]
-    Atom FunctionObject::construct(int argc, Atom* argv)
-    {
-        AvmAssert(argv != NULL); // need at least one arg spot passed in
+/* virtual */ Atom FunctionObject::get_coerced_receiver(Atom a) const {
+  return getFunctionReceiver(a);
+}
 
-        ScriptObject* obj = newInstance();
+// this = argv[0] (ignored)
+// arg1 = argv[1]
+// argN = argv[argc]
+Atom FunctionObject::construct(int argc, Atom *argv) {
+  AvmAssert(argv != NULL); // need at least one arg spot passed in
 
-        // this is a function
-        argv[0] = obj->atom(); // new object is receiver
-        AvmAssert(get_callEnv() != NULL);
-        Atom result = get_callEnv()->coerceEnter(argc, argv);
+  ScriptObject *obj = newInstance();
 
-        // for E3 13.2.2 compliance, check result and return it if (Type(result) is Object)
+  // this is a function
+  argv[0] = obj->atom(); // new object is receiver
+  AvmAssert(get_callEnv() != NULL);
+  Atom result = get_callEnv()->coerceEnter(argc, argv);
 
-        /* ISSUE does this apply to class constructors too?
+  // for E3 13.2.2 compliance, check result and return it if (Type(result) is
+  // Object)
 
-        answer: no.  from E4: A constructor may invoke a return statement as long as that
-        statement does not supply a value; a constructor cannot return a value. The newly
-        created object is returned automatically. A constructors return type must be omitted.
-        A constructor always returns a new instance. */
+  /* ISSUE does this apply to class constructors too?
 
-        return AvmCore::isNull(result) || AvmCore::isObject(result) ? result : obj->atom();
-    }
+  answer: no.  from E4: A constructor may invoke a return statement as long as
+  that statement does not supply a value; a constructor cannot return a value.
+  The newly created object is returned automatically. A constructors return
+  type must be omitted. A constructor always returns a new instance. */
+
+  return AvmCore::isNull(result) || AvmCore::isObject(result) ? result
+                                                              : obj->atom();
+}
 
 #if defined(DEBUGGER) || defined(VMCFG_AOT)
-    /*virtual*/ MethodEnv* FunctionObject::getCallMethodEnv()
-    {
-        return get_callEnv();
-    }
+/*virtual*/ MethodEnv *FunctionObject::getCallMethodEnv() {
+  return get_callEnv();
+}
 #endif
 
-    /*virtual*/ Atom FunctionObject::call(int argc, Atom* argv)
-    {
-        // When called via ScriptObject::call virtual call, use stub.
-        return (*m_call_ptr)(this, argc, argv);
-    }
-
-    /* static */ Atom FunctionObject::callFunction(FunctionObject* f, int argc, Atom* argv)
-    {
-        argv[0] = f->getFunctionReceiver(argv[0]);
-        AvmAssert(f->get_callEnv() != NULL);
-        return f->get_callEnv()->coerceEnter(argc, argv);
-    }
-
-    /*virtual*/ CodeContext* FunctionObject::getFunctionCodeContext() const
-    {
-        AvmAssert(get_callEnv() != NULL);
-        return get_callEnv()->scope()->abcEnv()->codeContext();
-    }
-
-    /*virtual*/ Stringp FunctionObject::implToString() const
-    {
-        AvmCore* core = this->core();
-        AvmAssert(get_callEnv() != NULL);
-        Stringp s = core->concatStrings(core->newConstantStringLatin1("[object Function-"), core->intToString(get_callEnv()->method->method_id()));
-        return core->concatStrings(s, core->newConstantStringLatin1("]"));
-    }
+/*virtual*/ Atom FunctionObject::call(int argc, Atom *argv) {
+  // When called via ScriptObject::call virtual call, use stub.
+  return (*m_call_ptr)(this, argc, argv);
 }
+
+/* static */ Atom FunctionObject::callFunction(FunctionObject *f, int argc,
+                                               Atom *argv) {
+  argv[0] = f->getFunctionReceiver(argv[0]);
+  AvmAssert(f->get_callEnv() != NULL);
+  return f->get_callEnv()->coerceEnter(argc, argv);
+}
+
+/*virtual*/ CodeContext *FunctionObject::getFunctionCodeContext() const {
+  AvmAssert(get_callEnv() != NULL);
+  return get_callEnv()->scope()->abcEnv()->codeContext();
+}
+
+/*virtual*/ Stringp FunctionObject::implToString() const {
+  AvmCore *core = this->core();
+  AvmAssert(get_callEnv() != NULL);
+  Stringp s = core->concatStrings(
+      core->newConstantStringLatin1("[object Function-"),
+      core->intToString(get_callEnv()->method->method_id()));
+  return core->concatStrings(s, core->newConstantStringLatin1("]"));
+}
+} // namespace avmplus
 
 namespace avm {
 using avmplus::FunctionProc;
 
-HostFunctionObject::HostFunctionObject(VTable* vtable, ScriptObject* delegate)
+HostFunctionObject::HostFunctionObject(VTable *vtable, ScriptObject *delegate)
     : FunctionObject(vtable, NULL /* MethodEnv callee */) {
-    setDelegate(delegate);
-    m_call_ptr = (FunctionProc) &callHostFunction;
+  setDelegate(delegate);
+  m_call_ptr = (FunctionProc)&callHostFunction;
 }
 
 // static
-Atom HostFunctionObject::callHostFunction(HostFunctionObject* f, int argc, Atom* args) {
-    return f->call(argc, args);
+Atom HostFunctionObject::callHostFunction(HostFunctionObject *f, int argc,
+                                          Atom *args) {
+  return f->call(argc, args);
 }
 
-}
-
+} // namespace avm

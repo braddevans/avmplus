@@ -1,8 +1,8 @@
 #include "avmplus.h"
 
 /*************************************************
-*      Perl-Compatible Regular Expressions       *
-*************************************************/
+ *      Perl-Compatible Regular Expressions       *
+ *************************************************/
 
 /* PCRE is a library of functions to support regular expressions whose syntax
 and semantics are as close as possible to those of the Perl 5 language.
@@ -39,7 +39,6 @@ POSSIBILITY OF SUCH DAMAGE.
 -----------------------------------------------------------------------------
 */
 
-
 /* This module contains global variables that are exported by the PCRE library.
 PCRE is thread-clean and doesn't use any global variables in the normal sense.
 However, it calls memory allocation and freeing functions via the four
@@ -54,15 +53,11 @@ differently, and global variables are not used (see pcre.in). */
 
 #ifdef AVMPLUS_PCRE
 
-void *avmplus_pcre_malloc(size_t size)
-{
-	return mmfx_new_array(char, size);
-}
+void *avmplus_pcre_malloc(size_t size) { return mmfx_new_array(char, size); }
 
-void avmplus_pcre_free(void *ptr)
-{
-	char *cp = (char *) ptr;
-	mmfx_delete_array(cp);
+void avmplus_pcre_free(void *ptr) {
+  char *cp = (char *)ptr;
+  mmfx_delete_array(cp);
 }
 
 const pcre_callout_t pcre_callout = NULL;
@@ -96,10 +91,10 @@ int   (*pcre_callout)(pcre_callout_block *) = NULL;
 #else
 #ifndef VPCOMPAT
 PCRE_EXP_DATA_DEFN void *(*pcre_malloc)(size_t) = malloc;
-PCRE_EXP_DATA_DEFN void  (*pcre_free)(void *) = free;
+PCRE_EXP_DATA_DEFN void (*pcre_free)(void *) = free;
 PCRE_EXP_DATA_DEFN void *(*pcre_stack_malloc)(size_t) = malloc;
-PCRE_EXP_DATA_DEFN void  (*pcre_stack_free)(void *) = free;
-PCRE_EXP_DATA_DEFN int   (*pcre_callout)(pcre_callout_block *) = NULL;
+PCRE_EXP_DATA_DEFN void (*pcre_stack_free)(void *) = free;
+PCRE_EXP_DATA_DEFN int (*pcre_callout)(pcre_callout_block *) = NULL;
 #endif
 
 #endif

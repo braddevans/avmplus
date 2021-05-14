@@ -7,86 +7,83 @@
 #ifndef PROXYGLUE_INCLUDED
 #define PROXYGLUE_INCLUDED
 
-namespace avmplus
-{
-    //
-    // ProxyClass
-    //
+namespace avmplus {
+//
+// ProxyClass
+//
 
-    class GC_AS3_EXACT(ProxyClass, ClassClosure)
-    {
-        friend class ProxyObject;
-    public:
-        ProxyClass(VTable* vtable);
+class GC_AS3_EXACT(ProxyClass, ClassClosure) {
+  friend class ProxyObject;
 
-    private:
-        Binding initOneBinding(GCRef<Namespace> ns, const char* nm);
+public:
+  ProxyClass(VTable *vtable);
 
-    private:
-        GC_DATA_BEGIN(ProxyClass);
+private:
+  Binding initOneBinding(GCRef<Namespace> ns, const char *nm);
 
-        Binding m_getProperty;
-        Binding m_setProperty;
-        Binding m_hasProperty;
-        Binding m_deleteProperty;
+private:
+  GC_DATA_BEGIN(ProxyClass);
 
-        Binding m_callProperty;
+  Binding m_getProperty;
+  Binding m_setProperty;
+  Binding m_hasProperty;
+  Binding m_deleteProperty;
 
-        Binding m_getDescendants;
+  Binding m_callProperty;
 
-        Binding m_nextNameIndex;
-        Binding m_nextName;
-        Binding m_nextValue;
-        
-        GC_DATA_END(ProxyClass);
-        
-        DECLARE_SLOTS_ProxyClass;
-    };
+  Binding m_getDescendants;
 
-    //
-    // ProxyObject
-    //
+  Binding m_nextNameIndex;
+  Binding m_nextName;
+  Binding m_nextValue;
 
-    class GC_AS3_EXACT(ProxyObject, ScriptObject)
-    {
-        friend class ProxyClass;
-    protected:
-        ProxyObject(VTable* ivtable, ScriptObject* delegate)
-            : ScriptObject(ivtable, delegate)
-        {
-        }
+  GC_DATA_END(ProxyClass);
 
-    public:
-        bool flash_proxy_isAttribute(Atom name);
+  DECLARE_SLOTS_ProxyClass;
+};
 
-        // overrides from ScriptObject
-        virtual Atom getAtomProperty(Atom name) const;
-        virtual void setAtomProperty(Atom name, Atom value);
-        virtual bool deleteAtomProperty(Atom name);
-        virtual bool hasAtomProperty(Atom name) const;
+//
+// ProxyObject
+//
 
-        virtual Atom getMultinameProperty(const Multiname* name) const;
-        virtual void setMultinameProperty(const Multiname* name, Atom value);
-        virtual bool deleteMultinameProperty(const Multiname* name);
-        virtual bool hasMultinameProperty(const Multiname* name) const;
+class GC_AS3_EXACT(ProxyObject, ScriptObject) {
+  friend class ProxyClass;
 
-        virtual Atom getUintProperty(uint32_t i) const;
-        virtual void setUintProperty(uint32_t i, Atom value);
-        virtual bool delUintProperty(uint32_t i);
-        virtual bool hasUintProperty(uint32_t i) const;
+protected:
+  ProxyObject(VTable *ivtable, ScriptObject *delegate)
+      : ScriptObject(ivtable, delegate) {}
 
-        virtual Atom callProperty(const Multiname* multiname, int argc, Atom* argv);
+public:
+  bool flash_proxy_isAttribute(Atom name);
 
-        virtual Atom getDescendants(const Multiname* name) const;
+  // overrides from ScriptObject
+  virtual Atom getAtomProperty(Atom name) const;
+  virtual void setAtomProperty(Atom name, Atom value);
+  virtual bool deleteAtomProperty(Atom name);
+  virtual bool hasAtomProperty(Atom name) const;
 
-        virtual Atom nextName(int index);
-        virtual Atom nextValue(int index);
-        virtual int nextNameIndex(int index);
-        
-    private:
-        GC_NO_DATA(ProxyObject);
-        DECLARE_SLOTS_ProxyObject;
-    };
-}
+  virtual Atom getMultinameProperty(const Multiname *name) const;
+  virtual void setMultinameProperty(const Multiname *name, Atom value);
+  virtual bool deleteMultinameProperty(const Multiname *name);
+  virtual bool hasMultinameProperty(const Multiname *name) const;
+
+  virtual Atom getUintProperty(uint32_t i) const;
+  virtual void setUintProperty(uint32_t i, Atom value);
+  virtual bool delUintProperty(uint32_t i);
+  virtual bool hasUintProperty(uint32_t i) const;
+
+  virtual Atom callProperty(const Multiname *multiname, int argc, Atom *argv);
+
+  virtual Atom getDescendants(const Multiname *name) const;
+
+  virtual Atom nextName(int index);
+  virtual Atom nextValue(int index);
+  virtual int nextNameIndex(int index);
+
+private:
+  GC_NO_DATA(ProxyObject);
+  DECLARE_SLOTS_ProxyObject;
+};
+} // namespace avmplus
 
 #endif /* PROXYGLUE_INCLUDED */

@@ -4,20 +4,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
 #include "VMPI.h"
 
 #include <signal.h>
 
-void VMPI_debugLog(const char* message)
-{
-    VMPI_log(message);
-}
+void VMPI_debugLog(const char *message) { VMPI_log(message); }
 
-void VMPI_debugBreak()
-{
-    // FIXME: Bug 613569: Need for flushing here might be hiding another bug
-    fflush(stdout);
-    fflush(stderr);
-    raise(SIGTRAP);
+void VMPI_debugBreak() {
+  // FIXME: Bug 613569: Need for flushing here might be hiding another bug
+  fflush(stdout);
+  fflush(stderr);
+  raise(SIGTRAP);
 }

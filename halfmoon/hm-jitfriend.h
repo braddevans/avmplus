@@ -16,7 +16,7 @@
 #include "avmplus.h"
 
 namespace halfmoon {
-  
+
 /**
  * class JitFriend is a layer of indirection for accessing private
  * avm data structures without avm needing to refer to compiler internal
@@ -25,40 +25,32 @@ namespace halfmoon {
 class JitFriend {
 
 public:
-  static uintptr_t getIID(MethodInfo* info) {
-    return ImtHolder::getIID(info);
-  }
+  static uintptr_t getIID(MethodInfo *info) { return ImtHolder::getIID(info); }
 
-  static uint32_t hashIID(MethodInfo* info) {
-    return ImtHolder::hashIID(info);
-  }
+  static uint32_t hashIID(MethodInfo *info) { return ImtHolder::hashIID(info); }
 
-  static GprMethodProc envImplGpr(MethodEnv* env) {
-    return env->_implGPR;
-  }
+  static GprMethodProc envImplGpr(MethodEnv *env) { return env->_implGPR; }
 
-  static FprMethodProc envImplFpr(MethodEnv* env) {
-    return env->_implFPR;
-  }
+  static FprMethodProc envImplFpr(MethodEnv *env) { return env->_implFPR; }
 
-  static GprImtThunkProc envImplImtGpr(MethodEnv* env) {
+  static GprImtThunkProc envImplImtGpr(MethodEnv *env) {
     return env->_implImtGPR;
   }
 
-  static FprImtThunkProc envImplImtFpr(MethodEnv* env) {
-    return (FprImtThunkProc) env->_implImtGPR;
+  static FprImtThunkProc envImplImtFpr(MethodEnv *env) {
+    return (FprImtThunkProc)env->_implImtGPR;
   }
 
-  static MethodEnv* imtEntry(VTable* vtable, MethodInfo* info) {
-      ImtThunkEnv *ite = vtable->imt.entries[hashIID(info)];
+  static MethodEnv *imtEntry(VTable *vtable, MethodInfo *info) {
+    ImtThunkEnv *ite = vtable->imt.entries[hashIID(info)];
 
-      return BaseExecMgr::resolveImtToConcreteMethodEnv(ite, vtable, info);
+    return BaseExecMgr::resolveImtToConcreteMethodEnv(ite, vtable, info);
   }
 
-  static MethodEnv* superInitEnv(MethodEnv* env) {
+  static MethodEnv *superInitEnv(MethodEnv *env) {
     return env->vtable()->base->init;
   }
-    
+
   static void aotFieldLayout();
 
 public:

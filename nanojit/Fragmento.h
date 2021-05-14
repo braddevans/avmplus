@@ -4,58 +4,52 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
 #ifndef __nanojit_Fragmento__
 #define __nanojit_Fragmento__
 
-namespace nanojit
-{
-    struct GuardRecord;
+namespace nanojit {
+struct GuardRecord;
 
-    /**
-     * Fragments are linear sequences of native code that have a single entry
-     * point at the start of the fragment and may have one or more exit points
-     *
-     * It may turn out that that this arrangement causes too much traffic
-     * between d and i-caches and that we need to carve up the structure differently.
-     */
-    class Fragment
-    {
-        public:
-            Fragment(const void*
-                     verbose_only(, uint32_t profFragID));
+/**
+ * Fragments are linear sequences of native code that have a single entry
+ * point at the start of the fragment and may have one or more exit points
+ *
+ * It may turn out that that this arrangement causes too much traffic
+ * between d and i-caches and that we need to carve up the structure
+ * differently.
+ */
+class Fragment {
+public:
+  Fragment(const void *verbose_only(, uint32_t profFragID));
 //### FIXME
 #ifdef NANOJIT_THUMB2
-            NIns*           code()                          { return (NIns*)((uintptr_t)_code | 0x1); }
+  NIns *code() { return (NIns *)((uintptr_t)_code | 0x1); }
 #else
-            NIns*           code()                          { return _code; }
+  NIns *code() { return _code; }
 #endif
-            void            setCode(NIns* codee)            { _code = codee; }
-            int32_t&        hits()                          { return _hits; }
+  void setCode(NIns *codee) { _code = codee; }
+  int32_t &hits() { return _hits; }
 
-            LirBuffer*     lirbuf;
-            LIns*          lastIns;
+  LirBuffer *lirbuf;
+  LIns *lastIns;
 
-            const void* ip;
-            uint32_t recordAttempts;
-            NIns* fragEntry;
+  const void *ip;
+  uint32_t recordAttempts;
+  NIns *fragEntry;
 
-            // for fragment entry and exit profiling.  See detailed
-            // how-to-use comment below.
-            verbose_only( LIns*          loopLabel; ) // where's the loop top?
-            verbose_only( uint32_t       profFragID; )
-            verbose_only( uint32_t       profCount; )
-            verbose_only( uint32_t       nStaticExits; )
-            verbose_only( size_t         nCodeBytes; )
-            verbose_only( size_t         nExitBytes; )
-            verbose_only( uint32_t       guardNumberer; )
-            verbose_only( GuardRecord*   guardsForFrag; )
+  // for fragment entry and exit profiling.  See detailed
+  // how-to-use comment below.
+  verbose_only(LIns *loopLabel;) // where's the loop top?
+      verbose_only(uint32_t profFragID;) verbose_only(uint32_t profCount;)
+          verbose_only(uint32_t nStaticExits;) verbose_only(size_t nCodeBytes;)
+              verbose_only(size_t nExitBytes;)
+                  verbose_only(uint32_t guardNumberer;)
+                      verbose_only(GuardRecord *guardsForFrag;)
 
-        private:
-            NIns*            _code;        // ptr to start of code
-            int32_t          _hits;
-    };
-}
+                          private : NIns *_code; // ptr to start of code
+  int32_t _hits;
+};
+} // namespace nanojit
 
 /*
  * How to use fragment profiling

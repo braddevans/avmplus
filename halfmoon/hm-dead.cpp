@@ -11,16 +11,16 @@ namespace halfmoon {
 
 /// remove a goto from a [goto]:label cluster
 ///
-void removeGoto(GotoInstr* go) {
+void removeGoto(GotoInstr *go) {
   AvmAssert(go->target && "goto has no target");
   if (enable_verbose)
     printf("removing dead goto %s%d\n", kInstrPrefix, go->id);
-  LabelInstr* target = go->target;
+  LabelInstr *target = go->target;
   if (isAlone(go)) {
     target->preds = 0;
   } else {
-    GotoInstr* N = go->next_goto;
-    GotoInstr* P = go->prev_goto;
+    GotoInstr *N = go->next_goto;
+    GotoInstr *P = go->prev_goto;
     if (target->preds == go)
       target->preds = N;
     N->prev_goto = P;
@@ -30,18 +30,19 @@ void removeGoto(GotoInstr* go) {
   go->target = 0;
 
   if (go->catch_blocks != NULL) {
-    for (SeqRange<ExceptionEdge*> r(*go->catch_blocks); !r.empty(); r.popFront()) {
-      CatchBlockInstr* cblock = r.front()->to;
+    for (SeqRange<ExceptionEdge *> r(*go->catch_blocks); !r.empty();
+         r.popFront()) {
+      CatchBlockInstr *cblock = r.front()->to;
 
       for (ExceptionEdgeRange p(cblock); !p.empty(); p.popFront()) {
-        ExceptionEdge* edge = p.front();
+        ExceptionEdge *edge = p.front();
         if (edge->from == go) {
           // dead edge
           if (edge->next_exception == edge) {
             cblock->catch_preds = NULL;
           } else {
-            ExceptionEdge* N = edge->next_exception;
-            ExceptionEdge* P = edge->prev_exception;
+            ExceptionEdge *N = edge->next_exception;
+            ExceptionEdge *P = edge->prev_exception;
             if (cblock->catch_preds == edge) {
               cblock->catch_preds = N;
             }
@@ -65,29 +66,22 @@ void removeGoto(GotoInstr* go) {
  */
 class Dead {
 public:
-  Dead(Allocator& alloc, InstrGraph* ir)
-  : alloc(alloc)
-  , ir(ir)
-  , defmark(alloc, ir->size())
-  , instrmark(alloc, ir->size()) {
-  }
+  Dead(Allocator &alloc, InstrGraph *ir)
+      : alloc(alloc), ir(ir), defmark(alloc, ir->size()),
+        instrmark(alloc, ir->size()) {}
 
   void mark();
   bool checkDead();
 
   /** Return true if d is marked */
-  bool keepDef(Def* d) {
-    return defmark.get(defId(d));
-  }
+  bool keepDef(Def *d) { return defmark.get(defId(d)); }
 
   /** Return true if instr is marked */
-  bool keepInstr(Instr* instr) {
-    return instrmark.get(instr->id);
-  }
+  bool keepInstr(Instr *instr) { return instrmark.get(instr->id); }
 
   /** Find the nearest marked reverse dominator block */
-  BlockStartInstr* findRdom(BlockEndInstr* end) {
-    BlockStartInstr* b = ir->blockStart(end);
+  BlockStartInstr *findRdom(BlockEndInstr *end) {
+    BlockStartInstr *b = ir->blockStart(end);
     do
       b = rdom->idom(b);
     while (rdom->hasIDom(b) && !keepInstr(b));
@@ -95,54 +89,54 @@ public:
   }
 
 private:
-  void markInstr(Instr*);
-  void markDef(Def*);
-  void markDef(const Use& u) { markDef(def(u)); }
-  void markDefs(Instr*);
-  void markRdf(BlockStartInstr*);
-  void markEnd(BlockEndInstr*);
-  void scanInstr(Instr*);
-  void scanDef(Def*);
+  void markInstr(Instr *);
+  void markDef(Def *);
+  void markDef(const Use &u) { markDef(def(u)); }
+  void markDefs(Instr *);
+  void markRdf(BlockStartInstr *);
+  void markEnd(BlockEndInstr *);
+  void scanInstr(Instr *);
+  void scanDef(Def *);
 
 private:
-  Allocator& alloc;
-  InstrGraph* ir;
+  Allocator &alloc;
+  InstrGraph *ir;
   BitSet defmark, instrmark;
-  SeqStack<Def*> defwork;
-  SeqStack<Instr*> instrwork;
-  DominatorTree* rdom;
-  BlockStartInstr** blockmap;
+  SeqStack<Def *> defwork;
+  SeqStack<Instr *> instrwork;
+  DominatorTree *rdom;
+  BlockStartInstr **blockmap;
 };
 
 /// Compact the param array of a label, and the corresponding
 /// arg arrays of all predecessor gotos, by removing [arg]/param
 /// entries whose params are unused in the label's block.
 ///
-bool compactLabelParams(LabelInstr* label, Dead* dead) {
+bool compactLabelParams(LabelInstr *label, Dead *dead) {
   int used = 0;
 
   for (int i = 0, n = label->paramc; i < n; ++i) {
-    Def& param = label->params[i];
+    Def &param = label->params[i];
     if (!dead->keepDef(&param))
       if (enable_verbose)
         printf("dead: compact %s%d %s def %d type %s is dead\n", kInstrPrefix,
-            label->id, name(label), i, typeName(param));
+               label->id, name(label), i, typeName(param));
   }
 
   for (int i = 0, n = label->paramc; i < n; ++i) {
-    Def& param = label->params[i];
+    Def &param = label->params[i];
     if (dead->keepDef(&param)) {
       // def is used - move if necessary, and update used count
       if (i > used) {
         // move param def to first unused slot, and repoint its uses
-        Def& new_param = label->params[used];
+        Def &new_param = label->params[used];
         AvmAssert(!new_param.isUsed());
         new (&new_param) Def(label, type(param)); // placement new
         copyUses(&param, &new_param);
         AvmAssert(!param.isUsed() && new_param.isUsed());
         // move arg use to corresponding slot in all goto preds
         for (PredRange r(label); !r.empty(); r.popFront()) {
-          GotoInstr* go = r.front();
+          GotoInstr *go = r.front();
           new (&go->args[used]) Use(go, def(go->args[i])); // placement new.
           go->args[i] = 0;
         }
@@ -176,7 +170,7 @@ bool compactLabelParams(LabelInstr* label, Dead* dead) {
  * A CondInstr's arg is considered marked if the corresponding param is marked
  * in any arm.
  */
-bool argMarked(CondInstr* instr, int pos, Dead* dead) {
+bool argMarked(CondInstr *instr, int pos, Dead *dead) {
   for (ArmParamRange p(instr, pos); !p.empty(); p.popFront())
     if (dead->keepDef(&p.front()))
       return true;
@@ -187,8 +181,8 @@ bool argMarked(CondInstr* instr, int pos, Dead* dead) {
 /// param arrays in its arms, by removing arg/[param] entries
 /// whose params are unused in all arms.
 ///
-bool compactCondArgs(CondInstr* instr, Dead* dead) {
-  Use* args = getArgs(instr);
+bool compactCondArgs(CondInstr *instr, Dead *dead) {
+  Use *args = getArgs(instr);
   int argc = numArgs(instr);
   int used = 0;
 
@@ -199,11 +193,13 @@ bool compactCondArgs(CondInstr* instr, Dead* dead) {
         // move arg[i] left to first unused slot
         new (&args[used]) Use(instr, def(args[i]));
         args[i] = 0;
-        // in all successors, move param def to first unused slot, and repoint uses
-        for (ArrayRange<ArmInstr*> r = armRange(instr); !r.empty(); r.popFront()) {
-          ArmInstr& arm = *r.front();
-          Def& param = arm.params[i];
-          Def& new_param = arm.params[used];
+        // in all successors, move param def to first unused slot, and repoint
+        // uses
+        for (ArrayRange<ArmInstr *> r = armRange(instr); !r.empty();
+             r.popFront()) {
+          ArmInstr &arm = *r.front();
+          Def &param = arm.params[i];
+          Def &new_param = arm.params[used];
           AvmAssert(!new_param.isUsed());
           new (&new_param) Def(&arm, type(param)); // placement new
           copyUses(&param, &new_param);
@@ -215,8 +211,8 @@ bool compactCondArgs(CondInstr* instr, Dead* dead) {
       // arg is useless - clear arg in cond, and do not increment use.
       if (enable_verbose)
         printf("dead: compact %s%d %s arg %d is dead\n", kInstrPrefix,
-            instr->id, name(instr), i);
-      for (ArrayRange<ArmInstr*> a = armRange(instr); !a.empty(); a.popFront())
+               instr->id, name(instr), i);
+      for (ArrayRange<ArmInstr *> a = armRange(instr); !a.empty(); a.popFront())
         for (UseRange u(a.front()->params[i]); !u.empty(); u.popFront()) {
           if (enable_verbose)
             printf("dead: unusing use in i%d %s of dead arg def\n",
@@ -231,7 +227,7 @@ bool compactCondArgs(CondInstr* instr, Dead* dead) {
   if (used < argc) {
     if (enable_verbose)
       printf("dead: compacted %s%d %s argc %d -> %d\n", kInstrPrefix, instr->id,
-          name(instr), argc, used);
+             name(instr), argc, used);
     instr->argc = used;
     return true;
   }
@@ -240,15 +236,15 @@ bool compactCondArgs(CondInstr* instr, Dead* dead) {
 
 /// Remove unused arg/param entries from block
 /// end/start junctions.
-void compactSigs(InstrGraph* ir, Dead* dead) {
+void compactSigs(InstrGraph *ir, Dead *dead) {
   for (PostorderBlockRange r(ir); !r.empty(); r.popFront()) {
-    BlockStartInstr* block = r.front();
+    BlockStartInstr *block = r.front();
     if (kind(block) == HR_label)
       compactLabelParams(cast<LabelInstr>(block), dead);
-    BlockEndInstr* end = ir->blockEnd(block);
+    BlockEndInstr *end = ir->blockEnd(block);
     InstrKind k = kind(end);
     if (k == HR_if || k == HR_switch)
-      compactCondArgs((CondInstr*)end, dead);
+      compactCondArgs((CondInstr *)end, dead);
   }
 }
 
@@ -264,7 +260,7 @@ void compactSigs(InstrGraph* ir, Dead* dead) {
  */
 void Dead::mark() {
   Allocator0 alloc0(alloc);
-  blockmap = new (alloc0) BlockStartInstr*[ir->size()];
+  blockmap = new (alloc0) BlockStartInstr *[ir->size()];
   for (EachBlock b(ir); !b.empty(); b.popFront())
     for (InstrRange i(b.front()); !i.empty(); i.popFront())
       blockmap[i.front()->id] = b.front();
@@ -286,7 +282,7 @@ void Dead::mark() {
 bool Dead::checkDead() {
   for (EachBlock b(ir); !b.empty(); b.popFront()) {
     for (InstrRange i(b.front()); !i.empty(); i.popFront()) {
-      Instr* instr = i.front();
+      Instr *instr = i.front();
       if (!keepInstr(instr)) {
         if (enable_verbose)
           printf("dead: i%d\n", instr->id);
@@ -311,8 +307,9 @@ bool Dead::checkDead() {
 
 /*
 notes:
-if marking an arm's def (split), mark the if, its condition, and use[i] (split input)
-if marking any instr, also mark the if's it's CD on and their condition (DEAD)
+if marking an arm's def (split), mark the if, its condition, and use[i] (split
+input) if marking any instr, also mark the if's it's CD on and their condition
+(DEAD)
   - dont need to worry about splits if we have full CD info since
     uses of splits are CD on the if
 Singer: insert extra splits of constants and force them to be used (yuck)
@@ -320,76 +317,76 @@ Singer: insert extra splits of constants and force them to be used (yuck)
 could: when marking a phi, mark the CD's of the corresponding gotos, but
   dont use CD info for general instructions?
  */
-void Dead::scanInstr(Instr* instr) {
+void Dead::scanInstr(Instr *instr) {
   switch (kind(instr)) {
-    case HR_switch:
-    case HR_if: {
-      CondInstr* cond = (CondInstr*) instr;
-      markInstr(ir->blockStart(cond));
-      markDef(cond->selector());
-      break;
-    }
-    case HR_goto:
-      markInstr(ir->blockStart((BlockEndInstr*)instr));
-      break;
-    case HR_label:
-    case HR_arm:
-      markRdf((BlockStartInstr*)instr);
-      break;
-    default:
-      markDefs(instr);
-      markInstr(blockmap[instr->id]);
-      break;
+  case HR_switch:
+  case HR_if: {
+    CondInstr *cond = (CondInstr *)instr;
+    markInstr(ir->blockStart(cond));
+    markDef(cond->selector());
+    break;
+  }
+  case HR_goto:
+    markInstr(ir->blockStart((BlockEndInstr *)instr));
+    break;
+  case HR_label:
+  case HR_arm:
+    markRdf((BlockStartInstr *)instr);
+    break;
+  default:
+    markDefs(instr);
+    markInstr(blockmap[instr->id]);
+    break;
   }
 }
 
-void Dead::scanDef(Def* d) {
-  Instr* instr = definer(d);
+void Dead::scanDef(Def *d) {
+  Instr *instr = definer(d);
   markInstr(instr);
   switch (kind(instr)) {
-    case HR_label:
-      // mark the corresponding arg in each incoming goto.
-      for (PredRange p(cast<LabelInstr>(instr)); !p.empty(); p.popFront()) {
-        GotoInstr* go = p.front();
-        markDef(go->args[pos(d)]); // mark the corresponding goto input
-        markInstr(go);
-      }
-      break;
-    case HR_arm: {
-      // mark the corresponding arg in the condition.
-      CondInstr* cond = cast<ArmInstr>(instr)->owner;
-      markDef(cond->arg(pos(d)));
-      break;
+  case HR_label:
+    // mark the corresponding arg in each incoming goto.
+    for (PredRange p(cast<LabelInstr>(instr)); !p.empty(); p.popFront()) {
+      GotoInstr *go = p.front();
+      markDef(go->args[pos(d)]); // mark the corresponding goto input
+      markInstr(go);
     }
+    break;
+  case HR_arm: {
+    // mark the corresponding arg in the condition.
+    CondInstr *cond = cast<ArmInstr>(instr)->owner;
+    markDef(cond->arg(pos(d)));
+    break;
+  }
   }
 }
 
 /// Mark the branch instructions that block is control-dependent on,
 /// which are the branches at the ends of the blocks in its reverse
 /// dominance frontier.
-void Dead::markRdf(BlockStartInstr* block) {
-  for (SeqRange<BlockStartInstr*> r(rdom->df(block)); !r.empty(); r.popFront())
+void Dead::markRdf(BlockStartInstr *block) {
+  for (SeqRange<BlockStartInstr *> r(rdom->df(block)); !r.empty(); r.popFront())
     markInstr(ir->blockEnd(r.front()));
 }
 
-void Dead::markEnd(BlockEndInstr* end) {
-  BlockStartInstr* block = ir->blockStart(end);
+void Dead::markEnd(BlockEndInstr *end) {
+  BlockStartInstr *block = ir->blockStart(end);
   markInstr(block);
 }
 
-void Dead::markInstr(Instr* instr) {
+void Dead::markInstr(Instr *instr) {
   if (!instrmark.get(instr->id)) {
     instrmark.set(instr->id);
     instrwork.push(instr);
   }
 }
 
-void Dead::markDefs(Instr* instr) {
+void Dead::markDefs(Instr *instr) {
   for (ArrayRange<Use> u = useRange(instr); !u.empty(); u.popFront())
     markDef(u.front());
 }
 
-void Dead::markDef(Def* d) {
+void Dead::markDef(Def *d) {
   int id = defId(d);
   if (!defmark.get(id)) {
     defmark.set(id);
@@ -397,12 +394,12 @@ void Dead::markDef(Def* d) {
   }
 }
 
-void clearUses(Instr* instr) {
+void clearUses(Instr *instr) {
   for (ArrayRange<Use> u = useRange(instr); !u.empty(); u.popFront())
     u.front() = 0;
 }
 
-void unlinkDeadCode(InstrGraph* ir, Dead* dead, Cleaner* clean) {
+void unlinkDeadCode(InstrGraph *ir, Dead *dead, Cleaner *clean) {
   Allocator scratch;
   BitSet keep(scratch, ir->size());
   InstrFactory factory(ir);
@@ -410,20 +407,21 @@ void unlinkDeadCode(InstrGraph* ir, Dead* dead, Cleaner* clean) {
   // unlink unmarked instructions
   for (PostorderBlockRange b(ir); !b.empty(); b.popFront()) {
     for (InstrRange j(b.front()); !j.empty();) {
-      Instr* instr = j.popBack();
+      Instr *instr = j.popBack();
       if (dead->keepInstr(instr))
         continue;
       if (isCond(instr)) {
-        BlockStartInstr* rdom = dead->findRdom((BlockEndInstr*)instr);
+        BlockStartInstr *rdom = dead->findRdom((BlockEndInstr *)instr);
         if (enable_verbose) {
           printf("dead: %s i%d is dead\n", name(instr), instr->id);
           printf("      nearest live rdom is i%d %s argc %d\n", rdom->id,
                  name(rdom), numDefs(rdom));
         }
         AvmAssert(numDefs(rdom) == 0);
-        LabelInstr* label = kind(rdom) == HR_label ? cast<LabelInstr>(rdom) :
-                            clean->ensureLabel(cast<ArmInstr>(rdom));
-        GotoInstr* go = factory.newGotoStmt(label);
+        LabelInstr *label = kind(rdom) == HR_label
+                                ? cast<LabelInstr>(rdom)
+                                : clean->ensureLabel(cast<ArmInstr>(rdom));
+        GotoInstr *go = factory.newGotoStmt(label);
         ir->replaceInstr(instr, go);
         clearUses(instr);
       } else {
@@ -446,7 +444,7 @@ void unlinkDeadCode(InstrGraph* ir, Dead* dead, Cleaner* clean) {
 /// arguably it is a bug for any such instructions to exist: had they
 /// been fully unlinked at the time, this traversal would not be needed.
 ///
-void removeDeadCode(Context* cxt, InstrGraph* ir) {
+void removeDeadCode(Context *cxt, InstrGraph *ir) {
   AvmAssert(checkPruned(ir));
   if (enable_verbose) {
     printf("Before removeDeadCode\n");
@@ -477,5 +475,5 @@ void removeDeadCode(Context* cxt, InstrGraph* ir) {
   AvmAssert(checkSSA(ir));
 }
 
-}
+} // namespace halfmoon
 #endif // VMCFG_HALFMOON

@@ -13,13 +13,12 @@ namespace halfmoon {
 /// on Briggs and Torczon.
 class SparseSet {
 public:
-  SparseSet(Allocator& alloc, int size)
-  : sparse_(new (alloc) unsigned[size])
-  , dense_(new (alloc) unsigned[size])
-  , length_(0) {
+  SparseSet(Allocator &alloc, int size)
+      : sparse_(new (alloc) unsigned[size]), dense_(new (alloc) unsigned[size]),
+        length_(0) {
     // add() can legitimately access uninitialized memory, safely,
     // so we do this to suppress valgrind errors.
-    VALGRIND_MAKE_MEM_DEFINED(sparse_, sizeof(unsigned)*size);
+    VALGRIND_MAKE_MEM_DEFINED(sparse_, sizeof(unsigned) * size);
   }
 
   bool contains(unsigned k) const {
@@ -27,14 +26,10 @@ public:
     return a < length_ && dense_[a] == k;
   }
 
-  void clear() {
-    length_ = 0;
-  }
+  void clear() { length_ = 0; }
 
   typedef ArrayRange<unsigned> Range;
-  Range range() const {
-    return Range(dense_, length_);
-  }
+  Range range() const { return Range(dense_, length_); }
 
   /// Add k to the set, return false if it was already in the set, true
   /// if it was added by this call.
@@ -62,32 +57,33 @@ public:
   }
 
 private:
-  unsigned* const sparse_;
-  unsigned* const dense_;
+  unsigned *const sparse_;
+  unsigned *const dense_;
   unsigned length_;
 };
 
 struct Block {
-  BlockStartInstr* start;
+  BlockStartInstr *start;
   int idom; // postorder_id of immediate dominator
 };
 
 class CfgInfo {
 public:
-  CfgInfo(Allocator& alloc, InstrGraph* ir);
-  template<class VIEW> void genericDfs(BlockStartInstr*);
-  template<class VIEW> void genericDfs(InstrGraph*);
-  template<class VIEW> void computeGenericDoms();
+  CfgInfo(Allocator &alloc, InstrGraph *ir);
+  template <class VIEW> void genericDfs(BlockStartInstr *);
+  template <class VIEW> void genericDfs(InstrGraph *);
+  template <class VIEW> void computeGenericDoms();
+
 private:
   int intersect(int idom, int pred);
+
 public:
   int max_post_id;
-  int* post_ids; // postorder numbers indexed by blockid
-  Block* blocks;
+  int *post_ids; // postorder numbers indexed by blockid
+  Block *blocks;
 };
 
-CfgInfo::CfgInfo(Allocator& alloc, InstrGraph* ir)
-: max_post_id(0) {
+CfgInfo::CfgInfo(Allocator &alloc, InstrGraph *ir) : max_post_id(0) {
   Allocator0 alloc0(alloc);
   int maxid = ir->block_count() + 2;
   post_ids = new (alloc0) int[maxid];
@@ -99,7 +95,7 @@ CfgInfo::CfgInfo(Allocator& alloc, InstrGraph* ir)
 /// predecessors not yet processed.  Returns the post_id of nearest.
 ///
 int CfgInfo::intersect(int idom, int pred) {
-  Block* blocks = this->blocks;
+  Block *blocks = this->blocks;
   if (!blocks[pred].idom)
     return idom; // predecessor not processed yet
   if (!idom)
@@ -115,55 +111,63 @@ int CfgInfo::intersect(int idom, int pred) {
 
 class SuccEdges {
 public:
-  class EdgeRange: public ArrayRange<ArmInstr*> {
+  class EdgeRange : public ArrayRange<ArmInstr *> {
   public:
-    explicit EdgeRange(BlockStartInstr* b)
-    : ArrayRange<ArmInstr*>(armRange((CondInstr*)end(b))) {}
+    explicit EdgeRange(BlockStartInstr *b)
+        : ArrayRange<ArmInstr *>(armRange((CondInstr *)end(b))) {}
   };
-  class CatchEdgeRange: public CatchBlockRange {
-   public:
-    explicit CatchEdgeRange(BlockStartInstr* block): CatchBlockRange(block) {}
+  class CatchEdgeRange : public CatchBlockRange {
+  public:
+    explicit CatchEdgeRange(BlockStartInstr *block) : CatchBlockRange(block) {}
   };
   class RootRange {
   public:
-    explicit RootRange(InstrGraph* ir) : begin(ir->begin) {}
+    explicit RootRange(InstrGraph *ir) : begin(ir->begin) {}
     bool empty() const { return begin == 0; }
-    BlockStartInstr* front() const { AvmAssert(!empty()); return begin; }
-    BlockStartInstr* popFront() {
-      BlockStartInstr* b = begin;
+    BlockStartInstr *front() const {
+      AvmAssert(!empty());
+      return begin;
+    }
+    BlockStartInstr *popFront() {
+      BlockStartInstr *b = begin;
       begin = 0;
       return b;
     }
+
   private:
-    BlockStartInstr* begin;
+    BlockStartInstr *begin;
   };
-  static bool oneEdge(BlockStartInstr* b) {
+  static bool oneEdge(BlockStartInstr *b) {
 #ifdef DEBUG
     // so the dom tree algorithm doesn't AvmAssert in printCfg in debug builds
-    if (!InstrGraph::hasBlockEnd(b)) return false;
+    if (!InstrGraph::hasBlockEnd(b))
+      return false;
 #endif
     return kind(end(b)) == HR_goto;
   }
-  static BlockStartInstr* next(BlockStartInstr* b) {
+  static BlockStartInstr *next(BlockStartInstr *b) {
     return cast<GotoInstr>(end(b))->target;
   }
-  static bool manyEdges(BlockStartInstr* b) {
+  static bool manyEdges(BlockStartInstr *b) {
 #ifdef DEBUG
     // so the dom tree algorithm doesn't AvmAssert in printCfg in debug builds
-    if (!InstrGraph::hasBlockEnd(b)) return false;
+    if (!InstrGraph::hasBlockEnd(b))
+      return false;
 #endif
     InstrKind k = kind(end(b));
     return k == HR_if || k == HR_switch;
   }
-  static bool hasCatchEdges(BlockStartInstr* b) {
+  static bool hasCatchEdges(BlockStartInstr *b) {
 #ifdef DEBUG
     // so the dom tree algorithm doesn't AvmAssert in printCfg in debug builds
-    if (!InstrGraph::hasBlockEnd(b)) return false;
+    if (!InstrGraph::hasBlockEnd(b))
+      return false;
 #endif
     return InstrGraph::blockEnd(b)->catch_blocks != NULL;
   }
+
 private:
-  static BlockEndInstr* end(BlockStartInstr* b) {
+  static BlockEndInstr *end(BlockStartInstr *b) {
     return InstrGraph::blockEnd(b);
   }
 };
@@ -172,61 +176,63 @@ class PredEdges {
 public:
   class EdgeRange {
   public:
-    explicit EdgeRange(BlockStartInstr* b) : r(cast<LabelInstr>(b)) {}
+    explicit EdgeRange(BlockStartInstr *b) : r(cast<LabelInstr>(b)) {}
     bool empty() const { return r.empty(); }
-    BlockStartInstr* front() const { return start(r.front()); }
-    BlockStartInstr* popFront() { return start(r.popFront()); }
+    BlockStartInstr *front() const { return start(r.front()); }
+    BlockStartInstr *popFront() { return start(r.popFront()); }
+
   private:
     PredRange r;
   };
-  class CatchEdgeRange: public ExceptionEdgeRange {
-   public:
-    explicit CatchEdgeRange(BlockStartInstr* block): ExceptionEdgeRange(cast<CatchBlockInstr>(block)) {}
-    BlockStartInstr* front() {
+  class CatchEdgeRange : public ExceptionEdgeRange {
+  public:
+    explicit CatchEdgeRange(BlockStartInstr *block)
+        : ExceptionEdgeRange(cast<CatchBlockInstr>(block)) {}
+    BlockStartInstr *front() {
       return InstrGraph::blockStart(ExceptionEdgeRange::front()->from);
     }
-    BlockStartInstr* popFront() {
+    BlockStartInstr *popFront() {
       return InstrGraph::blockStart(ExceptionEdgeRange::popFront()->from);
     }
   };
   class RootRange {
   public:
-    explicit RootRange(InstrGraph* ir) : ir(ir) {
-      // This is true for complete IR, but will AvmAssert in printCfg of incomplete ir. 
-      // AvmAssert((ir->exit || ir->end) && ir->exit != ir->end);
+    explicit RootRange(InstrGraph *ir) : ir(ir) {
+      // This is true for complete IR, but will AvmAssert in printCfg of
+      // incomplete ir. AvmAssert((ir->exit || ir->end) && ir->exit != ir->end);
       e = ir->exit ? ir->exit : ir->end;
     }
     bool empty() const { return e == 0; }
-    BlockStartInstr* front() const { AvmAssert(!empty()); return start(e); }
-    BlockStartInstr* popFront() {
-      BlockStartInstr* b = front();
+    BlockStartInstr *front() const {
+      AvmAssert(!empty());
+      return start(e);
+    }
+    BlockStartInstr *popFront() {
+      BlockStartInstr *b = front();
       e = (e == ir->exit) ? ir->end : 0;
       return b;
     }
+
   private:
-    InstrGraph* ir;
-    BlockEndInstr* e;
+    InstrGraph *ir;
+    BlockEndInstr *e;
   };
-  static bool oneEdge(BlockStartInstr* b) {
-    return kind(b) == HR_arm;
-  }
-  static BlockStartInstr* next(BlockStartInstr* b) {
+  static bool oneEdge(BlockStartInstr *b) { return kind(b) == HR_arm; }
+  static BlockStartInstr *next(BlockStartInstr *b) {
     return start(cast<ArmInstr>(b)->owner);
   }
-  static bool manyEdges(BlockStartInstr* b) {
-    return kind(b) == HR_label;
-  }
-  static bool hasCatchEdges(BlockStartInstr* b) {
+  static bool manyEdges(BlockStartInstr *b) { return kind(b) == HR_label; }
+  static bool hasCatchEdges(BlockStartInstr *b) {
     return kind(b) == HR_catchblock;
   }
+
 private:
-  static BlockStartInstr* start(BlockEndInstr* e) {
+  static BlockStartInstr *start(BlockEndInstr *e) {
     return InstrGraph::blockStart(e);
   }
 };
 
-template<class VIEW>
-void CfgInfo::genericDfs(InstrGraph* ir) {
+template <class VIEW> void CfgInfo::genericDfs(InstrGraph *ir) {
   int blockid = ir->block_count();
   post_ids[blockid] = -1;
   for (typename VIEW::RootRange r(ir); !r.empty();)
@@ -236,8 +242,7 @@ void CfgInfo::genericDfs(InstrGraph* ir) {
   blocks[post_id].start = 0; // 0 indicates root node.
 }
 
-template<class VIEW>
-void CfgInfo::genericDfs(BlockStartInstr* block) {
+template <class VIEW> void CfgInfo::genericDfs(BlockStartInstr *block) {
   int blockid = block->blockid;
   if (post_ids[blockid])
     return;
@@ -257,8 +262,7 @@ void CfgInfo::genericDfs(BlockStartInstr* block) {
   blocks[post_id].start = block;
 }
 
-template<class VIEW>
-void CfgInfo::computeGenericDoms() {
+template <class VIEW> void CfgInfo::computeGenericDoms() {
   blocks[max_post_id].idom = max_post_id;
   bool changed;
   do {
@@ -267,7 +271,7 @@ void CfgInfo::computeGenericDoms() {
     for (int i = max_post_id - 1; i > 0; --i) {
       // Compute idom by calling intersect() on each reachable edge.
       // Unreachable edges will have post_id == 0.
-      BlockStartInstr* block = blocks[i].start;
+      BlockStartInstr *block = blocks[i].start;
       int idom = 0;
       if (VIEW::oneEdge(block)) {
         idom = post_ids[VIEW::next(block)->blockid];
@@ -301,14 +305,14 @@ void CfgInfo::computeGenericDoms() {
  * algorithm from Cooper, Harvey, and Kennedy
  * "A Simple, Fast Dominance Algorithm."
  */
-DominatorTree::DominatorTree(Allocator& dom_alloc, InstrGraph* ir)
-: dom_alloc_(dom_alloc) {
+DominatorTree::DominatorTree(Allocator &dom_alloc, InstrGraph *ir)
+    : dom_alloc_(dom_alloc) {
   Allocator0 alloc0(dom_alloc);
   info_ = new (alloc0) BlockInfo[ir->block_count()];
 }
 
-template<class FWD, class REV>
-void DominatorTree::computeGeneric(InstrGraph* ir) {
+template <class FWD, class REV>
+void DominatorTree::computeGeneric(InstrGraph *ir) {
   Allocator scratch;
   CfgInfo cfg(scratch, ir);
   cfg.genericDfs<FWD>(ir);
@@ -316,10 +320,10 @@ void DominatorTree::computeGeneric(InstrGraph* ir) {
   // copy data into saved struct, compute DF and depth
   SparseSet visited(scratch, cfg.max_post_id + 1);
   for (int i = cfg.max_post_id - 1; i > 0; --i) {
-    BlockStartInstr* block = cfg.blocks[i].start;
-    BlockInfo& info = info_[block->blockid];
+    BlockStartInstr *block = cfg.blocks[i].start;
+    BlockInfo &info = info_[block->blockid];
     int idom = cfg.blocks[i].idom;
-    BlockStartInstr* idom_instr = cfg.blocks[idom].start;
+    BlockStartInstr *idom_instr = cfg.blocks[idom].start;
     info.idom = idom_instr;
     info.depth = idom_instr ? info_[idom_instr->blockid].depth + 1 : 1;
     if (REV::manyEdges(block) || REV::hasCatchEdges(block)) {
@@ -327,13 +331,14 @@ void DominatorTree::computeGeneric(InstrGraph* ir) {
     }
     if (REV::manyEdges(block)) {
       for (typename REV::EdgeRange r(block); !r.empty();) {
-        BlockStartInstr* next = r.popFront();
+        BlockStartInstr *next = r.popFront();
         int next_post_id = cfg.post_ids[next->blockid];
         if (!next_post_id)
           continue; // block was not reachable
         for (int n = next_post_id; n != idom; n = cfg.blocks[n].idom) {
           if (visited.add(n)) {
-            Seq<BlockStartInstr*>* &df = info_[cfg.blocks[n].start->blockid].df;
+            Seq<BlockStartInstr *> *&df =
+                info_[cfg.blocks[n].start->blockid].df;
             df = cons(dom_alloc_, block, df);
           }
         }
@@ -341,13 +346,14 @@ void DominatorTree::computeGeneric(InstrGraph* ir) {
     }
     if (REV::hasCatchEdges(block)) {
       for (typename REV::CatchEdgeRange r(block); !r.empty();) {
-        BlockStartInstr* next = r.popFront();
+        BlockStartInstr *next = r.popFront();
         int next_post_id = cfg.post_ids[next->blockid];
         if (!next_post_id)
           continue; // block was not reachable
         for (int n = next_post_id; n != idom; n = cfg.blocks[n].idom) {
           if (visited.add(n)) {
-            Seq<BlockStartInstr*>* &df = info_[cfg.blocks[n].start->blockid].df;
+            Seq<BlockStartInstr *> *&df =
+                info_[cfg.blocks[n].start->blockid].df;
             df = cons(dom_alloc_, block, df);
           }
         }
@@ -356,14 +362,14 @@ void DominatorTree::computeGeneric(InstrGraph* ir) {
   }
 }
 
-DominatorTree* forwardDoms(Allocator& alloc, InstrGraph* ir) {
-  DominatorTree* d = new (alloc) DominatorTree(alloc, ir);
+DominatorTree *forwardDoms(Allocator &alloc, InstrGraph *ir) {
+  DominatorTree *d = new (alloc) DominatorTree(alloc, ir);
   d->computeGeneric<SuccEdges, PredEdges>(ir);
   return d;
 }
 
-DominatorTree* reverseDoms(Allocator& alloc, InstrGraph* ir) {
-  DominatorTree* d = new (alloc) DominatorTree(alloc, ir);
+DominatorTree *reverseDoms(Allocator &alloc, InstrGraph *ir) {
+  DominatorTree *d = new (alloc) DominatorTree(alloc, ir);
   d->computeGeneric<PredEdges, SuccEdges>(ir);
   return d;
 }
@@ -371,19 +377,19 @@ DominatorTree* reverseDoms(Allocator& alloc, InstrGraph* ir) {
 /// Analyze each edge in the CFG.
 void LoopTree::analyze() {
   for (EachBlock b(ir_); !b.empty();) {
-    BlockStartInstr* block = b.popFront();
-    BlockEndInstr* end = ir_->blockEnd(block);
+    BlockStartInstr *block = b.popFront();
+    BlockEndInstr *end = ir_->blockEnd(block);
     if (kind(end) == HR_goto)
       analyzeEdge(block, cast<GotoInstr>(end)->target);
     else if (isCond(end))
-      for (ArrayRange<ArmInstr*> s = armRange((CondInstr*)end); !s.empty();)
+      for (ArrayRange<ArmInstr *> s = armRange((CondInstr *)end); !s.empty();)
         analyzeEdge(block, s.popFront());
   }
   if (enable_verbose) {
     for (EachBlock b(ir_); !b.empty();) {
-      BlockStartInstr* block = b.popFront();
+      BlockStartInstr *block = b.popFront();
       printf("loops: B%d: depth=%d header={", block->blockid, depth(block));
-      for (BlockStartInstr* h = hdr(block); h; h = loop(h).h)
+      for (BlockStartInstr *h = hdr(block); h; h = loop(h).h)
         printf("B%d%s", h->blockid, loop(h).h ? "," : "");
       printf("}\n");
     }
@@ -406,14 +412,14 @@ void LoopTree::analyze() {
   }
  */
 
-void LoopTree::analyzeEdge(BlockStartInstr* n, BlockStartInstr* h) {
+void LoopTree::analyzeEdge(BlockStartInstr *n, BlockStartInstr *h) {
   if (!doms_->dominates(h, n))
     return; // not a loop-edge
   loop(h).is_header = true;
-  SeqStack<BlockStartInstr*> stack;
+  SeqStack<BlockStartInstr *> stack;
   stack.push(n);
   while (!stack.empty()) {
-    BlockStartInstr* d = stack.pop();
+    BlockStartInstr *d = stack.pop();
     if (!contains(h, d)) {
       loop(d).h = h;
       if (kind(d) == HR_arm)
@@ -425,6 +431,5 @@ void LoopTree::analyzeEdge(BlockStartInstr* n, BlockStartInstr* h) {
   }
 }
 
-
-} // namespace avmplus
+} // namespace halfmoon
 #endif // VMCFG_HALFMOON

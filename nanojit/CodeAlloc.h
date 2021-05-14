@@ -7,258 +7,258 @@
 #ifndef __nanojit_CodeAlloc__
 #define __nanojit_CodeAlloc__
 
-namespace nanojit
-{
-    /**
-     * CodeList is a single block of code.  The next field is used to
-     * form linked lists of non-contiguous blocks of code.  Clients use CodeList*
-     * to point to the first block in a list.
-     */
-    class CodeList
-    {
-        friend class CodeAlloc;
-        friend class CodeRange;
+namespace nanojit {
+/**
+ * CodeList is a single block of code.  The next field is used to
+ * form linked lists of non-contiguous blocks of code.  Clients use CodeList*
+ * to point to the first block in a list.
+ */
+class CodeList {
+  friend class CodeAlloc;
+  friend class CodeRange;
 
-        /** for making singly linked lists of blocks in any order */
-        CodeList* next;
+  /** for making singly linked lists of blocks in any order */
+  CodeList *next;
 
-        /** adjacent block at lower address.  This field plus higher
-            form a doubly linked list of blocks in address order, used
-            for splitting and coalescing blocks. */
-        CodeList* lower;
+  /** adjacent block at lower address.  This field plus higher
+      form a doubly linked list of blocks in address order, used
+      for splitting and coalescing blocks. */
+  CodeList *lower;
 
-        /** pointer to the heapblock terminal that represents the code chunk containing this block */
-        CodeList* terminator;
+  /** pointer to the heapblock terminal that represents the code chunk
+   * containing this block */
+  CodeList *terminator;
 
-        /** true if block is free, false otherwise */
-        bool isFree;
+  /** true if block is free, false otherwise */
+  bool isFree;
 
-        /** (only valid for terminator blocks).  Set true just before calling
-         * markCodeChunkExec() and false just after markCodeChunkWrite() */
-        bool isExec;
+  /** (only valid for terminator blocks).  Set true just before calling
+   * markCodeChunkExec() and false just after markCodeChunkWrite() */
+  bool isExec;
 
-        union {
-            // this union is used in leu of pointer punning in code
-            // the end of this block is always the address of the next higher block
-            CodeList* higher;   // adjacent block at higher address
-            NIns* end;          // points just past the end
-        };
+  union {
+    // this union is used in leu of pointer punning in code
+    // the end of this block is always the address of the next higher block
+    CodeList *higher; // adjacent block at higher address
+    NIns *end;        // points just past the end
+  };
 
-        /** code holds this block's payload of binary code, from
-            here to this->end */
-        NIns  code[1]; // more follows
+  /** code holds this block's payload of binary code, from
+      here to this->end */
+  NIns code[1]; // more follows
 
-        /** return the starting address for this block only */
-        NIns* start() { return &code[0]; }
+  /** return the starting address for this block only */
+  NIns *start() { return &code[0]; }
 
-        /** return just the usable size of this block */
-        size_t size() const { return uintptr_t(end) - uintptr_t(&code[0]); }
+  /** return just the usable size of this block */
+  size_t size() const { return uintptr_t(end) - uintptr_t(&code[0]); }
 
-        /** return the whole size of this block including overhead */
-        size_t blockSize() const { return uintptr_t(end) - uintptr_t(this); }
+  /** return the whole size of this block including overhead */
+  size_t blockSize() const { return uintptr_t(end) - uintptr_t(this); }
 
-    public:
-        /** true is the given NIns is contained within this block */
-        bool isInBlock(NIns* n) { return (n >= this->start() && n < this->end); }
-    };
+public:
+  /** true is the given NIns is contained within this block */
+  bool isInBlock(NIns *n) { return (n >= this->start() && n < this->end); }
+};
 
-    /**
-     * Code memory allocator is a long lived manager for many code blocks that
-     * manages interaction with an underlying code memory allocator,
-     * sets page permissions.  CodeAlloc provides APIs for allocating and freeing
-     * individual blocks of code memory (for methods, stubs, or compiled
-     * traces), static functions for managing lists of allocated code, and has
-     * a few pure virtual methods that embedders must implement to provide
-     * memory to the allocator.
-     *
-     * A "chunk" is a region of memory obtained from allocCodeChunk; it must
-     * be page aligned and be a multiple of the system page size.
-     *
-     * A "block" is a region of memory within a chunk.  It can be arbitrarily
-     * sized and aligned, but is always contained within a single chunk.
-     * class CodeList represents one block; the members of CodeList track the
-     * extent of the block and support creating lists of blocks.
-     *
-     * The allocator coalesces free blocks when it can, in free(), but never
-     * coalesces chunks.
-     */
-    class CodeAlloc
-    {
-        static const size_t sizeofMinBlock = offsetof(CodeList, code);
-        static const size_t minAllocSize = LARGEST_UNDERRUN_PROT;
+/**
+ * Code memory allocator is a long lived manager for many code blocks that
+ * manages interaction with an underlying code memory allocator,
+ * sets page permissions.  CodeAlloc provides APIs for allocating and freeing
+ * individual blocks of code memory (for methods, stubs, or compiled
+ * traces), static functions for managing lists of allocated code, and has
+ * a few pure virtual methods that embedders must implement to provide
+ * memory to the allocator.
+ *
+ * A "chunk" is a region of memory obtained from allocCodeChunk; it must
+ * be page aligned and be a multiple of the system page size.
+ *
+ * A "block" is a region of memory within a chunk.  It can be arbitrarily
+ * sized and aligned, but is always contained within a single chunk.
+ * class CodeList represents one block; the members of CodeList track the
+ * extent of the block and support creating lists of blocks.
+ *
+ * The allocator coalesces free blocks when it can, in free(), but never
+ * coalesces chunks.
+ */
+class CodeAlloc {
+  static const size_t sizeofMinBlock = offsetof(CodeList, code);
+  static const size_t minAllocSize = LARGEST_UNDERRUN_PROT;
 
-        // Return the number of bytes needed for the header of 'n' blocks
-        static size_t headerSpaceFor(uint32_t nbrBlks)  { return nbrBlks * sizeofMinBlock; }
+  // Return the number of bytes needed for the header of 'n' blocks
+  static size_t headerSpaceFor(uint32_t nbrBlks) {
+    return nbrBlks * sizeofMinBlock;
+  }
 
-        // Return the number of bytes needed in order to safely construct 'n' blocks
-        static size_t blkSpaceFor(uint32_t nbrBlks)     { return (nbrBlks * minAllocSize) + headerSpaceFor(nbrBlks); }
+  // Return the number of bytes needed in order to safely construct 'n' blocks
+  static size_t blkSpaceFor(uint32_t nbrBlks) {
+    return (nbrBlks * minAllocSize) + headerSpaceFor(nbrBlks);
+  }
 
-        /** Terminator blocks.  All active and free allocations
-            are reachable by traversing this chain and each
-            element's lower chain. */
-        CodeList* heapblocks;
+  /** Terminator blocks.  All active and free allocations
+      are reachable by traversing this chain and each
+      element's lower chain. */
+  CodeList *heapblocks;
 
-        /** Reusable blocks. */
-        CodeList* availblocks;
-        size_t totalAllocated;
+  /** Reusable blocks. */
+  CodeList *availblocks;
+  size_t totalAllocated;
 
-        /** Cached value of VMPI_getVMPageSize */
-        const size_t bytesPerPage;
+  /** Cached value of VMPI_getVMPageSize */
+  const size_t bytesPerPage;
 
-        /** Number of bytes to request from VMPI layer, always a multiple of the page size */
-        const size_t bytesPerAlloc;
+  /** Number of bytes to request from VMPI layer, always a multiple of the page
+   * size */
+  const size_t bytesPerAlloc;
 
-        const Config* _config;
+  const Config *_config;
 
-        /** remove one block from a list */
-        static CodeList* removeBlock(CodeList* &list);
+  /** remove one block from a list */
+  static CodeList *removeBlock(CodeList *&list);
 
-        /** add one block to a list */
-        static void addBlock(CodeList* &blocks, CodeList* b);
+  /** add one block to a list */
+  static void addBlock(CodeList *&blocks, CodeList *b);
 
-        /** compute the CodeList pointer from a [start, end) range */
-        static CodeList* getBlock(NIns* start, NIns* end);
+  /** compute the CodeList pointer from a [start, end) range */
+  static CodeList *getBlock(NIns *start, NIns *end);
 
-        /** add raw memory to the free list */
-        void addMem();
+  /** add raw memory to the free list */
+  void addMem();
 
-        /** find the beginning of the heapblock terminated by term */
-        CodeList* firstBlock(CodeList* term);
+  /** find the beginning of the heapblock terminated by term */
+  CodeList *firstBlock(CodeList *term);
 
-        //
-        // CodeAlloc's SPI (Service Provider Interface).  Implementations must be
-        // defined by nanojit embedder.  Allocation failures should cause an exception
-        // or longjmp; nanojit intentionally does not check for null.
-        //
+  //
+  // CodeAlloc's SPI (Service Provider Interface).  Implementations must be
+  // defined by nanojit embedder.  Allocation failures should cause an exception
+  // or longjmp; nanojit intentionally does not check for null.
+  //
 
-        /** allocate nbytes of memory to hold code.  Never return null! */
-        void* allocCodeChunk(size_t nbytes);
+  /** allocate nbytes of memory to hold code.  Never return null! */
+  void *allocCodeChunk(size_t nbytes);
 
-        /** free a block previously allocated by allocCodeMem.  nbytes will
-         * match the previous allocCodeMem, but is provided here as well
-         * to mirror the mmap()/munmap() api.  markCodeChunkWrite() will have
-         * been called if necessary, so it is not necessary for freeCodeChunk()
-         * to do it again. */
-        void freeCodeChunk(void* addr, size_t nbytes);
+  /** free a block previously allocated by allocCodeMem.  nbytes will
+   * match the previous allocCodeMem, but is provided here as well
+   * to mirror the mmap()/munmap() api.  markCodeChunkWrite() will have
+   * been called if necessary, so it is not necessary for freeCodeChunk()
+   * to do it again. */
+  void freeCodeChunk(void *addr, size_t nbytes);
 
-        /** make this specific extent ready to execute (might remove write) */
-        void markCodeChunkExec(void* addr, size_t nbytes);
+  /** make this specific extent ready to execute (might remove write) */
+  void markCodeChunkExec(void *addr, size_t nbytes);
 
-        /** make this extent ready to modify (might remove exec) */
-        void markCodeChunkWrite(void* addr, size_t nbytes);
+  /** make this extent ready to modify (might remove exec) */
+  void markCodeChunkWrite(void *addr, size_t nbytes);
 
-        /**
-         * Check the permission bits of the region specified by 'addr' for 'nbytes' bytes
-         * to ensure that they are set as expected for the given state. (Exec or Write)
-         * This callback is only issued in DEBUG builds for validation purposes.
-         * It is up to the service provider to decide how to interprete the request; i.e
-         * it will most likely return true if the markCodeChunkXXX() methods are
-         * stubbed out.  Otherwise, the chunk's memory should be interrogated for
-         * correct permission bits.
-         */
-        bool checkChunkMark(void* addr, size_t nbytes, bool isExec);
+  /**
+   * Check the permission bits of the region specified by 'addr' for 'nbytes'
+   * bytes to ensure that they are set as expected for the given state. (Exec or
+   * Write) This callback is only issued in DEBUG builds for validation
+   * purposes. It is up to the service provider to decide how to interprete the
+   * request; i.e it will most likely return true if the markCodeChunkXXX()
+   * methods are stubbed out.  Otherwise, the chunk's memory should be
+   * interrogated for correct permission bits.
+   */
+  bool checkChunkMark(void *addr, size_t nbytes, bool isExec);
 
-    public:
-        CodeAlloc(const Config* config);
-        ~CodeAlloc();
+public:
+  CodeAlloc(const Config *config);
+  ~CodeAlloc();
 
-        /** return all the memory allocated through this allocator to the gcheap. */
-        void reset();
+  /** return all the memory allocated through this allocator to the gcheap. */
+  void reset();
 
-        /** allocate some memory (up to 'byteLimit' bytes) for code returning pointers to the region.  A zero 'byteLimit' means no limit */
-        void alloc(NIns* &start, NIns* &end, size_t byteLimit);
+  /** allocate some memory (up to 'byteLimit' bytes) for code returning pointers
+   * to the region.  A zero 'byteLimit' means no limit */
+  void alloc(NIns *&start, NIns *&end, size_t byteLimit);
 
-        /** free a block of memory previously returned by alloc() */
-        void free(NIns* start, NIns* end);
+  /** free a block of memory previously returned by alloc() */
+  void free(NIns *start, NIns *end);
 
-        /** free several blocks */
-        void freeAll(CodeList* &code);
+  /** free several blocks */
+  void freeAll(CodeList *&code);
 
-        /** flush the icache for all code in the list, before executing */
-        static void flushICache(CodeList* &blocks);
+  /** flush the icache for all code in the list, before executing */
+  static void flushICache(CodeList *&blocks);
 
-        /** flush the icache for a specific extent */
-        static void flushICache(void *start, size_t len);
+  /** flush the icache for a specific extent */
+  static void flushICache(void *start, size_t len);
 
-        /** add the ranges [start, holeStart) and [holeEnd, end) to code, and
-            free [holeStart, holeEnd) if the hole is >= minsize */
-        void addRemainder(CodeList* &code, NIns* start, NIns* end, NIns* holeStart, NIns* holeEnd);
+  /** add the ranges [start, holeStart) and [holeEnd, end) to code, and
+      free [holeStart, holeEnd) if the hole is >= minsize */
+  void addRemainder(CodeList *&code, NIns *start, NIns *end, NIns *holeStart,
+                    NIns *holeEnd);
 
-        /** add a block previously returned by alloc(), to code */
-        static void add(CodeList* &code, NIns* start, NIns* end);
+  /** add a block previously returned by alloc(), to code */
+  static void add(CodeList *&code, NIns *start, NIns *end);
 
-        /** return the number of bytes in all the code blocks in "code", including block overhead */
+  /** return the number of bytes in all the code blocks in "code", including
+   * block overhead */
 #ifdef PERFM
-        static size_t size(const CodeList* code);
+  static size_t size(const CodeList *code);
 #endif
 
-        /** return the total number of bytes held by this CodeAlloc. */
-        size_t size();
+  /** return the total number of bytes held by this CodeAlloc. */
+  size_t size();
 
-        /** get stats about heap usage */
-        void getStats(size_t& total, size_t& frag_size, size_t& free_size);
+  /** get stats about heap usage */
+  void getStats(size_t &total, size_t &frag_size, size_t &free_size);
 
-        /** print out stats about heap usage */
-        void logStats();
+  /** print out stats about heap usage */
+  void logStats();
 
-        /** protect all code managed by this CodeAlloc */
-        void markAllExec();
+  /** protect all code managed by this CodeAlloc */
+  void markAllExec();
 
-        /** protect all mem in the block list */
+  /** protect all mem in the block list */
 #if defined(NANOJIT_WIN_CFG)
-		void markExec(CodeList* &blocks, NIns *pFnc);
+  void markExec(CodeList *&blocks, NIns *pFnc);
 #else
-		void markExec(CodeList* &blocks);
+  void markExec(CodeList *&blocks);
 #endif
 
-        /** protect an entire chunk */
+  /** protect an entire chunk */
 #if defined(NANOJIT_WIN_CFG)
-		void markChunkExec(CodeList* term, NIns *pFnc);
+  void markChunkExec(CodeList *term, NIns *pFnc);
 #else
-		void markChunkExec(CodeList* term);
+  void markChunkExec(CodeList *term);
 #endif
 
-        /** unprotect the code chunk containing just this one block */
-        void markBlockWrite(CodeList* b);
+  /** unprotect the code chunk containing just this one block */
+  void markBlockWrite(CodeList *b);
 
 #ifdef _DEBUG
-        /** make sure all the higher/lower pointers are correct for every block */
-        void sanity_check();
+  /** make sure all the higher/lower pointers are correct for every block */
+  void sanity_check();
 #endif
-    };
+};
 
-    /** CodeRange is a range-style iterator over CodeList */
-    class CodeRange
-    {
-    public:
-        CodeRange(const CodeList* blocks)
-                : p(blocks) {}
+/** CodeRange is a range-style iterator over CodeList */
+class CodeRange {
+public:
+  CodeRange(const CodeList *blocks) : p(blocks) {}
 
-        /** return true if there are no more blocks */
-        bool empty() const {
-            return !p;
-        }
+  /** return true if there are no more blocks */
+  bool empty() const { return !p; }
 
-        /** return the start address of the front block */
-        const void *frontStart() const {
-            NanoAssert(!empty());
-            return &p->code[0];
-        }
+  /** return the start address of the front block */
+  const void *frontStart() const {
+    NanoAssert(!empty());
+    return &p->code[0];
+  }
 
-        /** return the end address of the front block */
-        const void *frontEnd() const {
-            return p->end;
-        }
+  /** return the end address of the front block */
+  const void *frontEnd() const { return p->end; }
 
-        /** move to the next block */
-        void popFront() {
-            NanoAssert(!empty());
-            p = p->next;
-        }
+  /** move to the next block */
+  void popFront() {
+    NanoAssert(!empty());
+    p = p->next;
+  }
 
-    private:
-        const CodeList* p;
-    };
-}
+private:
+  const CodeList *p;
+};
+} // namespace nanojit
 
 #endif // __nanojit_CodeAlloc__

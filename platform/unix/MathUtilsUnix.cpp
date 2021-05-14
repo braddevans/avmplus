@@ -4,7 +4,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-namespace avmplus
-{
-    /* Nothing here.  All are inlined on this platform. */
+namespace avmplus {
+/* Nothing here.  All are inlined on this platform. */
 }

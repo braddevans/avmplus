@@ -5,4 +5,3 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // Contents removed, file stays for now (adding and removing files is hard).
-

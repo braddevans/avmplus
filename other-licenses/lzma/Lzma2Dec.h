@@ -12,8 +12,7 @@ extern "C" {
 
 /* ---------- State Interface ---------- */
 
-typedef struct
-{
+typedef struct {
   CLzmaDec decoder;
   UInt32 packSize;
   UInt32 unpackSize;
@@ -32,12 +31,11 @@ SRes Lzma2Dec_AllocateProbs(CLzma2Dec *p, Byte prop, ISzAlloc *alloc);
 SRes Lzma2Dec_Allocate(CLzma2Dec *p, Byte prop, ISzAlloc *alloc);
 void Lzma2Dec_Init(CLzma2Dec *p);
 
-
 /*
 finishMode:
-  It has meaning only if the decoding reaches output limit (*destLen or dicLimit).
-  LZMA_FINISH_ANY - use smallest number of input bytes
-  LZMA_FINISH_END - read EndOfStream marker after decoding
+  It has meaning only if the decoding reaches output limit (*destLen or
+dicLimit). LZMA_FINISH_ANY - use smallest number of input bytes LZMA_FINISH_END
+- read EndOfStream marker after decoding
 
 Returns:
   SZ_OK
@@ -48,12 +46,13 @@ Returns:
   SZ_ERROR_DATA - Data error
 */
 
-SRes Lzma2Dec_DecodeToDic(CLzma2Dec *p, SizeT dicLimit,
-    const Byte *src, SizeT *srcLen, ELzmaFinishMode finishMode, ELzmaStatus *status);
+SRes Lzma2Dec_DecodeToDic(CLzma2Dec *p, SizeT dicLimit, const Byte *src,
+                          SizeT *srcLen, ELzmaFinishMode finishMode,
+                          ELzmaStatus *status);
 
 SRes Lzma2Dec_DecodeToBuf(CLzma2Dec *p, Byte *dest, SizeT *destLen,
-    const Byte *src, SizeT *srcLen, ELzmaFinishMode finishMode, ELzmaStatus *status);
-
+                          const Byte *src, SizeT *srcLen,
+                          ELzmaFinishMode finishMode, ELzmaStatus *status);
 
 /* ---------- One Call Interface ---------- */
 
@@ -75,7 +74,8 @@ Returns:
 */
 
 SRes Lzma2Decode(Byte *dest, SizeT *destLen, const Byte *src, SizeT *srcLen,
-    Byte prop, ELzmaFinishMode finishMode, ELzmaStatus *status, ISzAlloc *alloc);
+                 Byte prop, ELzmaFinishMode finishMode, ELzmaStatus *status,
+                 ISzAlloc *alloc);
 
 #ifdef __cplusplus
 }

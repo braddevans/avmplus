@@ -7,33 +7,27 @@
 #ifndef __avmplus_BooleanClass__
 #define __avmplus_BooleanClass__
 
+namespace avmplus {
+/**
+ * class Boolean
+ */
+class GC_AS3_EXACT(BooleanClass, ClassClosure) {
+protected:
+  BooleanClass(VTable *vtable);
 
-namespace avmplus
-{
-    /**
-     * class Boolean
-     */
-    class GC_AS3_EXACT(BooleanClass, ClassClosure)
-    {
-    protected:
-        BooleanClass(VTable* vtable);
+public:
+  // this = argv[0]
+  // arg1 = argv[1]
+  // argN = argv[argc]
+  Atom call(int argc, Atom *argv) { return construct(argc, argv); }
 
-    public:
-        // this = argv[0]
-        // arg1 = argv[1]
-        // argN = argv[argc]
-        Atom call(int argc, Atom* argv)
-        {
-            return construct(argc, argv);
-        }
+  // ------------------------ DATA SECTION BEGIN
+private:
+  GC_NO_DATA(BooleanClass)
 
-    // ------------------------ DATA SECTION BEGIN
-    private:
-        GC_NO_DATA(BooleanClass)
-
-        DECLARE_SLOTS_BooleanClass;
-    // ------------------------ DATA SECTION END
-    };
-}
+  DECLARE_SLOTS_BooleanClass;
+  // ------------------------ DATA SECTION END
+};
+} // namespace avmplus
 
 #endif /* __avmplus_BooleanClass__ */

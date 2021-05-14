@@ -12,50 +12,45 @@
 #define PI 3.141592653589793
 #endif
 
-namespace avmplus
-{
+namespace avmplus {
 
-    double MathUtils::acos(double value)
-    {
-        double result = ::acos(value);
-        if(result == 0 && (value > 1 || value < -1)) {
-            return MathUtils::nan();
-        }
-        return result;
-    }
-
-    double MathUtils::asin(double value)
-    {
-        double result = ::asin(value);
-        if(result == 0 && (value > 1 || value < -1)) {
-            return MathUtils::nan();
-        }
-        return result;
-    }
-
-    double MathUtils::atan2(double y, double x)
-    {
-        double result = ::atan2(y, x);
-        if(result !=0 )
-            return result;
-
-        if (MathUtils::isNegZero(y) && MathUtils::isNegZero(x))
-            return -PI;
-        else if(y == 0 && MathUtils::isNegZero(x))
-            return PI;
-        else if(x == 0 && MathUtils::isNegZero(y))
-            return y;
-        else if(x == 0 && y == 0)
-            return y;
-        return result;
-    }
-
-    double MathUtils::log(double value)
-    {
-        if( value >= 0 )
-            return ::log(value);
-        else
-            return MathUtils::nan();
-    }
-
+double MathUtils::acos(double value) {
+  double result = ::acos(value);
+  if (result == 0 && (value > 1 || value < -1)) {
+    return MathUtils::nan();
+  }
+  return result;
 }
+
+double MathUtils::asin(double value) {
+  double result = ::asin(value);
+  if (result == 0 && (value > 1 || value < -1)) {
+    return MathUtils::nan();
+  }
+  return result;
+}
+
+double MathUtils::atan2(double y, double x) {
+  double result = ::atan2(y, x);
+  if (result != 0)
+    return result;
+
+  if (MathUtils::isNegZero(y) && MathUtils::isNegZero(x))
+    return -PI;
+  else if (y == 0 && MathUtils::isNegZero(x))
+    return PI;
+  else if (x == 0 && MathUtils::isNegZero(y))
+    return y;
+  else if (x == 0 && y == 0)
+    return y;
+  return result;
+}
+
+double MathUtils::log(double value) {
+  if (value >= 0)
+    return ::log(value);
+  else
+    return MathUtils::nan();
+}
+
+} // namespace avmplus

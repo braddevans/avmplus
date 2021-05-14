@@ -7,109 +7,104 @@
 #ifndef __avmplus_XMLClass__
 #define __avmplus_XMLClass__
 
+namespace avmplus {
+/**
+ * class XMLClass
+ */
+class GC_AS3_EXACT(XMLClass, ClassClosure) {
+protected:
+  XMLClass(VTable *cvtable);
 
-namespace avmplus
-{
-    /**
-     * class XMLClass
-     */
-    class GC_AS3_EXACT(XMLClass, ClassClosure)
-    {
-    protected:
-        XMLClass(VTable* cvtable);
-        
-    public:
+public:
 #ifdef DRC_TRIVIAL_DESTRUCTOR
-        ~XMLClass();
+  ~XMLClass();
 #endif
 
-        REALLY_INLINE static XMLClass* create(MMgc::GC* gc, VTable* cvtable)
-        {
-            return new (gc, MMgc::kExact, cvtable->getExtraSize()) XMLClass(cvtable);
-        }
+  REALLY_INLINE static XMLClass *create(MMgc::GC *gc, VTable *cvtable) {
+    return new (gc, MMgc::kExact, cvtable->getExtraSize()) XMLClass(cvtable);
+  }
 
-        // this = argv[0]
-        // arg1 = argv[1]
-        // argN = argv[argc]
-        Atom call(int argc, Atom* argv);
+  // this = argv[0]
+  // arg1 = argv[1]
+  // argN = argv[argc]
+  Atom call(int argc, Atom *argv);
 
-        Atom ToXML(Atom arg);
+  Atom ToXML(Atom arg);
 
-        // static props/funcs off the XML object
-        // XML.ignoreComments
-        // XML.ignoreProcessingInstructions
-        // XML.ignoreWhitespace
-        // XML.prettyPrinting
-        // XML.prettyIndent
-        // XML.settings (in AS)
-        // XML.setSettings ([settings]) (in AS)
-        // XML.defaultSettings() (in AS)
+  // static props/funcs off the XML object
+  // XML.ignoreComments
+  // XML.ignoreProcessingInstructions
+  // XML.ignoreWhitespace
+  // XML.prettyPrinting
+  // XML.prettyIndent
+  // XML.settings (in AS)
+  // XML.setSettings ([settings]) (in AS)
+  // XML.defaultSettings() (in AS)
 
-        void set_ignoreComments(bool32 ignoreFlag);
-        bool get_ignoreComments();
+  void set_ignoreComments(bool32 ignoreFlag);
+  bool get_ignoreComments();
 
-        void set_ignoreProcessingInstructions(bool32 ignoreFlag);
-        bool get_ignoreProcessingInstructions();
+  void set_ignoreProcessingInstructions(bool32 ignoreFlag);
+  bool get_ignoreProcessingInstructions();
 
-        void set_ignoreWhitespace(bool32 ignoreFlag);
-        bool get_ignoreWhitespace();
+  void set_ignoreWhitespace(bool32 ignoreFlag);
+  bool get_ignoreWhitespace();
 
-        void set_prettyPrinting(bool32 prettyPrinting);
-        bool get_prettyPrinting();
+  void set_prettyPrinting(bool32 prettyPrinting);
+  bool get_prettyPrinting();
 
-        void set_prettyIndent(int indent);
-        int get_prettyIndent();
+  void set_prettyIndent(int indent);
+  int get_prettyIndent();
 
-        bool okToPrettyPrint() { return (get_prettyPrinting() && (m_prettyIndent >= 0)); }
+  bool okToPrettyPrint() {
+    return (get_prettyPrinting() && (m_prettyIndent >= 0));
+  }
 
-        enum flags
-        {
-            kFlagIgnoreComments = 0x01,
-            kFlagIgnoreProcessingInstructions = 0x02,
-            kFlagIgnoreWhitespace = 0x04,
-            kFlagPrettyPrinting = 0x08
-        };
-        
-    // ------------------------ DATA SECTION BEGIN
-        GC_DATA_BEGIN(XMLClass)
+  enum flags {
+    kFlagIgnoreComments = 0x01,
+    kFlagIgnoreProcessingInstructions = 0x02,
+    kFlagIgnoreWhitespace = 0x04,
+    kFlagPrettyPrinting = 0x08
+  };
 
-    public:
-        int m_prettyIndent;
-        uint8_t m_flags;
+  // ------------------------ DATA SECTION BEGIN
+  GC_DATA_BEGIN(XMLClass)
 
-        GC_DATA_END(XMLClass)
+public:
+  int m_prettyIndent;
+  uint8_t m_flags;
 
-    private:
-        DECLARE_SLOTS_XMLClass;
-    // ------------------------ DATA SECTION END
-    };
+  GC_DATA_END(XMLClass)
 
-    /**
-     * class QName
-     */
-    class GC_AS3_EXACT(QNameClass, ClassClosure)
-    {
-    protected:
-        QNameClass(VTable* cvtable);
+private:
+  DECLARE_SLOTS_XMLClass;
+  // ------------------------ DATA SECTION END
+};
 
-    public:
-        REALLY_INLINE static QNameClass* create(MMgc::GC* gc, VTable* cvtable)
-        {
-            return new (gc, MMgc::kExact, cvtable->getExtraSize()) QNameClass(cvtable);
-        }
+/**
+ * class QName
+ */
+class GC_AS3_EXACT(QNameClass, ClassClosure) {
+protected:
+  QNameClass(VTable *cvtable);
 
-        // this = argv[0]
-        // arg1 = argv[1]
-        // argN = argv[argc]
-        Atom call(int argc, Atom* argv);
+public:
+  REALLY_INLINE static QNameClass *create(MMgc::GC *gc, VTable *cvtable) {
+    return new (gc, MMgc::kExact, cvtable->getExtraSize()) QNameClass(cvtable);
+  }
 
-    // ------------------------ DATA SECTION BEGIN
-    private:
-        GC_NO_DATA(QNameClass)
+  // this = argv[0]
+  // arg1 = argv[1]
+  // argN = argv[argc]
+  Atom call(int argc, Atom *argv);
 
-        DECLARE_SLOTS_QNameClass;
-    // ------------------------ DATA SECTION END
-    };
-}
+  // ------------------------ DATA SECTION BEGIN
+private:
+  GC_NO_DATA(QNameClass)
+
+  DECLARE_SLOTS_QNameClass;
+  // ------------------------ DATA SECTION END
+};
+} // namespace avmplus
 
 #endif /* __avmplus_XMLClass__ */

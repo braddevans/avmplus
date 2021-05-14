@@ -7,16 +7,13 @@
 #ifndef __avmshell_DescribeTypeClass__
 #define __avmshell_DescribeTypeClass__
 
-
-namespace avmplus
-{
-    class DescribeTypeClass
-    {
-    public:
-        static Atom describeTypeJSON(ScriptObject* self, Atom o, uint32_t flags);
-        static Stringp getQualifiedClassName(ScriptObject* self, Atom v);
-        static Stringp getQualifiedSuperclassName(ScriptObject* self, Atom v);
-    };
-}
+namespace avmplus {
+class DescribeTypeClass {
+public:
+  static Atom describeTypeJSON(ScriptObject *self, Atom o, uint32_t flags);
+  static Stringp getQualifiedClassName(ScriptObject *self, Atom v);
+  static Stringp getQualifiedSuperclassName(ScriptObject *self, Atom v);
+};
+} // namespace avmplus
 
 #endif /* __avmshell_DescribeTypeClass__ */

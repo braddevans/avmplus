@@ -7,23 +7,18 @@
 #ifndef __avmplus_AvmProfiler__
 #define __avmplus_AvmProfiler__
 
-
-namespace avmplus
-{
+namespace avmplus {
 #ifdef DEBUGGER
-    /**
-     * The Profiler class used to contain a profiler that is now no
-     * longer in use. However, it still contains AS3 function showRedrawRegions,
-     * and so it cannot be deleted.
-     */
-    class Profiler : public MMgc::GCFinalizedObject
-    {
-    public:
-        Profiler()
-        {
-        }
-    };
+/**
+ * The Profiler class used to contain a profiler that is now no
+ * longer in use. However, it still contains AS3 function showRedrawRegions,
+ * and so it cannot be deleted.
+ */
+class Profiler : public MMgc::GCFinalizedObject {
+public:
+  Profiler() {}
+};
 #endif
-}
+} // namespace avmplus
 
 #endif /* __avmplus_AvmProfiler__ */

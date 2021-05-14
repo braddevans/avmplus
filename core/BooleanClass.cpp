@@ -6,22 +6,17 @@
 
 #include "avmplus.h"
 
-
-namespace avmplus
-{
-    BooleanClass::BooleanClass(VTable* cvtable)
-        : ClassClosure(cvtable)
-    {
-        toplevel()->_booleanClass = this;
-        createVanillaPrototype();
-    }
-
-    Atom BooleanClass::construct(int argc, Atom* argv)
-    {
-        // TODO throw arg error if argc > 1
-        if (argc == 0)
-            return falseAtom;
-        else
-            return AvmCore::booleanAtom(argv[1]);
-    }
+namespace avmplus {
+BooleanClass::BooleanClass(VTable *cvtable) : ClassClosure(cvtable) {
+  toplevel()->_booleanClass = this;
+  createVanillaPrototype();
 }
+
+Atom BooleanClass::construct(int argc, Atom *argv) {
+  // TODO throw arg error if argc > 1
+  if (argc == 0)
+    return falseAtom;
+  else
+    return AvmCore::booleanAtom(argv[1]);
+}
+} // namespace avmplus

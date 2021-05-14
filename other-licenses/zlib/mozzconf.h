@@ -11,7 +11,7 @@
 #if defined(XP_WIN) && defined(ZLIB_DLL)
 #undef ZLIB_DLL
 #elif defined(HAVE_VISIBILITY_ATTRIBUTE) && !defined(MOZ_ENABLE_LIBXUL)
-#define ZEXTERN __attribute__((visibility ("default"))) extern
+#define ZEXTERN __attribute__((visibility("default"))) extern
 #endif
 
 /* Exported Symbols */

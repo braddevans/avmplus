@@ -11,8 +11,8 @@
 #if 0
 
 #include "CodegenLIR.h"
-#include "Deopt.h"
 #include "Deopt-CL.h"
+#include "Deopt.h"
 #include "Interpreter.h"
 
 namespace avmplus

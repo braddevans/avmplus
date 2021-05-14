@@ -7,8 +7,8 @@
 #include "sha1.h"
 
 namespace base {
-  typedef unsigned int uint32;  // true on any machine we care about
-  typedef unsigned char uint8;
+typedef unsigned int uint32; // true on any machine we care about
+typedef unsigned char uint8;
 
 // Implementation of SHA-1. Only handles data in byte-sized blocks,
 // which simplifies the code a fair bit.
@@ -32,21 +32,21 @@ namespace base {
 // http://crbug.com/47218
 
 class SecureHashAlgorithm {
- public:
+public:
   SecureHashAlgorithm() { Init(); }
 
   static const int kDigestSizeBytes;
 
   void Init();
-  void Update(const void* data, size_t nbytes);
+  void Update(const void *data, size_t nbytes);
   void Final();
 
   // 20 bytes of message digest.
-  const unsigned char* Digest() const {
-    return reinterpret_cast<const unsigned char*>(H);
+  const unsigned char *Digest() const {
+    return reinterpret_cast<const unsigned char *>(H);
   }
 
- private:
+private:
   void Pad();
   void Process();
 
@@ -76,7 +76,7 @@ static inline uint32 f(uint32 t, uint32 B, uint32 C, uint32 D) {
 }
 
 static inline uint32 S(uint32 n, uint32 X) {
-  return (X << n) | (X >> (32-n));
+  return (X << n) | (X >> (32 - n));
 }
 
 static inline uint32 K(uint32 t) {
@@ -91,11 +91,9 @@ static inline uint32 K(uint32 t) {
   }
 }
 
-static inline void swapends(uint32* t) {
-  *t = ((*t & 0xff000000) >> 24) |
-       ((*t & 0xff0000) >> 8) |
-       ((*t & 0xff00) << 8) |
-       ((*t & 0xff) << 24);
+static inline void swapends(uint32 *t) {
+  *t = ((*t & 0xff000000) >> 24) | ((*t & 0xff0000) >> 8) |
+       ((*t & 0xff00) << 8) | ((*t & 0xff) << 24);
 }
 
 const int SecureHashAlgorithm::kDigestSizeBytes = 20;
@@ -123,8 +121,8 @@ void SecureHashAlgorithm::Final() {
     swapends(&H[t]);
 }
 
-void SecureHashAlgorithm::Update(const void* data, size_t nbytes) {
-  const uint8* d = reinterpret_cast<const uint8*>(data);
+void SecureHashAlgorithm::Update(const void *data, size_t nbytes) {
+  const uint8 *d = reinterpret_cast<const uint8 *>(data);
   while (nbytes--) {
     M[cursor++] = *d++;
     if (cursor >= 64)
@@ -136,7 +134,7 @@ void SecureHashAlgorithm::Update(const void* data, size_t nbytes) {
 void SecureHashAlgorithm::Pad() {
   M[cursor++] = 0x80;
 
-  if (cursor > 64-8) {
+  if (cursor > 64 - 8) {
     // pad out to next block
     while (cursor < 64)
       M[cursor++] = 0;
@@ -144,13 +142,13 @@ void SecureHashAlgorithm::Pad() {
     Process();
   }
 
-  while (cursor < 64-4)
+  while (cursor < 64 - 4)
     M[cursor++] = 0;
 
-  M[64-4] = (l & 0xff000000) >> 24;
-  M[64-3] = (l & 0xff0000) >> 16;
-  M[64-2] = (l & 0xff00) >> 8;
-  M[64-1] = (l & 0xff);
+  M[64 - 4] = (l & 0xff000000) >> 24;
+  M[64 - 3] = (l & 0xff0000) >> 16;
+  M[64 - 2] = (l & 0xff00) >> 8;
+  M[64 - 1] = (l & 0xff);
 }
 
 void SecureHashAlgorithm::Process() {
@@ -196,15 +194,14 @@ void SecureHashAlgorithm::Process() {
   cursor = 0;
 }
 
-std::string SHA1HashString(const std::string& str) {
+std::string SHA1HashString(const std::string &str) {
   char hash[SecureHashAlgorithm::kDigestSizeBytes];
-  SHA1HashBytes(reinterpret_cast<const unsigned char*>(str.c_str()),
-                str.length(), reinterpret_cast<unsigned char*>(hash));
+  SHA1HashBytes(reinterpret_cast<const unsigned char *>(str.c_str()),
+                str.length(), reinterpret_cast<unsigned char *>(hash));
   return std::string(hash, SecureHashAlgorithm::kDigestSizeBytes);
 }
 
-void SHA1HashBytes(const unsigned char* data, size_t len,
-                   unsigned char* hash) {
+void SHA1HashBytes(const unsigned char *data, size_t len, unsigned char *hash) {
   SecureHashAlgorithm sha;
   sha.Update(data, len);
   sha.Final();
@@ -212,4 +209,4 @@ void SHA1HashBytes(const unsigned char* data, size_t len,
   memcpy(hash, sha.Digest(), SecureHashAlgorithm::kDigestSizeBytes);
 }
 
-}  // namespace base
+} // namespace base

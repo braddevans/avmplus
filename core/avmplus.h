@@ -4,7 +4,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
 #ifndef __avmplus__
 #define __avmplus__
 
@@ -52,16 +51,16 @@
 
 #include "vmbase.h"
 
-#include "atom.h"
-#include "atom-inlines.h"
-#include "avmplus-tracers.h"
-#include "GCTypes.h"
-#include "avmplusVersion.h"
-#include "AvmLog.h"
 #include "ActionBlockConstants.h"
-#include "wopcodes.h"
+#include "AvmLog.h"
 #include "ErrorConstants.h"
+#include "GCTypes.h"
 #include "NativeObjectHelpers.h"
+#include "atom-inlines.h"
+#include "atom.h"
+#include "avmplus-tracers.h"
+#include "avmplusVersion.h"
+#include "wopcodes.h"
 
 using namespace avmplus::AtomConstants;
 using namespace avmplus::ActionBlockConstants;
@@ -70,156 +69,154 @@ using namespace avmplus::ErrorConstants;
 /**
  * Incomplete class definitions for everything in AVM+
  */
-namespace avmplus
-{
-    class AbcEnv;
-    class AbcParser;
-    class Accessor;
-    class Aggregate;
-    class ArrayClass;
-    class ArrayObject;
-    class Atan2Method;
-    class AvmCore;
-    class AvmPlusScriptableObject;
-    class MethodFrame;
-    class BooleanClass;
-    class BuiltinTraits;
-    class BugCompatibility;
-    class ByteArrayClass;
-    class ByteArrayObject;
-    class CallStackNode;
-    class ClassClass;
-    class ClassClosure;
-    class Closure;
-    class CodeContext;
-    class CompiledRegExp;
-    class ConditionObject;
-    class Console;
-    class D2A;
-    class Date;
-    class DataInput;
-    class DataOutput;
-    class DateClass;
-    class DateObject;
-    class Debugger;
+namespace avmplus {
+class AbcEnv;
+class AbcParser;
+class Accessor;
+class Aggregate;
+class ArrayClass;
+class ArrayObject;
+class Atan2Method;
+class AvmCore;
+class AvmPlusScriptableObject;
+class MethodFrame;
+class BooleanClass;
+class BuiltinTraits;
+class BugCompatibility;
+class ByteArrayClass;
+class ByteArrayObject;
+class CallStackNode;
+class ClassClass;
+class ClassClosure;
+class Closure;
+class CodeContext;
+class CompiledRegExp;
+class ConditionObject;
+class Console;
+class D2A;
+class Date;
+class DataInput;
+class DataOutput;
+class DateClass;
+class DateObject;
+class Debugger;
 #ifdef DEBUGGER
-    class DebuggerMethodInfo;
+class DebuggerMethodInfo;
 #endif
-    class DescribeTypeClass;
-    class Domain;
-    class DomainEnv;
-    class DomainMgr;
-    class E4XNode;
-    class EnterSafepointManager;
-    class ErrorClass;
-    class ErrorObject;
-    class Exception;
-    class ExceptionFrame;
-    class ExceptionHandler;
-    class ExceptionHandlerTable;
-    class FixedBitSet;
-    class FrameState;
-    class FunctionObject;
-    class HeapHashtable;
-    class HeapMultiname;
-    class InlineHashtable;
-    class IntVectorObject;
+class DescribeTypeClass;
+class Domain;
+class DomainEnv;
+class DomainMgr;
+class E4XNode;
+class EnterSafepointManager;
+class ErrorClass;
+class ErrorObject;
+class Exception;
+class ExceptionFrame;
+class ExceptionHandler;
+class ExceptionHandlerTable;
+class FixedBitSet;
+class FrameState;
+class FunctionObject;
+class HeapHashtable;
+class HeapMultiname;
+class InlineHashtable;
+class IntVectorObject;
 #ifdef VMCFG_FLOAT
-    class FloatVectorObject;
-#endif    
-    class Isolate;
-    class DoubleVectorObject;
-    class UIntVectorObject;
-    class ObjectVectorObject;
-    class JSONClass;
-    class LinkObject;
-    class MathClass;
-    class MathUtils;
-    class MethodClosure;
-    class MethodEnv;
-    class MethodInfo;
-    class MethodSignature;
-    class Multiname;
-    class MutexObject;
-    class Namespace;
-    class NamespaceSet;
-    class NamespaceClass;
-    class NativeInitializer;
-    struct NativeMethodInfo;
-    class NumberClass;
-    class IntClass;
-    class UIntClass;
-    class OSDep;
-    class ObjectClass;
-    class OutputStream;
-    class PoolObject;
-    class PrintWriter;
-    class Profiler;
-    class ProxyClass;
-    class ProxyObject;
-    class RegExpClass;
-    class RegExpObject;
-    class Sampler;
-    class ScopeChain;
-    class ScopeTypeChain;
-    class ScriptBuffer;
-    class ScriptEnv;
-    class ScriptObject;
-    class StackTrace;
-    class StringBuffer;
-    class StringClass;
-    class String;
-    class Toplevel;
-    class Traits;
-    class TraitsBindings;
-    class TraitsMetadata;
-#ifdef VMCFG_WORDCODE
-    class WordcodeTranslator;
-    class WordcodeEmitter;
+class FloatVectorObject;
 #endif
-    class UnicodeUtils;
-    class FrameValue;
-    class Verifier;
-    class VTable;
-    class VoidClass;
-    class WeakMethodClosure;
-    class XMLClass;
-    class XMLListClass;
-    class XMLObject;
-    class XMLListObject;
-    class QNameClass;
-    class QNameObject;
-    class XMLParser;
-    class XMLTag;
-    class DictionaryClass;
-    class DictionaryObject;
-    class ObjectOutputClass;
-    class ObjectOutputObject;
-    class ObjectInputClass;
-    class ObjectInputObject;
-    class DynamicPropertyOutputClass;
-    class DynamicPropertyOutputObject;
-    class va_list_wrapper;
+class Isolate;
+class DoubleVectorObject;
+class UIntVectorObject;
+class ObjectVectorObject;
+class JSONClass;
+class LinkObject;
+class MathClass;
+class MathUtils;
+class MethodClosure;
+class MethodEnv;
+class MethodInfo;
+class MethodSignature;
+class Multiname;
+class MutexObject;
+class Namespace;
+class NamespaceSet;
+class NamespaceClass;
+class NativeInitializer;
+struct NativeMethodInfo;
+class NumberClass;
+class IntClass;
+class UIntClass;
+class OSDep;
+class ObjectClass;
+class OutputStream;
+class PoolObject;
+class PrintWriter;
+class Profiler;
+class ProxyClass;
+class ProxyObject;
+class RegExpClass;
+class RegExpObject;
+class Sampler;
+class ScopeChain;
+class ScopeTypeChain;
+class ScriptBuffer;
+class ScriptEnv;
+class ScriptObject;
+class StackTrace;
+class StringBuffer;
+class StringClass;
+class String;
+class Toplevel;
+class Traits;
+class TraitsBindings;
+class TraitsMetadata;
+#ifdef VMCFG_WORDCODE
+class WordcodeTranslator;
+class WordcodeEmitter;
+#endif
+class UnicodeUtils;
+class FrameValue;
+class Verifier;
+class VTable;
+class VoidClass;
+class WeakMethodClosure;
+class XMLClass;
+class XMLListClass;
+class XMLObject;
+class XMLListObject;
+class QNameClass;
+class QNameObject;
+class XMLParser;
+class XMLTag;
+class DictionaryClass;
+class DictionaryObject;
+class ObjectOutputClass;
+class ObjectOutputObject;
+class ObjectInputClass;
+class ObjectInputObject;
+class DynamicPropertyOutputClass;
+class DynamicPropertyOutputObject;
+class va_list_wrapper;
 
-    template<class TLIST, uintptr_t align> class VectorAccessor;
+template <class TLIST, uintptr_t align> class VectorAccessor;
 
-    struct WordOpcodeAttr;
+struct WordOpcodeAttr;
 
-    typedef Traits* Traitsp;
-    // Stringp and Namespacep should be const, but RCObject doens't allow it yet
-    typedef String* Stringp;
-    typedef Namespace* Namespacep;
-    typedef const NamespaceSet* NamespaceSetp;
-    typedef const TraitsBindings* TraitsBindingsp;
-    typedef const TraitsMetadata* TraitsMetadatap;
-    typedef const MethodSignature* MethodSignaturep;
+typedef Traits *Traitsp;
+// Stringp and Namespacep should be const, but RCObject doens't allow it yet
+typedef String *Stringp;
+typedef Namespace *Namespacep;
+typedef const NamespaceSet *NamespaceSetp;
+typedef const TraitsBindings *TraitsBindingsp;
+typedef const TraitsMetadata *TraitsMetadatap;
+typedef const MethodSignature *MethodSignaturep;
 
-    typedef struct FramePtr_* FramePtr;
-}
+typedef struct FramePtr_ *FramePtr;
+} // namespace avmplus
 
-namespace halfmoon
-{
-    class JitFriend; // Bridge for encapsulating private access from halfmoon
+namespace halfmoon {
+class JitFriend; // Bridge for encapsulating private access from halfmoon
 }
 
 #ifdef VMCFG_AOT
@@ -227,97 +224,91 @@ struct ABCInfo;
 #endif
 
 #ifdef VMCFG_FLOAT
-#   ifndef FLOAT_ONLY
-#       define FLOAT_ONLY(...) __VA_ARGS__
-#       define IFFLOAT(a,b)  a
-#   endif
-#else 
-#   ifndef FLOAT_ONLY
-#       define FLOAT_ONLY(...)
-#       define IFFLOAT(a,b)  b
-#   endif
+#ifndef FLOAT_ONLY
+#define FLOAT_ONLY(...) __VA_ARGS__
+#define IFFLOAT(a, b) a
+#endif
+#else
+#ifndef FLOAT_ONLY
+#define FLOAT_ONLY(...)
+#define IFFLOAT(a, b) b
+#endif
 #endif
 
 #include "avm.h"
 
 #include "MMgc.h"
 
-namespace avmplus
-{
-    typedef MMgc::LeafVector<Traits*, MMgc::GC::kZero> UnscannedTraitsArray;
-    typedef MMgc::LeafVector<uint64_t, MMgc::GC::kZero> U64Array;
-}
+namespace avmplus {
+typedef MMgc::LeafVector<Traits *, MMgc::GC::kZero> UnscannedTraitsArray;
+typedef MMgc::LeafVector<uint64_t, MMgc::GC::kZero> U64Array;
+} // namespace avmplus
 
-#include "QCache.h"
+#include "../AVMPI/float4Support.h"
+#include "../nanojit/njconfig.h"
+#include "AbcEnv.h"
+#include "ArrayObject.h"
+#include "AtomWriteBarrier.h"
+#include "AvmCore.h"
+#include "AvmPlusScriptableObject.h"
 #include "BigInteger.h"
-#include "d2a.h"
+#include "BitSet.h"
+#include "BooleanClass.h"
+#include "BuiltinNatives.h"
+#include "BuiltinTraits.h"
+#include "ClassClass.h"
+#include "ClassClosure.h"
+#include "CodeContext.h"
+#include "Coder.h"
+#include "Exception.h"
+#include "FrameState.h"
+#include "FunctionClass.h"
+#include "IntClass.h"
+#include "Isolate.h"
 #include "MathUtils.h"
-#include "UnicodeUtils.h"
+#include "MethodClosure.h"
+#include "MethodEnv.h"
+#include "MethodInfo.h"
+#include "Multiname.h"
+#include "MultinameHashtable.h"
+#include "Namespace.h"
+#include "NamespaceClass.h"
+#include "NamespaceSet.h"
+#include "NativeFunction.h"
+#include "NumberClass.h"
 #include "OSDep.h"
 #include "OutputStream.h"
-#include "ScriptBuffer.h"
-#include "avmplusList.h"
-#include "avmplusStack.h"
-#include "avmplusContainer.h"
-#include "SortedMap.h"
-#include "BitSet.h"
-#include "AvmPlusScriptableObject.h"
-#include "api-versions.h"
-#include "AtomWriteBarrier.h"
-#include "Namespace.h"
-#include "StringObject.h"
-#include "MultinameHashtable.h"
-#include "PrintWriter.h"
-#include "BuiltinTraits.h"
-#include "NamespaceSet.h"
-#include "Multiname.h"
-#include "Sampler.h"
-#include "../nanojit/njconfig.h"
-#include "Coder.h"
-#include "../AVMPI/float4Support.h"
-#include "exec.h"
-#include "api-versions.h"
-#include "Isolate.h"
-#include "AvmCore.h"
-#include "avmplusHashtable.h"
-#include "Traits.h"
-#include "VTable.h"
-#include "ScriptObject.h"
-#include "NativeFunction.h"
-#include "BuiltinNatives.h"
-#include "WordcodeTranslator.h"
-#include "WordcodeEmitter.h"
-#include "MethodInfo.h"
 #include "PoolObject.h"
-#include "AbcEnv.h"
-#include "TraitsIterator.h"
+#include "PrintWriter.h"
+#include "QCache.h"
+#include "Sampler.h"
 #include "ScopeChain.h"
-#include "MethodEnv.h"
-#include "CodeContext.h"
-#include "avmplusProfiler.h"
-#include "StringBuffer.h"
-#include "FrameState.h"
-#include "Verifier.h"
-#include "ClassClosure.h"
-#include "ClassClass.h"
-#include "FunctionClass.h"
-#include "MethodClosure.h"
+#include "ScriptBuffer.h"
+#include "ScriptObject.h"
+#include "SortedMap.h"
 #include "StackTrace.h"
-#include "Exception.h"
-#include "MethodInfo.h"
-#include "NamespaceClass.h"
-#include "ArrayObject.h"
-#include "MethodClosure.h"
-#include "BooleanClass.h"
-#include "NumberClass.h"
-#include "IntClass.h"
+#include "StringBuffer.h"
+#include "StringObject.h"
+#include "Traits.h"
+#include "TraitsIterator.h"
+#include "UnicodeUtils.h"
+#include "VTable.h"
+#include "Verifier.h"
+#include "WordcodeEmitter.h"
+#include "WordcodeTranslator.h"
+#include "api-versions.h"
+#include "avmplusContainer.h"
+#include "avmplusHashtable.h"
+#include "avmplusList.h"
+#include "avmplusProfiler.h"
+#include "avmplusStack.h"
+#include "d2a.h"
+#include "exec.h"
 #ifdef VMCFG_FLOAT
-#include "FloatClass.h"
 #include "Float4Class.h"
+#include "FloatClass.h"
 #endif
 #include "ArrayClass.h"
-#include "ObjectClass.h"
-#include "StringClass.h"
 #include "Date.h"
 #include "DateClass.h"
 #include "DateObject.h"
@@ -327,34 +318,36 @@ namespace avmplus
 #include "DomainMgr.h"
 #include "ErrorClass.h"
 #include "MathClass.h"
+#include "ObjectClass.h"
+#include "StringClass.h"
 #ifdef VMCFG_EVAL
 #include "eval-avmplus.h"
 #endif
-#include "DataIO.h"
-#include "Toplevel.h"
-#include "VectorClass.h"
 #include "AbcParser.h"
+#include "DataIO.h"
+#include "E4XNode.h"
 #include "JSONClass.h"
 #include "RegExpClass.h"
 #include "RegExpObject.h"
+#include "Toplevel.h"
+#include "VectorClass.h"
 #include "XMLClass.h"
 #include "XMLListClass.h"
-#include "XMLObject.h"
 #include "XMLListObject.h"
+#include "XMLObject.h"
 #include "XMLParser16.h"
 #include "avmplusDebugger.h"
-#include "E4XNode.h"
 #include "instr.h"
 #ifdef VMCFG_AOT
 #include "AOTCompiler.h"
 #endif
-#include "ByteArrayGlue.h"
-#include "ProxyGlue.h"
-#include "DictionaryGlue.h"
-#include "ObjectIO.h"
 #include "AvmSerializer.h"
-#include "ITelemetry.h"
+#include "ByteArrayGlue.h"
 #include "ConcurrencyGlue.h"
+#include "DictionaryGlue.h"
+#include "ITelemetry.h"
+#include "ObjectIO.h"
+#include "ProxyGlue.h"
 
 // Some unusual test cases for the exact-tracer script
 
@@ -364,19 +357,15 @@ namespace avmplus
 
 // inline implementations
 
-#include "AtomWriteBarrier-inlines.h"
 #include "AbcEnv-inlines.h"
 #include "AbcParser-inlines.h"
 #include "ArrayObject-inlines.h"
+#include "AtomWriteBarrier-inlines.h"
 #include "AvmCore-inlines.h"
-#include "avmplusHashtable-inlines.h"
-#include "avmplusList-inlines.h"
 #include "ClassClosure-inlines.h"
 #include "Coder-inlines.h"
 #include "E4XNode-inlines.h"
-#include "exec-inlines.h"
 #include "FrameState-inlines.h"
-#include "instr-inlines.h"
 #include "Isolate-inlines.h"
 #include "MathUtils-inlines.h"
 #include "MethodEnv-inlines.h"
@@ -389,8 +378,12 @@ namespace avmplus
 #include "ScriptObject-inlines.h"
 #include "Toplevel-inlines.h"
 #include "Traits-inlines.h"
-#include "Verifier-inlines.h"
-#include "VectorClass-inlines.h"
 #include "VTable-inlines.h"
+#include "VectorClass-inlines.h"
+#include "Verifier-inlines.h"
+#include "avmplusHashtable-inlines.h"
+#include "avmplusList-inlines.h"
+#include "exec-inlines.h"
+#include "instr-inlines.h"
 
 #endif /* __avmplus__ */

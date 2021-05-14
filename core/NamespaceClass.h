@@ -7,35 +7,32 @@
 #ifndef __avmplus_NamespaceClass__
 #define __avmplus_NamespaceClass__
 
+namespace avmplus {
+/**
+ * class Namespace - the type of namespace objects
+ */
+class GC_AS3_EXACT(NamespaceClass, ClassClosure) {
+protected:
+  NamespaceClass(VTable *cvtable);
 
-namespace avmplus
-{
-    /**
-     * class Namespace - the type of namespace objects
-     */
-    class GC_AS3_EXACT(NamespaceClass, ClassClosure)
-    {
-    protected:
-        NamespaceClass(VTable* cvtable);
-        
-    public:
-        REALLY_INLINE static NamespaceClass* create(MMgc::GC* gc, VTable* cvtable)
-        {
-            return new (gc, MMgc::kExact, cvtable->getExtraSize()) NamespaceClass(cvtable);
-        }
+public:
+  REALLY_INLINE static NamespaceClass *create(MMgc::GC *gc, VTable *cvtable) {
+    return new (gc, MMgc::kExact, cvtable->getExtraSize())
+        NamespaceClass(cvtable);
+  }
 
-        // this = argv[0]
-        // arg1 = argv[1]
-        // argN = argv[argc]
-        Atom call (int argc, Atom* argv);
+  // this = argv[0]
+  // arg1 = argv[1]
+  // argN = argv[argc]
+  Atom call(int argc, Atom *argv);
 
-    // ------------------------ DATA SECTION BEGIN
-    private:
-        GC_NO_DATA(NamespaceClass)
+  // ------------------------ DATA SECTION BEGIN
+private:
+  GC_NO_DATA(NamespaceClass)
 
-        DECLARE_SLOTS_NamespaceClass;
-    // ------------------------ DATA SECTION END
-    };
-}
+  DECLARE_SLOTS_NamespaceClass;
+  // ------------------------ DATA SECTION END
+};
+} // namespace avmplus
 
 #endif /* __avmplus_NamespaceClass__ */

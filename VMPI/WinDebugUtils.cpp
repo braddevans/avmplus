@@ -7,32 +7,27 @@
 #include "VMPI.h"
 
 #ifdef _DEBUG
-    #include <windows.h>
-    #include <malloc.h>
-    #ifndef UNDER_CE
-        #include <DbgHelp.h>
-    #endif
-    #include <strsafe.h>
+#include <malloc.h>
+#include <windows.h>
+#ifndef UNDER_CE
+#include <DbgHelp.h>
+#endif
+#include <strsafe.h>
 #endif
 
 /*************************************************************************/
 /******************************* Debugging *******************************/
 /*************************************************************************/
 
-void VMPI_debugLog(const char* message)
-{
+void VMPI_debugLog(const char *message) {
 #ifndef UNDER_CE
-    OutputDebugStringA(message);
+  OutputDebugStringA(message);
 #else
-    // !!@ only unicode is supported
-    //OutputDebugStringW(unicode msg);
+  // !!@ only unicode is supported
+  // OutputDebugStringW(unicode msg);
 #endif
 
-    VMPI_log( message ); //also log to standard output
+  VMPI_log(message); // also log to standard output
 }
 
-
-void VMPI_debugBreak()
-{
-    ::DebugBreak();
-}
+void VMPI_debugBreak() { ::DebugBreak(); }

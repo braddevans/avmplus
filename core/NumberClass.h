@@ -7,61 +7,57 @@
 #ifndef __avmplus_NumberClass__
 #define __avmplus_NumberClass__
 
+namespace avmplus {
+/**
+ * class Number
+ */
+class GC_AS3_EXACT(NumberClass, ClassClosure) {
+protected:
+  NumberClass(VTable *cvtable);
 
-namespace avmplus
-{
-    /**
-     * class Number
-     */
-    class GC_AS3_EXACT(NumberClass, ClassClosure)
-    {
-    protected:
-        NumberClass(VTable* cvtable);
-    public:
-        REALLY_INLINE static NumberClass* create(MMgc::GC* gc, VTable* cvtable)
-        {
-            return new (gc, MMgc::kExact, cvtable->getExtraSize()) NumberClass(cvtable);
-        }
+public:
+  REALLY_INLINE static NumberClass *create(MMgc::GC *gc, VTable *cvtable) {
+    return new (gc, MMgc::kExact, cvtable->getExtraSize()) NumberClass(cvtable);
+  }
 
-        // this = argv[0]
-        // arg1 = argv[1]
-        // argN = argv[argc]
-        Atom call(int argc, Atom* argv)
-        {
-            // Note: SpiderMonkey returns 0 for Number() with no args
-            return construct(argc,argv);
-        }
+  // this = argv[0]
+  // arg1 = argv[1]
+  // argN = argv[argc]
+  Atom call(int argc, Atom *argv) {
+    // Note: SpiderMonkey returns 0 for Number() with no args
+    return construct(argc, argv);
+  }
 
-        Stringp _convert(double n, int precision, int mode);
-        Stringp _numberToString(double n, int radix);
-        double _minValue();
+  Stringp _convert(double n, int precision, int mode);
+  Stringp _numberToString(double n, int radix);
+  double _minValue();
 
-        double abs(double x);
-        double acos(double x);
-        double asin(double x);
-        double atan(double x);
-        double atan2(double y, double x);
-        double ceil(double x);
-        double cos(double x);
-        double exp(double x);
-        double floor(double x);
-        double log(double x);
-        double pow(double x, double y);
-        double random();
-        double round(double x);
-        double sin(double x);
-        double sqrt(double x);
-        double tan(double x);
-        double min(double x, double y, const Atom* argv, uint32_t argc);
-        double max(double x, double y, const Atom* argv, uint32_t argc);
+  double abs(double x);
+  double acos(double x);
+  double asin(double x);
+  double atan(double x);
+  double atan2(double y, double x);
+  double ceil(double x);
+  double cos(double x);
+  double exp(double x);
+  double floor(double x);
+  double log(double x);
+  double pow(double x, double y);
+  double random();
+  double round(double x);
+  double sin(double x);
+  double sqrt(double x);
+  double tan(double x);
+  double min(double x, double y, const Atom *argv, uint32_t argc);
+  double max(double x, double y, const Atom *argv, uint32_t argc);
 
-    // ------------------------ DATA SECTION BEGIN
-    private:
-        GC_NO_DATA(NumberClass)
+  // ------------------------ DATA SECTION BEGIN
+private:
+  GC_NO_DATA(NumberClass)
 
-        DECLARE_SLOTS_NumberClass;
-    // ------------------------ DATA SECTION END
-    };
-}
+  DECLARE_SLOTS_NumberClass;
+  // ------------------------ DATA SECTION END
+};
+} // namespace avmplus
 
 #endif /* __avmplus_NumberClass__ */

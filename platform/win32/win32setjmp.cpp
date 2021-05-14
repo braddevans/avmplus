@@ -7,14 +7,10 @@
 #include "avmplus.h"
 #include <setjmp.h>
 
-
-extern "C"
-{
-    __declspec(naked)
-    int __cdecl _setjmp3(jmp_buf /*jmpbuf*/, int /*arg*/)
-    {
-        _asm
-        {
+extern "C" {
+__declspec(naked) int __cdecl _setjmp3(jmp_buf /*jmpbuf*/, int /*arg*/) {
+  _asm
+  {
             mov edx, [esp+4]
             mov DWORD PTR [edx],ebp
             mov DWORD PTR [edx+4],ebx
@@ -29,21 +25,19 @@ extern "C"
             mov DWORD PTR [edx+36],0
             sub eax,eax
             ret
-        }
-    }
+  }
+}
 
-    // Disable the "ebp was modified" warning.
-    // We really do want to modify it.
-    #pragma warning ( disable : 4731 )
+// Disable the "ebp was modified" warning.
+// We really do want to modify it.
+#pragma warning(disable : 4731)
 
-    // flow in or out of inline asm code suppresses global optimization
-    #pragma warning ( disable : 4740 )
+// flow in or out of inline asm code suppresses global optimization
+#pragma warning(disable : 4740)
 
-    __declspec(noreturn)
-    void __cdecl longjmp(jmp_buf jmpbuf, int result)
-    {
-        _asm
-        {
+__declspec(noreturn) void __cdecl longjmp(jmp_buf jmpbuf, int result) {
+  _asm
+  {
             mov edx,[jmpbuf]
             mov eax,[result]
             mov ebp,DWORD PTR [edx]
@@ -53,8 +47,8 @@ extern "C"
             mov esp,DWORD PTR [edx+16]
             add esp,4
             jmp DWORD PTR [edx+20]
-        }
-    }
+  }
+}
 
-    #pragma warning ( default : 4740 )
+#pragma warning(default : 4740)
 }

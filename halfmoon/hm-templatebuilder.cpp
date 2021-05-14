@@ -9,32 +9,29 @@
 #include "hm-templatebuilder.h"
 
 namespace halfmoon {
-using nanojit::BitSet;
-using avmplus::Toplevel;
 using avmplus::getBinding;
+using avmplus::Toplevel;
+using nanojit::BitSet;
 
 ///
 /// TemplateBuilder
 ///
-TemplateBuilder::TemplateBuilder(InstrFactory* factory)
-: factory_(*factory)
-, ir_(factory->createGraph())
-, builder_(ir_, factory)
-, start_instr_(0) {
-}
+TemplateBuilder::TemplateBuilder(InstrFactory *factory)
+    : factory_(*factory), ir_(factory->createGraph()), builder_(ir_, factory),
+      start_instr_(0) {}
 
-/// start a template with a template instruction. 
+/// start a template with a template instruction.
 /// template shape comes from instr_attrs on the given opcode.
 /// TODO resolve ambiguity between using a variadic
 /// representation and bona fide variadic template params
 ///
 void TemplateBuilder::start(InstrKind k, int num_params,
-                            const Type* param_types[]) {
-  AvmAssert(factory_.hasTemplate(k) && "instruction is not a template"); 
+                            const Type *param_types[]) {
+  AvmAssert(factory_.hasTemplate(k) && "instruction is not a template");
   (void)k;
   start_instr_ = factory_.newStartInstr(HR_template, num_params, param_types);
-  ir_->begin = (StartInstr*)builder_.addInstr(start_instr_);
+  ir_->begin = (StartInstr *)builder_.addInstr(start_instr_);
 }
 
-} // namespace avmplus
+} // namespace halfmoon
 #endif // VMCFG_HALFMOON

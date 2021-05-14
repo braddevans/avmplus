@@ -7,54 +7,52 @@
 #ifndef __GCMemberBase__
 #define __GCMemberBase__
 
-namespace MMgc
-{
-    //  Since GCFinalizedObject doesn't derive from GCObject, create a GCMemberBase
-    //  class so that we don't have to copy/paste this in both inner class definitions.
-    
-    //  GCMemberBase class:
-    //
-    //  Separate definitons of GCMember for GCObject and GCFinalizedObject are necessary in order to
-    //  restrict usage of GCMember only as member variables of GCObject or GCFinalizedObject.  We do not
-    //  want to allow GCMember to be declared on a non-GCObject (except for GCRoots-- see definition in GCRoot::GCMember)
-    //  The GCMemberBase class contains the shared functionality between GCObject::GCMember and GCFinalizedObject::GCMember.
-    //
-    
-    template <class T>
-    class GCMemberBase : public GCRef<T>
-    {
-        friend class GC;
-    private:
-        //  'set' is invoked whenever the garbage collected pointer value 't' changes
-        void set(const T* tNew);
-        T* value() const;
-        T* const* location() const;
+namespace MMgc {
+//  Since GCFinalizedObject doesn't derive from GCObject, create a GCMemberBase
+//  class so that we don't have to copy/paste this in both inner class
+//  definitions.
 
-    protected:
-        
-        //  In order to keep the usage syntax uniform as "GCMember",
-        //  Protect the constructors so that only "GCMember" subclasses are allowed to use this object.
-        explicit GCMemberBase();
-  
-        template<class T2>
-        explicit GCMemberBase(const GCRef<T2>& other);
- 
-        // copy constructor
-        explicit GCMemberBase(const GCMemberBase<T>& other);
+//  GCMemberBase class:
+//
+//  Separate definitons of GCMember for GCObject and GCFinalizedObject are
+//  necessary in order to restrict usage of GCMember only as member variables of
+//  GCObject or GCFinalizedObject.  We do not want to allow GCMember to be
+//  declared on a non-GCObject (except for GCRoots-- see definition in
+//  GCRoot::GCMember) The GCMemberBase class contains the shared functionality
+//  between GCObject::GCMember and GCFinalizedObject::GCMember.
+//
 
-        ~GCMemberBase();
+template <class T> class GCMemberBase : public GCRef<T> {
+  friend class GC;
 
-    public:
- 
-        GCMemberBase& operator=(const GCMemberBase& other);
+private:
+  //  'set' is invoked whenever the garbage collected pointer value 't' changes
+  void set(const T *tNew);
+  T *value() const;
+  T *const *location() const;
 
-        template<class T2>
-        void operator=(const GCRef<T2>& other);
+protected:
+  //  In order to keep the usage syntax uniform as "GCMember",
+  //  Protect the constructors so that only "GCMember" subclasses are allowed to
+  //  use this object.
+  explicit GCMemberBase();
 
-        //  Overload the T* assignment operator so that we can set GCMember's directly to NULL.
-        void operator=(T* tNew);
-        
-    };
-}
+  template <class T2> explicit GCMemberBase(const GCRef<T2> &other);
+
+  // copy constructor
+  explicit GCMemberBase(const GCMemberBase<T> &other);
+
+  ~GCMemberBase();
+
+public:
+  GCMemberBase &operator=(const GCMemberBase &other);
+
+  template <class T2> void operator=(const GCRef<T2> &other);
+
+  //  Overload the T* assignment operator so that we can set GCMember's directly
+  //  to NULL.
+  void operator=(T *tNew);
+};
+} // namespace MMgc
 
 #endif /* __GCMemberBase__ */

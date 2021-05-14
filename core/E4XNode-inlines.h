@@ -7,31 +7,25 @@
 #ifndef __avmplus_E4XNode_inlines__
 #define __avmplus_E4XNode_inlines__
 
-namespace avmplus
-{
-    REALLY_INLINE uint32_t ElementE4XNode::numAttributes() const
-    {
-        return (m_attributes ? m_attributes->list.length() : 0);
-    }
-
-    REALLY_INLINE E4XNode::HeapE4XNodeList* ElementE4XNode::getAttributes() const
-    {
-        return m_attributes;
-    }
-
-    REALLY_INLINE E4XNode *ElementE4XNode::getAttribute(uint32_t index) const
-    {
-        return m_attributes->list.get(index);
-    }
-
-    REALLY_INLINE uint32_t ElementE4XNode::numNamespaces() const
-    {
-        return (m_namespaces ? m_namespaces->list.length() : 0);
-    }
-
-    REALLY_INLINE HeapNamespaceList* ElementE4XNode::getNamespaces() const
-    {
-        return m_namespaces;
-    }
+namespace avmplus {
+REALLY_INLINE uint32_t ElementE4XNode::numAttributes() const {
+  return (m_attributes ? m_attributes->list.length() : 0);
 }
+
+REALLY_INLINE E4XNode::HeapE4XNodeList *ElementE4XNode::getAttributes() const {
+  return m_attributes;
+}
+
+REALLY_INLINE E4XNode *ElementE4XNode::getAttribute(uint32_t index) const {
+  return m_attributes->list.get(index);
+}
+
+REALLY_INLINE uint32_t ElementE4XNode::numNamespaces() const {
+  return (m_namespaces ? m_namespaces->list.length() : 0);
+}
+
+REALLY_INLINE HeapNamespaceList *ElementE4XNode::getNamespaces() const {
+  return m_namespaces;
+}
+} // namespace avmplus
 #endif /* __avmplus_E4XNode_inlines__ */

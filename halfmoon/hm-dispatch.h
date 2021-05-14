@@ -22,8 +22,7 @@ namespace halfmoon {
 /// KindAdapter uses "static polymorphism", via the curiously recurring
 /// template pattern (CRTP):
 ///
-template<class SELF_CLASS, class RETURN_TYPE>
-class KindAdapter {
+template <class SELF_CLASS, class RETURN_TYPE> class KindAdapter {
 public:
   typedef RETURN_TYPE dispatch_return_type;
 
@@ -35,8 +34,9 @@ public:
 /// plus a do_default function for opcodes that no adapter has any special
 /// code for.  (basically instructions not yet implemented).
 ///
-template<class KIND_ADAPTER>
-typename KIND_ADAPTER::dispatch_return_type do_instr(KIND_ADAPTER* a, Instr* instr) {
+template <class KIND_ADAPTER>
+typename KIND_ADAPTER::dispatch_return_type do_instr(KIND_ADAPTER *a,
+                                                     Instr *instr) {
   switch (kind(instr)) {
 #include "generated/KindAdapter_cases.hh"
   default:
@@ -58,8 +58,7 @@ typename KIND_ADAPTER::dispatch_return_type do_instr(KIND_ADAPTER* a, Instr* ins
 /// ShapeAdapter uses "static polymorphism", via the curiously recurring
 /// template pattern (CRTP):
 ///
-template<class SELF_CLASS, class RETURN_TYPE>
-class ShapeAdapter {
+template <class SELF_CLASS, class RETURN_TYPE> class ShapeAdapter {
 public:
   typedef RETURN_TYPE dispatch_return_type;
 
@@ -71,8 +70,9 @@ public:
 /// plus a do_default function for shapes that no adapter has any special
 /// code for.
 ///
-template<class SHAPE_ADAPTER>
-typename SHAPE_ADAPTER::dispatch_return_type do_shape(SHAPE_ADAPTER* a, Instr* instr) {
+template <class SHAPE_ADAPTER>
+typename SHAPE_ADAPTER::dispatch_return_type do_shape(SHAPE_ADAPTER *a,
+                                                      Instr *instr) {
   switch (shape(instr)) {
 #include "generated/ShapeAdapter_cases.hh"
   default:

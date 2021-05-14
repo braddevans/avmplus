@@ -6,68 +6,52 @@
 
 #include "avmshell.h"
 namespace avmshell {
-    using namespace avmplus;
-    ShellWorkerObject::ShellWorkerObject(avmplus::VTable* vtable, avmplus::ScriptObject* prototype)
-        : avmplus::ScriptObject(vtable, prototype)
-    {
-    }
-    
-    void ShellWorkerObject::clearByteCode()
-    {
-        set_m_byteCode(NULL);
-    }
+using namespace avmplus;
+ShellWorkerObject::ShellWorkerObject(avmplus::VTable *vtable,
+                                     avmplus::ScriptObject *prototype)
+    : avmplus::ScriptObject(vtable, prototype) {}
 
-    void ShellWorkerObject::setByteCode(avmplus::ByteArrayObject* code)
-    {
-        set_m_byteCode(code);
-    }
-    
-    avmplus::ByteArrayObject* ShellWorkerObject::getByteCode()
-    {
-        return get_m_byteCode();
-    }
+void ShellWorkerObject::clearByteCode() { set_m_byteCode(NULL); }
 
-    bool ShellWorkerObject::terminate()
-    {
-        return internalStop();
-    }
-
-    void ShellWorkerObject::start()
-    {
-        return internalStart();
-    }
-    
-    ShellWorkerClass::ShellWorkerClass(avmplus::VTable *cvtable)
-        : avmplus::ClassClosure(cvtable)
-    {
-        AvmAssert(avmplus::AvmCore::getActiveCore() == cvtable->core());
-        createVanillaPrototype();
-        
-        avmplus::Isolate* ent = core()->getIsolate();
-        // By convention nobody will mutate the isolate table entry
-        // except the current thread, as long as the entry has a nonnegative giid
-        // so no need for locking.
-        
-        ShellWorkerObject* current = (ShellWorkerObject*)constructObject();
-        set_m_current(current);
-        current->setIsolate(ent);
-    }
-    
-    void ShellWorkerClass::pr(avmplus::Stringp s)
-    {
-        printf("%s\n", avmplus::StUTF8String(core()->internString(s)).c_str());
-        fflush(stdout);
-    }
-    
-    avmplus::String* ShellWorkerObject::internalGetState()
-    {
-        return this->get_state();
-    }
-    
-    ShellWorkerObject* ShellWorkerClass::getCurrentWorker()
-    {
-        // Exposing accessor as public.
-        return get_m_current();
-    }
-    
+void ShellWorkerObject::setByteCode(avmplus::ByteArrayObject *code) {
+  set_m_byteCode(code);
 }
+
+avmplus::ByteArrayObject *ShellWorkerObject::getByteCode() {
+  return get_m_byteCode();
+}
+
+bool ShellWorkerObject::terminate() { return internalStop(); }
+
+void ShellWorkerObject::start() { return internalStart(); }
+
+ShellWorkerClass::ShellWorkerClass(avmplus::VTable *cvtable)
+    : avmplus::ClassClosure(cvtable) {
+  AvmAssert(avmplus::AvmCore::getActiveCore() == cvtable->core());
+  createVanillaPrototype();
+
+  avmplus::Isolate *ent = core()->getIsolate();
+  // By convention nobody will mutate the isolate table entry
+  // except the current thread, as long as the entry has a nonnegative giid
+  // so no need for locking.
+
+  ShellWorkerObject *current = (ShellWorkerObject *)constructObject();
+  set_m_current(current);
+  current->setIsolate(ent);
+}
+
+void ShellWorkerClass::pr(avmplus::Stringp s) {
+  printf("%s\n", avmplus::StUTF8String(core()->internString(s)).c_str());
+  fflush(stdout);
+}
+
+avmplus::String *ShellWorkerObject::internalGetState() {
+  return this->get_state();
+}
+
+ShellWorkerObject *ShellWorkerClass::getCurrentWorker() {
+  // Exposing accessor as public.
+  return get_m_current();
+}
+
+} // namespace avmshell

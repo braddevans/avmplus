@@ -7,47 +7,43 @@
 #ifndef __avmplus_ObjectClass__
 #define __avmplus_ObjectClass__
 
+namespace avmplus {
+/**
+ * class Object
+ * base class for all objects in ES4
+ */
+class GC_AS3_EXACT(ObjectClass, ClassClosure) {
+protected:
+  ObjectClass(VTable *cvtable);
 
-namespace avmplus
-{
-    /**
-     * class Object
-     * base class for all objects in ES4
-     */
-    class GC_AS3_EXACT(ObjectClass, ClassClosure)
-    {
-    protected:
-        ObjectClass(VTable* cvtable);
-        
-    public:
-        REALLY_INLINE static ObjectClass* create(MMgc::GC* gc, VTable* cvtable)
-        {
-            return new (gc, MMgc::kExact, cvtable->getExtraSize()) ObjectClass(cvtable);
-        }
+public:
+  REALLY_INLINE static ObjectClass *create(MMgc::GC *gc, VTable *cvtable) {
+    return new (gc, MMgc::kExact, cvtable->getExtraSize()) ObjectClass(cvtable);
+  }
 
-        void initPrototype();
+  void initPrototype();
 
-        ScriptObject* construct();
+  ScriptObject *construct();
 
-        // this = argv[0]
-        // arg1 = argv[1]
-        // argN = argv[argc]
-        Atom call(int argc, Atom* argv);
+  // this = argv[0]
+  // arg1 = argv[1]
+  // argN = argv[argc]
+  Atom call(int argc, Atom *argv);
 
-        // native methods
-        bool _hasOwnProperty(Atom thisAtom, Stringp name);
-        bool _isPrototypeOf(Atom thisAtom, Atom other);
-        bool _propertyIsEnumerable(Atom thisAtom, Stringp name);
-        void _setPropertyIsEnumerable(Atom thisAtom, Stringp name, bool enumerable);
-        Stringp _toString(Atom thisAtom);
+  // native methods
+  bool _hasOwnProperty(Atom thisAtom, Stringp name);
+  bool _isPrototypeOf(Atom thisAtom, Atom other);
+  bool _propertyIsEnumerable(Atom thisAtom, Stringp name);
+  void _setPropertyIsEnumerable(Atom thisAtom, Stringp name, bool enumerable);
+  Stringp _toString(Atom thisAtom);
 
-    // ------------------------ DATA SECTION BEGIN
-    private:
-        GC_NO_DATA(ObjectClass)
+  // ------------------------ DATA SECTION BEGIN
+private:
+  GC_NO_DATA(ObjectClass)
 
-        DECLARE_SLOTS_ObjectClass;
-    // ------------------------ DATA SECTION END
-    };
-}
+  DECLARE_SLOTS_ObjectClass;
+  // ------------------------ DATA SECTION END
+};
+} // namespace avmplus
 
 #endif /* __avmplus_ObjectClass__ */

@@ -1,8 +1,8 @@
 #include "avmplus.h"
 
 /*************************************************
-*      Perl-Compatible Regular Expressions       *
-*************************************************/
+ *      Perl-Compatible Regular Expressions       *
+ *************************************************/
 
 /* PCRE is a library of functions to support regular expressions whose syntax
 and semantics are as close as possible to those of the Perl 5 language.
@@ -39,21 +39,18 @@ POSSIBILITY OF SUCH DAMAGE.
 -----------------------------------------------------------------------------
 */
 
-
 /* This module contains the external function pcre_refcount(), which is an
 auxiliary function that can be used to maintain a reference count in a compiled
 pattern data block. This might be helpful in applications where the block is
 shared by different users. */
 
-
 #include "config.h"
 
 #include "pcre_internal.h"
 
-
 /*************************************************
-*           Maintain reference count             *
-*************************************************/
+ *           Maintain reference count             *
+ *************************************************/
 
 /* The reference count is a 16-bit field, initialized to zero. It is not
 possible to transfer a non-zero count from one host to a different host that
@@ -68,15 +65,15 @@ Returns:        the (possibly updated) count value (a non-negative number), or
                 a negative error number
 */
 
-PCRE_EXP_DEFN int
-pcre_refcount(pcre *argument_re, int adjust)
-{
-real_pcre *re = (real_pcre *)argument_re;
-if (re == NULL) return PCRE_ERROR_NULL;
-re->ref_count = (-adjust > re->ref_count)? 0 :
-                (adjust + re->ref_count > 65535)? 65535 :
-                re->ref_count + adjust;
-return re->ref_count;
+PCRE_EXP_DEFN int pcre_refcount(pcre *argument_re, int adjust) {
+  real_pcre *re = (real_pcre *)argument_re;
+  if (re == NULL)
+    return PCRE_ERROR_NULL;
+  re->ref_count =
+      (-adjust > re->ref_count)
+          ? 0
+          : (adjust + re->ref_count > 65535) ? 65535 : re->ref_count + adjust;
+  return re->ref_count;
 }
 
 /* End of pcre_refcount.c */

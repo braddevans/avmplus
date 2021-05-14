@@ -4,18 +4,14 @@
 
 #include "avmplus.h"
 
-namespace avmplus
-{
+namespace avmplus {
 #ifdef DEBUGGER
 
-	uintptr OSDep::startIntWriteTimer(uint32 /*millis*/, int* /*addr*/)
-	{
-		return 0;
-	}
+uintptr OSDep::startIntWriteTimer(uint32 /*millis*/, int * /*addr*/) {
+  return 0;
+}
 
-	void OSDep::stopTimer(uintptr /*handle*/)
-	{
-	}
+void OSDep::stopTimer(uintptr /*handle*/) {}
 
 #endif // DEBUGGER
-}
+} // namespace avmplus

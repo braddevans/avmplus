@@ -13,28 +13,31 @@
 
 #else
 
-#define MMGC_WB_EDGE(_a, _v) {if(GCHeap::GetGCHeap()->config.dumpFalsePositives) GetActiveGC()->mutatorGraph.edge(_a, _v); }
+#define MMGC_WB_EDGE(_a, _v)                                                   \
+  {                                                                            \
+    if (GCHeap::GetGCHeap()->config.dumpFalsePositives)                        \
+      GetActiveGC()->mutatorGraph.edge(_a, _v);                                \
+  }
 
-namespace MMgc
-{
-    /**
-       HeapGraph represents the edges in the GC heap.
-    */
-    class HeapGraph
-    {
-    public:
-        HeapGraph() {}
-        ~HeapGraph() { clear(); }
+namespace MMgc {
+/**
+   HeapGraph represents the edges in the GC heap.
+*/
+class HeapGraph {
+public:
+  HeapGraph() {}
+  ~HeapGraph() { clear(); }
 
-        // this is called before the mutation takes place
-        void edge(const void *addr, const void *newValue);
-        GCHashtable *getPointers(const void *obj);
-        void clear();
-    private:
-        // key = addr, value = container
-        GCHashtable_VMPI backEdges;
-    };
-}
+  // this is called before the mutation takes place
+  void edge(const void *addr, const void *newValue);
+  GCHashtable *getPointers(const void *obj);
+  void clear();
+
+private:
+  // key = addr, value = container
+  GCHashtable_VMPI backEdges;
+};
+} // namespace MMgc
 #endif // MMGC_HEAP_GRAPH
 
 #endif /* __MMGC_HEAP_GRAPH__ */

@@ -7,55 +7,47 @@
 #ifndef __GCRef_inlines__
 #define __GCRef_inlines__
 
-namespace MMgc
-{
-    namespace GCAPI
-    {
-        template < class T >
-        GCRef<T>& GCRef<T>::operator=(T *tNew)
-        {
+namespace MMgc {
+namespace GCAPI {
+template <class T> GCRef<T> &GCRef<T>::operator=(T *tNew) {
 #ifdef GCDEBUG
-            GC *gc = GC::GetActiveGC();
-            GCAssert(!gc->IsPointerToGCPage(this));
+  GC *gc = GC::GetActiveGC();
+  GCAssert(!gc->IsPointerToGCPage(this));
 #endif
-            t = tNew;
-            return *this;
-        }
-        
-        template < class T >
-        template < class T2 >
-        GCRef<T>& GCRef<T>::operator=(const GCRef<T2>& other)
-        {
-#ifdef GCDEBUG
-            GC *gc = GC::GetActiveGC();
-            GCAssert(!gc->IsPointerToGCPage(this));
-#endif
-            t = other.t;
-            return *this;
-        }
-
-        template < class T >
-        void GCRef_Union<T>::operator=(T *tNew)
-        {
-#ifdef GCDEBUG
-            GC *gc = GC::GetActiveGC();
-            GCAssert(!gc->IsPointerToGCPage(this));
-#endif
-            t = tNew;
-        }
-        
-        template < class T >
-        template < class T2 >
-        GCRef_Union<T>& GCRef_Union<T>::operator=(const GCRef<T2>& other)
-        {
-#ifdef GCDEBUG
-            GC *gc = GC::GetActiveGC();
-            GCAssert(!gc->IsPointerToGCPage(this));
-#endif
-            t = other.t;
-            return *this;
-        }
-    }
+  t = tNew;
+  return *this;
 }
+
+template <class T>
+template <class T2>
+GCRef<T> &GCRef<T>::operator=(const GCRef<T2> &other) {
+#ifdef GCDEBUG
+  GC *gc = GC::GetActiveGC();
+  GCAssert(!gc->IsPointerToGCPage(this));
+#endif
+  t = other.t;
+  return *this;
+}
+
+template <class T> void GCRef_Union<T>::operator=(T *tNew) {
+#ifdef GCDEBUG
+  GC *gc = GC::GetActiveGC();
+  GCAssert(!gc->IsPointerToGCPage(this));
+#endif
+  t = tNew;
+}
+
+template <class T>
+template <class T2>
+GCRef_Union<T> &GCRef_Union<T>::operator=(const GCRef<T2> &other) {
+#ifdef GCDEBUG
+  GC *gc = GC::GetActiveGC();
+  GCAssert(!gc->IsPointerToGCPage(this));
+#endif
+  t = other.t;
+  return *this;
+}
+} // namespace GCAPI
+} // namespace MMgc
 
 #endif /* __GCRef_inlines__ */

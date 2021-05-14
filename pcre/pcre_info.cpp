@@ -1,8 +1,8 @@
 #include "avmplus.h"
 
 /*************************************************
-*      Perl-Compatible Regular Expressions       *
-*************************************************/
+ *      Perl-Compatible Regular Expressions       *
+ *************************************************/
 
 /* PCRE is a library of functions to support regular expressions whose syntax
 and semantics are as close as possible to those of the Perl 5 language.
@@ -39,20 +39,17 @@ POSSIBILITY OF SUCH DAMAGE.
 -----------------------------------------------------------------------------
 */
 
-
 /* This module contains the external function pcre_info(), which gives some
 information about a compiled pattern. However, use of this function is now
 deprecated, as it has been superseded by pcre_fullinfo(). */
-
 
 #include "config.h"
 
 #include "pcre_internal.h"
 
-
 /*************************************************
-* (Obsolete) Return info about compiled pattern  *
-*************************************************/
+ * (Obsolete) Return info about compiled pattern  *
+ *************************************************/
 
 /* This is the original "info" function. It picks potentially useful data out
 of the private structure, but its interface was too rigid. It remains for
@@ -72,22 +69,24 @@ Returns:        number of capturing subpatterns
                 or negative values on error
 */
 
-PCRE_EXP_DEFN int
-pcre_info(const pcre *argument_re, int *optptr, int *first_byte)
-{
-real_pcre internal_re;
-const real_pcre *re = (const real_pcre *)argument_re;
-if (re == NULL) return PCRE_ERROR_NULL;
-if (re->magic_number != MAGIC_NUMBER)
-  {
-  re = _pcre_try_flipped(re, &internal_re, NULL, NULL);
-  if (re == NULL) return PCRE_ERROR_BADMAGIC;
+PCRE_EXP_DEFN int pcre_info(const pcre *argument_re, int *optptr,
+                            int *first_byte) {
+  real_pcre internal_re;
+  const real_pcre *re = (const real_pcre *)argument_re;
+  if (re == NULL)
+    return PCRE_ERROR_NULL;
+  if (re->magic_number != MAGIC_NUMBER) {
+    re = _pcre_try_flipped(re, &internal_re, NULL, NULL);
+    if (re == NULL)
+      return PCRE_ERROR_BADMAGIC;
   }
-if (optptr != NULL) *optptr = (int)(re->options & PUBLIC_OPTIONS);
-if (first_byte != NULL)
-  *first_byte = ((re->options & PCRE_FIRSTSET) != 0)? re->first_byte :
-     ((re->options & PCRE_STARTLINE) != 0)? -1 : -2;
-return re->top_bracket;
+  if (optptr != NULL)
+    *optptr = (int)(re->options & PUBLIC_OPTIONS);
+  if (first_byte != NULL)
+    *first_byte = ((re->options & PCRE_FIRSTSET) != 0)
+                      ? re->first_byte
+                      : ((re->options & PCRE_STARTLINE) != 0) ? -1 : -2;
+  return re->top_bracket;
 }
 
 /* End of pcre_info.c */

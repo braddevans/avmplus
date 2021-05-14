@@ -7,43 +7,41 @@
 #ifndef __avmplus_OutputStream__
 #define __avmplus_OutputStream__
 
+namespace avmplus {
+// The OutputStream classes are abstract base classes for output streams.
 
-namespace avmplus
-{
-    // The OutputStream classes are abstract base classes for output streams.
+/**
+ * GCOutputStream is a base class for output streams that are allocated on
+ * the managed heap.
+ *
+ * GCOutputStream instances *must always* be allocated on the GC'd heap.
+ */
+class GCOutputStream : public MMgc::GCFinalizedObject {
+public:
+  GCOutputStream() {}
+  virtual void write(const char *utf8) = 0; // null terminated-utf8 data
+  virtual void writeN(const char *utf8,
+                      size_t charCount) = 0; // fixed amount of utf8 data
+};
 
-    /**
-     * GCOutputStream is a base class for output streams that are allocated on
-     * the managed heap.
-     *
-     * GCOutputStream instances *must always* be allocated on the GC'd heap.
-     */
-    class GCOutputStream : public MMgc::GCFinalizedObject
-    {
-    public:
-        GCOutputStream() {}
-        virtual void write(const char* utf8) = 0;  // null terminated-utf8 data
-        virtual void writeN(const char* utf8, size_t charCount) = 0;  // fixed amount of utf8 data
-    };
+/**
+ * NonGCOutputStream is a base class for output streams that are allocated on
+ * on the stack, inside GCRoots, or in unmanaged (malloc'd) memory.
+ *
+ * NonGCOutputStream instances *must never* be allocated on the GC'd heap.
+ */
+class NonGCOutputStream {
+private:
+  // This operator is private and not implemented, in order to catch errors.
+  static void *operator new(size_t size, MMgc::GC *gc);
 
-    /**
-     * NonGCOutputStream is a base class for output streams that are allocated on
-     * on the stack, inside GCRoots, or in unmanaged (malloc'd) memory.
-     *
-     * NonGCOutputStream instances *must never* be allocated on the GC'd heap.
-     */
-    class NonGCOutputStream
-    {
-    private:
-        // This operator is private and not implemented, in order to catch errors.
-        static void *operator new(size_t size, MMgc::GC *gc);
-        
-    public:
-        NonGCOutputStream() {}
-        virtual ~NonGCOutputStream() {}
-        virtual void write(const char* utf8) = 0;  // null terminated-utf8 data
-        virtual void writeN(const char* utf8, size_t charCount) = 0;  // fixed amount of utf8 data
-    };
-}
+public:
+  NonGCOutputStream() {}
+  virtual ~NonGCOutputStream() {}
+  virtual void write(const char *utf8) = 0; // null terminated-utf8 data
+  virtual void writeN(const char *utf8,
+                      size_t charCount) = 0; // fixed amount of utf8 data
+};
+} // namespace avmplus
 
 #endif /* __avmplus_OutputStream__ */

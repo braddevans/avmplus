@@ -7,74 +7,72 @@
 #ifndef __avmplus_Container__
 #define __avmplus_Container__
 
-namespace avmplus
-{
-    /**
-     * The instances of this utility class hold fixed-size indexed
-     * sets of constructor-less structs with a 'void gcTrace(GC*)'
-     * method.  The structs will be initialized to all-zero-bits.
-     */
-    template <class T>
-    class ExactStructContainer : public MMgc::GCFinalizedObject
-    {
-    public:
-        static ExactStructContainer* create(MMgc::GC* gc, void (*finalizer)(ExactStructContainer<T>* self), uint32_t capacity) {
-            size_t extra = 0;
-            if (capacity > 0)
-                extra = MMgc::GCHeap::CheckForCallocSizeOverflow(capacity-1, sizeof(T));
-            ExactStructContainer<T>* obj;
-            if (finalizer == NULL)
-                obj = new (gc, MMgc::kExact, MMgc::kNoFinalize, extra) ExactStructContainer<T>(capacity, finalizer);
-            else
-                obj = new (gc, MMgc::kExact, extra) ExactStructContainer<T>(capacity, finalizer);
-            return obj;
-        }
+namespace avmplus {
+/**
+ * The instances of this utility class hold fixed-size indexed
+ * sets of constructor-less structs with a 'void gcTrace(GC*)'
+ * method.  The structs will be initialized to all-zero-bits.
+ */
+template <class T> class ExactStructContainer : public MMgc::GCFinalizedObject {
+public:
+  static ExactStructContainer *
+  create(MMgc::GC *gc, void (*finalizer)(ExactStructContainer<T> *self),
+         uint32_t capacity) {
+    size_t extra = 0;
+    if (capacity > 0)
+      extra = MMgc::GCHeap::CheckForCallocSizeOverflow(capacity - 1, sizeof(T));
+    ExactStructContainer<T> *obj;
+    if (finalizer == NULL)
+      obj = new (gc, MMgc::kExact, MMgc::kNoFinalize, extra)
+          ExactStructContainer<T>(capacity, finalizer);
+    else
+      obj = new (gc, MMgc::kExact, extra)
+          ExactStructContainer<T>(capacity, finalizer);
+    return obj;
+  }
 
-        ~ExactStructContainer() {
-            if (_finalizer != NULL)
-                _finalizer(this);
-        }
+  ~ExactStructContainer() {
+    if (_finalizer != NULL)
+      _finalizer(this);
+  }
 
-        uint32_t capacity() {
-            return _capacity;
-        }
+  uint32_t capacity() { return _capacity; }
 
-        T& get(uint32_t index) {
-            AvmAssert(index < capacity());
-            return elements[index];
-        }
+  T &get(uint32_t index) {
+    AvmAssert(index < capacity());
+    return elements[index];
+  }
 
-        T& operator[](uint32_t index) {
-            return get(index);
-        }
+  T &operator[](uint32_t index) { return get(index); }
 
-        virtual bool gcTrace(MMgc::GC* gc, size_t cursor)
-        {
-            uint32_t cap = capacity();
-            const uint32_t work_increment = 2000/sizeof(void*);
-            if (work_increment * cursor >= cap)
-                return false;
-            size_t work = work_increment;
-            bool more = true;
-            if (work_increment * (cursor + 1) >= cap) {
-                work = cap - (work_increment * cursor);
-                more = false;
-            }
-            for ( size_t i=0 ; i < work ; i++ )
-                elements[(work_increment * cursor) + i].gcTrace(gc);
-            return more;
-        }
-        
-    private:
-        ExactStructContainer(uint32_t capacity, void (*finalizer)(ExactStructContainer* self)) : _capacity(capacity), _finalizer(finalizer) {}
+  virtual bool gcTrace(MMgc::GC *gc, size_t cursor) {
+    uint32_t cap = capacity();
+    const uint32_t work_increment = 2000 / sizeof(void *);
+    if (work_increment * cursor >= cap)
+      return false;
+    size_t work = work_increment;
+    bool more = true;
+    if (work_increment * (cursor + 1) >= cap) {
+      work = cap - (work_increment * cursor);
+      more = false;
+    }
+    for (size_t i = 0; i < work; i++)
+      elements[(work_increment * cursor) + i].gcTrace(gc);
+    return more;
+  }
 
-        uint32_t _capacity;
-        void     (*_finalizer)(ExactStructContainer* self);
-        T        elements[1];     // Actually max(1,capacity())
+private:
+  ExactStructContainer(uint32_t capacity,
+                       void (*finalizer)(ExactStructContainer *self))
+      : _capacity(capacity), _finalizer(finalizer) {}
 
-        friend class CodegenLIR; // for offsetof(elements)
-        friend class halfmoon::JitFriend; // for offsetof(elements)
-    };
-}
+  uint32_t _capacity;
+  void (*_finalizer)(ExactStructContainer *self);
+  T elements[1]; // Actually max(1,capacity())
+
+  friend class CodegenLIR;          // for offsetof(elements)
+  friend class halfmoon::JitFriend; // for offsetof(elements)
+};
+} // namespace avmplus
 
 #endif /* __avmplus_Container__ */

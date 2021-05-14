@@ -13,13 +13,13 @@ namespace halfmoon {
 /// instruction, and thus reachable in a def->use traversal, but not
 /// live themselves (not reachable in a use->def traversal).
 ///
-void removeDeadCode(Context*, InstrGraph*);
+void removeDeadCode(Context *, InstrGraph *);
 
 /// Remove a goto from its label's list of predecessors
-void removeGoto(GotoInstr* go);
+void removeGoto(GotoInstr *go);
 
 /// Unlink and set all uses in instr to 0 so this instruction isn't a straggler.
-void clearUses(Instr* instr);
-}
+void clearUses(Instr *instr);
+} // namespace halfmoon
 
 #endif

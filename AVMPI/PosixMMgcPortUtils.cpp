@@ -1,8 +1,8 @@
 /* -*- Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*- */
 /* vi: set ts=4 sw=4 expandtab: (add to ~/.vimrc: set modeline modelines=5) */
 /* This Source Code Form is subject to the terms of the Mozilla Public
-* License, v. 2.0. If a copy of the MPL was not distributed with this
-* file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 //
 // These implementations depend on MMgc (via avmplus.h)
@@ -11,11 +11,10 @@
 
 #include <sys/mman.h>
 
-bool AVMPI_isMemoryProfilingEnabled()
-{
-    //read the mmgc profiling option switch
-    const char *env = getenv("MMGC_PROFILE");
-    return (env && (VMPI_strncmp(env, "1", 1) == 0));
+bool AVMPI_isMemoryProfilingEnabled() {
+  // read the mmgc profiling option switch
+  const char *env = getenv("MMGC_PROFILE");
+  return (env && (VMPI_strncmp(env, "1", 1) == 0));
 }
 
 // Constraint: nbytes must be a multiple of the VM page size.
@@ -28,39 +27,40 @@ bool AVMPI_isMemoryProfilingEnabled()
 // This function is duplicated in the Windows port utils, if you
 // fix a bug here be sure to fix the bug there.
 
-void *AVMPI_allocateCodeMemory(size_t nbytes)
-{
-    MMgc::GCHeap* heap = MMgc::GCHeap::GetGCHeap();
-    size_t pagesize = VMPI_getVMPageSize();
+void *AVMPI_allocateCodeMemory(size_t nbytes) {
+  MMgc::GCHeap *heap = MMgc::GCHeap::GetGCHeap();
+  size_t pagesize = VMPI_getVMPageSize();
 
-    if (nbytes % pagesize != 0) {
+  if (nbytes % pagesize != 0) {
 #ifdef DEBUG
-        char buf[256];
-        VMPI_snprintf(buf,
-                      sizeof(buf),
-                      "AVMPI_allocateCodeMemory invariants violated: request=%lu pagesize=%lu\nAborting.\n",
-                      (unsigned long)nbytes,
-                      (unsigned long)pagesize);
-        VMPI_log(buf);
+    char buf[256];
+    VMPI_snprintf(buf, sizeof(buf),
+                  "AVMPI_allocateCodeMemory invariants violated: request=%lu "
+                  "pagesize=%lu\nAborting.\n",
+                  (unsigned long)nbytes, (unsigned long)pagesize);
+    VMPI_log(buf);
 #endif
-        VMPI_abort();
-    }
+    VMPI_abort();
+  }
 
 #ifdef VMCFG_STRESS_SPARSE_CODE_MEM
-	// Allocate directly from system, typically allocating a page at at time.
-	// Assumes placement in memory will be randomized, as it is on 64-bit Windows and MacOS.
-	// This is for stress-testing only, as no serious attempt has been made to determine
-	// the impact of excessive address space fragmentation or to tune MMgc OOM policy.
-	void* address = AVMPI_reserveMemoryRegion(NULL, nbytes);
-	//fprintf(stderr, "$$$ allocating %lu at %p\n", nbytes, address);
-	AvmAssert(address != NULL);
-	AVMPI_commitMemory(address, nbytes);
-    heap->SignalCodeMemoryAllocation(1, false);
-	return address;
+  // Allocate directly from system, typically allocating a page at at time.
+  // Assumes placement in memory will be randomized, as it is on 64-bit Windows
+  // and MacOS. This is for stress-testing only, as no serious attempt has been
+  // made to determine the impact of excessive address space fragmentation or to
+  // tune MMgc OOM policy.
+  void *address = AVMPI_reserveMemoryRegion(NULL, nbytes);
+  // fprintf(stderr, "$$$ allocating %lu at %p\n", nbytes, address);
+  AvmAssert(address != NULL);
+  AVMPI_commitMemory(address, nbytes);
+  heap->SignalCodeMemoryAllocation(1, false);
+  return address;
 #else
-    size_t nblocks = nbytes / MMgc::GCHeap::kBlockSize;
-    heap->SignalCodeMemoryAllocation(nblocks, true);
-    return heap->GetPartition(MMgc::kCodePartition)->Alloc(nblocks, MMgc::GCHeap::flags_Alloc, pagesize/MMgc::GCHeap::kBlockSize);
+  size_t nblocks = nbytes / MMgc::GCHeap::kBlockSize;
+  heap->SignalCodeMemoryAllocation(nblocks, true);
+  return heap->GetPartition(MMgc::kCodePartition)
+      ->Alloc(nblocks, MMgc::GCHeap::flags_Alloc,
+              pagesize / MMgc::GCHeap::kBlockSize);
 #endif
 }
 
@@ -78,73 +78,72 @@ void *AVMPI_allocateCodeMemory(size_t nbytes)
 // This function is duplicated in the Windows port utils, if you
 // fix a bug here be sure to fix the bug there.
 
-void AVMPI_freeCodeMemory(void* address, size_t nbytes)
-{
-    MMgc::GCHeap* heap = MMgc::GCHeap::GetGCHeap();
-    size_t pagesize = VMPI_getVMPageSize();
-	
+void AVMPI_freeCodeMemory(void *address, size_t nbytes) {
+  MMgc::GCHeap *heap = MMgc::GCHeap::GetGCHeap();
+  size_t pagesize = VMPI_getVMPageSize();
+
 #ifdef VMCFG_STRESS_SPARSE_CODE_MEM
-	size_t nblocks = 1;
-    size_t actualBytes = nbytes;
+  size_t nblocks = 1;
+  size_t actualBytes = nbytes;
 #else
-    size_t nblocks = heap->GetPartition(MMgc::kCodePartition)->Size(address);
-    size_t actualBytes = nblocks * MMgc::GCHeap::kBlockSize;
+  size_t nblocks = heap->GetPartition(MMgc::kCodePartition)->Size(address);
+  size_t actualBytes = nblocks * MMgc::GCHeap::kBlockSize;
 #endif
 
-    if ((uintptr_t)address % pagesize != 0 || nbytes % pagesize != 0 || nbytes != actualBytes) {
+  if ((uintptr_t)address % pagesize != 0 || nbytes % pagesize != 0 ||
+      nbytes != actualBytes) {
 #ifdef DEBUG
-        char buf[256];
-        VMPI_snprintf(buf,
-                      sizeof(buf),
-                      "AVMPI_freeCodeMemory invariants violated: address=%lu provided=%lu actual=%lu\nAborting.\n",
-                      (unsigned long)address,
-                      (unsigned long)nbytes,
-                      (unsigned long)actualBytes);
-        VMPI_log(buf);
+    char buf[256];
+    VMPI_snprintf(buf, sizeof(buf),
+                  "AVMPI_freeCodeMemory invariants violated: address=%lu "
+                  "provided=%lu actual=%lu\nAborting.\n",
+                  (unsigned long)address, (unsigned long)nbytes,
+                  (unsigned long)actualBytes);
+    VMPI_log(buf);
 #endif
-        VMPI_abort();
-    }
-	
+    VMPI_abort();
+  }
+
 #ifdef VMCFG_STRESS_SPARSE_CODE_MEM
-	AVMPI_decommitMemory((char*)address, nbytes);
-	AVMPI_releaseMemoryRegion(address, nbytes);
-    heap->SignalCodeMemoryDeallocated(nblocks, false);
+  AVMPI_decommitMemory((char *)address, nbytes);
+  AVMPI_releaseMemoryRegion(address, nbytes);
+  heap->SignalCodeMemoryDeallocated(nblocks, false);
 #else
-    heap->GetPartition(MMgc::kCodePartition)->Free(address);
-    heap->SignalCodeMemoryDeallocated(nblocks, true);
+  heap->GetPartition(MMgc::kCodePartition)->Free(address);
+  heap->SignalCodeMemoryDeallocated(nblocks, true);
 #endif
 }
 
-// Constraint: address must point into a block returned from VMPI_allocateCodeMemory
-// that has not been freed, it must point to a VM page boundary, and the number of
-// bytes to protect must be an integral number of VM pages.  We can't check that
-// the memory was returned from VMPI_allocateCodeMemory though and we don't check
-// that the memory is currently allocated.
+// Constraint: address must point into a block returned from
+// VMPI_allocateCodeMemory that has not been freed, it must point to a VM page
+// boundary, and the number of bytes to protect must be an integral number of VM
+// pages.  We can't check that the memory was returned from
+// VMPI_allocateCodeMemory though and we don't check that the memory is
+// currently allocated.
 //
 // GCHeap may return memory that overlaps the boundary between two separately
-// committed regions.  If that causes problems for you there are two options: either
-// don't use GCHeap memory for code memory, or turn off VM support.
+// committed regions.  If that causes problems for you there are two options:
+// either don't use GCHeap memory for code memory, or turn off VM support.
 
-void AVMPI_makeCodeMemoryExecutable(void *address, size_t nbytes, bool makeItSo)
-{
-    size_t pagesize = VMPI_getVMPageSize();
-    
-    if ((uintptr_t)address % pagesize != 0 || nbytes % pagesize != 0) {
+void AVMPI_makeCodeMemoryExecutable(void *address, size_t nbytes,
+                                    bool makeItSo) {
+  size_t pagesize = VMPI_getVMPageSize();
+
+  if ((uintptr_t)address % pagesize != 0 || nbytes % pagesize != 0) {
 #ifdef DEBUG
-        char buf[256];
-        VMPI_snprintf(buf,
-                      sizeof(buf),
-                      "AVMPI_makeCodeMemoryExecutable invariants violated: address=%lu size=%lu pagesize=%lu\nAborting.\n",
-                      (unsigned long)address,
-                      (unsigned long)nbytes,
-                      (unsigned long)pagesize);
-        VMPI_log(buf);
+    char buf[256];
+    VMPI_snprintf(buf, sizeof(buf),
+                  "AVMPI_makeCodeMemoryExecutable invariants violated: "
+                  "address=%lu size=%lu pagesize=%lu\nAborting.\n",
+                  (unsigned long)address, (unsigned long)nbytes,
+                  (unsigned long)pagesize);
+    VMPI_log(buf);
 #endif
-        VMPI_abort();
-    }
-    
-    int flags = makeItSo ? PROT_EXEC|PROT_READ : PROT_WRITE|PROT_READ;
-    int retval = mprotect((maddr_ptr)address, (unsigned int)nbytes, flags);
-    AvmAssert(retval == 0);
-    (void)retval;
+    VMPI_abort();
+  }
+
+  int flags = makeItSo ? PROT_EXEC | PROT_READ : PROT_WRITE | PROT_READ;
+  int retval = mprotect((maddr_ptr)address, (unsigned int)nbytes, flags);
+  AvmAssert(retval == 0);
+  (void)retval;
 }

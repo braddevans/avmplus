@@ -4,24 +4,31 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
 #ifndef __GCTypes__
 #define __GCTypes__
 
 #include "VMPI.h"
 
-namespace MMgc
-{
-    typedef void* (*GCMallocFuncPtr)(size_t size);
-    typedef void (*GCFreeFuncPtr)(void* mem);
+namespace MMgc {
+typedef void *(*GCMallocFuncPtr)(size_t size);
+typedef void (*GCFreeFuncPtr)(void *mem);
 
-    enum FixedMallocOpts { kNone=0, kZero=1, kCanFail=2, kCanFailAndZero=3 };
+enum FixedMallocOpts {
+  kNone = 0,
+  kZero = 1,
+  kCanFail = 2,
+  kCanFailAndZero = 3
+};
 
-    enum GCTracerCheckResult { kPassDueToManualTracer, kOffsetFound, kOffsetNotFound };
+enum GCTracerCheckResult {
+  kPassDueToManualTracer,
+  kOffsetFound,
+  kOffsetNotFound
+};
 
-    #ifndef NULL
-    #define NULL 0
-    #endif
-}
+#ifndef NULL
+#define NULL 0
+#endif
+} // namespace MMgc
 
 #endif /* __GCTypes__ */

@@ -8,20 +8,16 @@ namespace halfmoon {
 
 /// Simple max function.
 ///
-template<class T> T max(T a, T b) {
-  return a > b ? a : b;
-}
+template <class T> T max(T a, T b) { return a > b ? a : b; }
 
 /// Simple min function.
 ///
-template<class T> T min(T a, T b) {
-  return a < b ? a : b;
-}
+template <class T> T min(T a, T b) { return a < b ? a : b; }
 
 /// Copy values from from_range to to_range.  Similar to STL copy(), except
 /// that the ranges must be the same size, and no range is returned.
 ///
-template<class FR, class TR>
+template <class FR, class TR>
 inline void copyRange(FR from_range, TR to_range) {
   for (; !from_range.empty(); from_range.popFront(), to_range.popFront())
     to_range.front() = from_range.front();
@@ -31,8 +27,7 @@ inline void copyRange(FR from_range, TR to_range) {
 /// Find value in range starting at the front.  Returns new range starting
 /// with the found value.  Similar to STL find().
 ///
-template<class R, class T>
-inline R find(R r, T value) {
+template <class R, class T> inline R find(R r, T value) {
   for (; !r.empty(); r.popFront())
     if (r.front() == value)
       break;
@@ -41,8 +36,7 @@ inline R find(R r, T value) {
 
 /// Count the number of elements in range.
 ///
-template<class R>
-inline int count(R r) {
+template <class R> inline int count(R r) {
   int n = 0;
   for (; !r.empty(); r.popFront())
     n++;
@@ -51,10 +45,9 @@ inline int count(R r) {
 
 /// Assign value to all elements in Range
 ///
-template<class Range, class Value>
-inline void fill(Range r, Value v) {
+template <class Range, class Value> inline void fill(Range r, Value v) {
   for (; !r.empty(); r.popFront())
     r.front() = v;
 }
 
-} // namespace avmplus
+} // namespace halfmoon

@@ -7,13 +7,12 @@
 #ifndef __GCTests__
 #define __GCTests__
 
-
-namespace MMgc
-{
-    // If you call this you may regress https://bugzilla.mozilla.org/show_bug.cgi?id=472852, which
-    // is about spurious asserts that are triggered possibly by stray references on the stack to
-    // weakref data.  Beware!
-    void RunGCTests(GC *gc);
-}
+namespace MMgc {
+// If you call this you may regress
+// https://bugzilla.mozilla.org/show_bug.cgi?id=472852, which is about spurious
+// asserts that are triggered possibly by stray references on the stack to
+// weakref data.  Beware!
+void RunGCTests(GC *gc);
+} // namespace MMgc
 
 #endif /* __GCTests__ */

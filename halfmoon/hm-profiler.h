@@ -8,18 +8,18 @@
 #define OPT_PROFILER_HH
 
 namespace halfmoon {
-    class ProfiledInformation {
-    public:
-        ProfiledInformation();
-        ~ProfiledInformation();
-        void addBranchProbability(ArmInstr* arm_instr, double taken_probability);
-        double getBranchProbability(ArmInstr* arm_instr);
-        bool isHotterArm(ArmInstr* thinkHotArm, ArmInstr* thinkSlowArm);
+class ProfiledInformation {
+public:
+  ProfiledInformation();
+  ~ProfiledInformation();
+  void addBranchProbability(ArmInstr *arm_instr, double taken_probability);
+  double getBranchProbability(ArmInstr *arm_instr);
+  bool isHotterArm(ArmInstr *thinkHotArm, ArmInstr *thinkSlowArm);
 
-    private:
-        Allocator alloc_;
-        HashMap<ArmInstr*, double> branch_probability_;
-    };
-}
+private:
+  Allocator alloc_;
+  HashMap<ArmInstr *, double> branch_probability_;
+};
+} // namespace halfmoon
 
 #endif

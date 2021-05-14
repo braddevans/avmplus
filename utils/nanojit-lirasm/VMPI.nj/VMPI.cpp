@@ -7,107 +7,93 @@
 #include "nanojit.h"
 
 #ifdef SOLARIS
-    typedef caddr_t maddr_ptr;
+typedef caddr_t maddr_ptr;
 #else
-    typedef void *maddr_ptr;
+typedef void *maddr_ptr;
 #endif
 
 using namespace avmplus;
 
-size_t
-VMPI_getVMPageSize()
-{
-    return 4096;
-}
+size_t VMPI_getVMPageSize() { return 4096; }
 
 #ifdef WIN32
-void
-VMPI_setPageProtection(void *address,
-                       size_t size,
-                       bool executableFlag,
-                       bool writeableFlag)
-{
-    DWORD oldProtectFlags = 0;
-    DWORD newProtectFlags = 0;
-    if ( executableFlag && writeableFlag ) {
-        newProtectFlags = PAGE_EXECUTE_READWRITE;
-    } else if ( executableFlag ) {
-        newProtectFlags = PAGE_EXECUTE_READ;
-    } else if ( writeableFlag ) {
-        newProtectFlags = PAGE_READWRITE;
-    } else {
-        newProtectFlags = PAGE_READONLY;
-    }
+void VMPI_setPageProtection(void *address, size_t size, bool executableFlag,
+                            bool writeableFlag) {
+  DWORD oldProtectFlags = 0;
+  DWORD newProtectFlags = 0;
+  if (executableFlag && writeableFlag) {
+    newProtectFlags = PAGE_EXECUTE_READWRITE;
+  } else if (executableFlag) {
+    newProtectFlags = PAGE_EXECUTE_READ;
+  } else if (writeableFlag) {
+    newProtectFlags = PAGE_READWRITE;
+  } else {
+    newProtectFlags = PAGE_READONLY;
+  }
 
-    BOOL retval;
-    MEMORY_BASIC_INFORMATION mbi;
-    do {
-        VirtualQuery(address, &mbi, sizeof(MEMORY_BASIC_INFORMATION));
-        size_t markSize = size > mbi.RegionSize ? mbi.RegionSize : size;
+  BOOL retval;
+  MEMORY_BASIC_INFORMATION mbi;
+  do {
+    VirtualQuery(address, &mbi, sizeof(MEMORY_BASIC_INFORMATION));
+    size_t markSize = size > mbi.RegionSize ? mbi.RegionSize : size;
 
-        retval = VirtualProtect(address, markSize, newProtectFlags, &oldProtectFlags);
-        NanoAssert(retval);
+    retval =
+        VirtualProtect(address, markSize, newProtectFlags, &oldProtectFlags);
+    NanoAssert(retval);
 
-        address = (char*) address + markSize;
-        size -= markSize;
-    } while(size > 0 && retval);
+    address = (char *)address + markSize;
+    size -= markSize;
+  } while (size > 0 && retval);
 
-    // We should not be clobbering PAGE_GUARD protections
-    NanoAssert((oldProtectFlags & PAGE_GUARD) == 0);
+  // We should not be clobbering PAGE_GUARD protections
+  NanoAssert((oldProtectFlags & PAGE_GUARD) == 0);
 }
 
 #elif defined(AVMPLUS_OS2)
 
-void
-VMPI_setPageProtection(void *address,
-                       size_t size,
-                       bool executableFlag,
-                       bool writeableFlag)
-{
-    ULONG flags = PAG_READ;
-    if (executableFlag) {
-        flags |= PAG_EXECUTE;
+void VMPI_setPageProtection(void *address, size_t size, bool executableFlag,
+                            bool writeableFlag) {
+  ULONG flags = PAG_READ;
+  if (executableFlag) {
+    flags |= PAG_EXECUTE;
+  }
+  if (writeableFlag) {
+    flags |= PAG_WRITE;
+  }
+  address = (void *)((size_t)address & ~(0xfff));
+  size = (size + 0xfff) & ~(0xfff);
+
+  ULONG attribFlags = PAG_FREE;
+  while (size) {
+    ULONG attrib;
+    ULONG range = size;
+    ULONG retval = DosQueryMem(address, &range, &attrib);
+    NanoAssert(retval == 0);
+
+    // exit if this is the start of the next memory object
+    if (attrib & attribFlags) {
+      break;
     }
-    if (writeableFlag) {
-        flags |= PAG_WRITE;
-    }
-    address = (void*)((size_t)address & ~(0xfff));
-    size = (size + 0xfff) & ~(0xfff);
+    attribFlags |= PAG_BASE;
 
-    ULONG attribFlags = PAG_FREE;
-    while (size) {
-        ULONG attrib;
-        ULONG range = size;
-        ULONG retval = DosQueryMem(address, &range, &attrib);
-        NanoAssert(retval == 0);
+    range = size > range ? range : size;
+    retval = DosSetMem(address, range, flags);
+    NanoAssert(retval == 0);
 
-        // exit if this is the start of the next memory object
-        if (attrib & attribFlags) {
-            break;
-        }
-        attribFlags |= PAG_BASE;
-
-        range = size > range ? range : size;
-        retval = DosSetMem(address, range, flags);
-        NanoAssert(retval == 0);
-
-        address = (char*)address + range;
-        size -= range;
-    }
+    address = (char *)address + range;
+    size -= range;
+  }
 }
 
 #else // !WIN32 && !AVMPLUS_OS2
 
-void VMPI_setPageProtection(void *address,
-                            size_t size,
-                            bool executableFlag,
-                            bool writeableFlag)
-{
+void VMPI_setPageProtection(void *address, size_t size, bool executableFlag,
+                            bool writeableFlag) {
   int bitmask = sysconf(_SC_PAGESIZE) - 1;
   // mprotect requires that the addresses be aligned on page boundaries
-  void *endAddress = (void*) ((char*)address + size);
-  void *beginPage = (void*) ((size_t)address & ~bitmask);
-  void *endPage   = (void*) (((size_t)endAddress + bitmask) & ~bitmask);
+  void *endAddress = (void *)((char *)address + size);
+  void *beginPage = (void *)((size_t)address & ~bitmask);
+  void *endPage = (void *)(((size_t)endAddress + bitmask) & ~bitmask);
   size_t sizePaged = (size_t)endPage - (size_t)beginPage;
 
   int flags = PROT_READ;

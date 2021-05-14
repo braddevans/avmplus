@@ -18,11 +18,12 @@ namespace halfmoon {
 
 /// Inlining: visit the whole IR and inline nodes greedily.
 ///
-/// \param cxt contains an early attempt at the "compilation context". We're going to need it to inline callees.
-/// \param ir the instruction graph that we are to examine for inlinable callsites.
+/// \param cxt contains an early attempt at the "compilation context". We're
+/// going to need it to inline callees. \param ir the instruction graph that we
+/// are to examine for inlinable callsites.
 ///
-bool inlineGraph(Context *cxt, InstrGraph* ir, const char *title);
+bool inlineGraph(Context *cxt, InstrGraph *ir, const char *title);
 
-}
+} // namespace halfmoon
 
 #endif /* OPT_INLINE_H_ */

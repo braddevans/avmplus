@@ -1,6 +1,6 @@
 /*************************************************
-*       Perl-Compatible Regular Expressions      *
-*************************************************/
+ *       Perl-Compatible Regular Expressions      *
+ *************************************************/
 
 #ifndef _PCREPOSIX_H
 #define _PCREPOSIX_H
@@ -52,41 +52,40 @@ extern "C" {
 
 /* Options, mostly defined by POSIX, but with a couple of extras. */
 
-#define REG_ICASE     0x0001
-#define REG_NEWLINE   0x0002
-#define REG_NOTBOL    0x0004
-#define REG_NOTEOL    0x0008
-#define REG_DOTALL    0x0010   /* NOT defined by POSIX. */
-#define REG_NOSUB     0x0020
-#define REG_UTF8      0x0040   /* NOT defined by POSIX. */
+#define REG_ICASE 0x0001
+#define REG_NEWLINE 0x0002
+#define REG_NOTBOL 0x0004
+#define REG_NOTEOL 0x0008
+#define REG_DOTALL 0x0010 /* NOT defined by POSIX. */
+#define REG_NOSUB 0x0020
+#define REG_UTF8 0x0040 /* NOT defined by POSIX. */
 
 /* This is not used by PCRE, but by defining it we make it easier
 to slot PCRE into existing programs that make POSIX calls. */
 
-#define REG_EXTENDED  0
+#define REG_EXTENDED 0
 
 /* Error values. Not all these are relevant or used by the wrapper. */
 
 enum {
-  REG_ASSERT = 1,  /* internal error ? */
-  REG_BADBR,       /* invalid repeat counts in {} */
-  REG_BADPAT,      /* pattern error */
-  REG_BADRPT,      /* ? * + invalid */
-  REG_EBRACE,      /* unbalanced {} */
-  REG_EBRACK,      /* unbalanced [] */
-  REG_ECOLLATE,    /* collation error - not relevant */
-  REG_ECTYPE,      /* bad class */
-  REG_EESCAPE,     /* bad escape sequence */
-  REG_EMPTY,       /* empty expression */
-  REG_EPAREN,      /* unbalanced () */
-  REG_ERANGE,      /* bad range inside [] */
-  REG_ESIZE,       /* expression too big */
-  REG_ESPACE,      /* failed to get memory */
-  REG_ESUBREG,     /* bad back reference */
-  REG_INVARG,      /* bad argument */
-  REG_NOMATCH      /* match failed */
+  REG_ASSERT = 1, /* internal error ? */
+  REG_BADBR,      /* invalid repeat counts in {} */
+  REG_BADPAT,     /* pattern error */
+  REG_BADRPT,     /* ? * + invalid */
+  REG_EBRACE,     /* unbalanced {} */
+  REG_EBRACK,     /* unbalanced [] */
+  REG_ECOLLATE,   /* collation error - not relevant */
+  REG_ECTYPE,     /* bad class */
+  REG_EESCAPE,    /* bad escape sequence */
+  REG_EMPTY,      /* empty expression */
+  REG_EPAREN,     /* unbalanced () */
+  REG_ERANGE,     /* bad range inside [] */
+  REG_ESIZE,      /* expression too big */
+  REG_ESPACE,     /* failed to get memory */
+  REG_ESUBREG,    /* bad back reference */
+  REG_INVARG,     /* bad argument */
+  REG_NOMATCH     /* match failed */
 };
-
 
 /* The structure representing a compiled regular expression. */
 
@@ -111,32 +110,32 @@ export settings are needed, and are set in pcreposix.c before including this
 file. */
 
 #if defined(_WIN32) && !defined(PCRE_STATIC) && !defined(PCREPOSIX_EXP_DECL)
-#  define PCREPOSIX_EXP_DECL  extern __declspec(dllimport)
-#  define PCREPOSIX_EXP_DEFN  __declspec(dllimport)
+#define PCREPOSIX_EXP_DECL extern __declspec(dllimport)
+#define PCREPOSIX_EXP_DEFN __declspec(dllimport)
 #endif
 
 /* By default, we use the standard "extern" declarations. */
 
 #ifndef PCREPOSIX_EXP_DECL
-#  ifdef __cplusplus
-#    define PCREPOSIX_EXP_DECL  extern "C"
-#    define PCREPOSIX_EXP_DEFN  extern "C"
-#  else
-#    define PCREPOSIX_EXP_DECL  extern
-#    define PCREPOSIX_EXP_DEFN  extern
-#  endif
+#ifdef __cplusplus
+#define PCREPOSIX_EXP_DECL extern "C"
+#define PCREPOSIX_EXP_DEFN extern "C"
+#else
+#define PCREPOSIX_EXP_DECL extern
+#define PCREPOSIX_EXP_DEFN extern
+#endif
 #endif
 
 /* The functions */
 
 PCREPOSIX_EXP_DECL int regcomp(regex_t *, const char *, int);
 PCREPOSIX_EXP_DECL int regexec(const regex_t *, const char *, size_t,
-                     regmatch_t *, int);
+                               regmatch_t *, int);
 PCREPOSIX_EXP_DECL size_t regerror(int, const regex_t *, char *, size_t);
 PCREPOSIX_EXP_DECL void regfree(regex_t *);
 
 #ifdef __cplusplus
-}   /* extern "C" */
+} /* extern "C" */
 #endif
 
 #endif /* End of pcreposix.h */

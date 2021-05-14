@@ -7,39 +7,36 @@
 #ifndef __avmplus_ShellWorkerGlue__
 #define __avmplus_ShellWorkerGlue__
 
-
 namespace avmshell {
-    class ShellWorkerClass : public avmplus::ClassClosure
-    {
-        public:
-        ShellWorkerClass(avmplus::VTable* cvtable);
-        ShellWorkerObject* getCurrentWorker();
-        void registerClassAlias(avmplus::String* name, avmplus::ClassClosure* constr);
-        void pr(avmplus::Stringp s);
-        
-        private:
-        DECLARE_SLOTS_ShellWorkerClass;
-    };
-    
-    class ShellWorkerObject : public avmplus::ScriptObject, public avmplus::WorkerObjectBase<ShellWorkerObject>
-    {
-        friend class ShellWorkerClass;
-        
-        public:
-        ShellWorkerObject(avmplus::VTable* vtable, avmplus::ScriptObject* prototype); 
-        void clearByteCode();
-        avmplus::ByteArrayObject* getByteCode();
-        void setByteCode(avmplus::ByteArrayObject* byteCode);
+class ShellWorkerClass : public avmplus::ClassClosure {
+public:
+  ShellWorkerClass(avmplus::VTable *cvtable);
+  ShellWorkerObject *getCurrentWorker();
+  void registerClassAlias(avmplus::String *name, avmplus::ClassClosure *constr);
+  void pr(avmplus::Stringp s);
 
-        bool terminate();
+private:
+  DECLARE_SLOTS_ShellWorkerClass;
+};
 
-		bool get_isPrimordial ()	{ return isPrimordial(); }
-        avmplus::String* internalGetState();
-        void start();
+class ShellWorkerObject : public avmplus::ScriptObject,
+                          public avmplus::WorkerObjectBase<ShellWorkerObject> {
+  friend class ShellWorkerClass;
 
-        private:
-        DECLARE_SLOTS_ShellWorkerObject;
-    };
-}
+public:
+  ShellWorkerObject(avmplus::VTable *vtable, avmplus::ScriptObject *prototype);
+  void clearByteCode();
+  avmplus::ByteArrayObject *getByteCode();
+  void setByteCode(avmplus::ByteArrayObject *byteCode);
+
+  bool terminate();
+
+  bool get_isPrimordial() { return isPrimordial(); }
+  avmplus::String *internalGetState();
+  void start();
+
+private:
+  DECLARE_SLOTS_ShellWorkerObject;
+};
+} // namespace avmshell
 #endif /* __avmplus_ShellWorkerGlue__ */
-

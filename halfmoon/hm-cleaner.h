@@ -24,31 +24,32 @@ namespace halfmoon {
 ///
 class Cleaner {
 public:
-  Cleaner(InstrGraph* ir);
+  Cleaner(InstrGraph *ir);
   bool onePass();
-  LabelInstr* ensureLabel(ArmInstr* arm);
+  LabelInstr *ensureLabel(ArmInstr *arm);
 
 private:
-  bool simplify(BlockEndInstr* block);
-  bool hoistBranch(GotoInstr* go, CondInstr* branch);
-  bool hoistGoto(GotoInstr* go, GotoInstr* succ_go);
-  bool joinBlocks(BlockEndInstr* pred, BlockStartInstr* succ, InstrGraph* ir);
-  bool joinArms(CondInstr* cond, LabelInstr* target);
-  Def* translate(const Use&, GotoInstr* go);
-  LabelInstr* findSingleTarget(CondInstr* branch);
+  bool simplify(BlockEndInstr *block);
+  bool hoistBranch(GotoInstr *go, CondInstr *branch);
+  bool hoistGoto(GotoInstr *go, GotoInstr *succ_go);
+  bool joinBlocks(BlockEndInstr *pred, BlockStartInstr *succ, InstrGraph *ir);
+  bool joinArms(CondInstr *cond, LabelInstr *target);
+  Def *translate(const Use &, GotoInstr *go);
+  LabelInstr *findSingleTarget(CondInstr *branch);
 
 private:
   Allocator alloc_;
-  HashMap<int, LabelInstr*> arm_labels_; // one label for each arm that gained goto's
-  InstrGraph* ir_;
+  HashMap<int, LabelInstr *>
+      arm_labels_; // one label for each arm that gained goto's
+  InstrGraph *ir_;
   InstrFactory factory_;
 };
 
 /// Simplify the control flow graph as much as possible by
 /// removing constant conditions, removing dead blocks, bypassing
 /// redundant jumps, etc.
-void cleanBlocks(Context* cxt, InstrGraph* ir, Cleaner*);
+void cleanBlocks(Context *cxt, InstrGraph *ir, Cleaner *);
 
-}
+} // namespace halfmoon
 
 #endif

@@ -9,94 +9,81 @@
 
 // Inline methods shared across classes
 
-
-namespace MMgc
-{
-    // FL* are freelist helpers, put in one place to ease Valgrind support
-    REALLY_INLINE void **FLSeed(void **item, void *next)
-    {
-        VALGRIND_MAKE_MEM_DEFINED(item, sizeof(void*));
-        item[0] = next;
-        VALGRIND_MAKE_MEM_UNDEFINED(item, sizeof(void*));
-        return (void**)next;
-    }
-
-    REALLY_INLINE void FLPush(void* &head, const void *next)
-    {
-        *(void**)next = head;
-        head = const_cast<void*>(next);
-    }
-
-    REALLY_INLINE void *FLPop(void* &head)
-    {
-        void *p = head;
-        VALGRIND_MAKE_MEM_DEFINED(p, sizeof(void*));
-        head = *(void**)p;
-        VALGRIND_MAKE_MEM_UNDEFINED(p, sizeof(void*));
-        return p;
-    }
-
-    REALLY_INLINE void *FLPopAndZero(void* &head)
-    { 
-        void *p = FLPop(head);
-        VALGRIND_MAKE_MEM_DEFINED(p, sizeof(void*));
-        *(void**)p = NULL;
-        VALGRIND_MAKE_MEM_UNDEFINED(p, sizeof(void*));
-        return p;
-    }
-
-    REALLY_INLINE void *FLNext(void *item)
-    {
-        void **p = (void**)item;
-        VALGRIND_MAKE_MEM_DEFINED(p, sizeof(void*));
-        void *next = p[0];
-        VALGRIND_MAKE_MEM_UNDEFINED(p, sizeof(void*));
-        return next;
-    }
-
-    template<typename T, int growthIncrement>
-    bool BasicList<T,growthIncrement>::Add(T item)
-    {
-        if (holes && iteratorCount == 0)
-            Compact();
-        if (count == capacity)
-        {
-            uint32_t tryCapacity = capacity + growthIncrement;
-            T* newItems = (T*)VMPI_alloc(GCHeap::CheckForCallocSizeOverflow(tryCapacity, sizeof(T)));
-
-            if (newItems == NULL)
-                return false;
-            memset(newItems, 0, sizeof(T)*tryCapacity);
-
-            capacity = tryCapacity;
-            if (items)
-                VMPI_memcpy(newItems, items, count * sizeof(T));
-            VMPI_free(items);
-            items = newItems;
-        }
-
-		uint32_t targetOffset = 0;
-        if (holes)
-        {
-            for (uint32_t j = 0; j < capacity && !targetOffset; j++)
-            {
-            	// find the first hole to insert item:
-                if (items[j] == NULL)
-                {
-					targetOffset = j;
-                }
-            }
-        }
-		else
-		{
-			targetOffset = count;
-		}
-
-        items[targetOffset] = item;
-        count++;
-        return true;
-    }
-
+namespace MMgc {
+// FL* are freelist helpers, put in one place to ease Valgrind support
+REALLY_INLINE void **FLSeed(void **item, void *next) {
+  VALGRIND_MAKE_MEM_DEFINED(item, sizeof(void *));
+  item[0] = next;
+  VALGRIND_MAKE_MEM_UNDEFINED(item, sizeof(void *));
+  return (void **)next;
 }
+
+REALLY_INLINE void FLPush(void *&head, const void *next) {
+  *(void **)next = head;
+  head = const_cast<void *>(next);
+}
+
+REALLY_INLINE void *FLPop(void *&head) {
+  void *p = head;
+  VALGRIND_MAKE_MEM_DEFINED(p, sizeof(void *));
+  head = *(void **)p;
+  VALGRIND_MAKE_MEM_UNDEFINED(p, sizeof(void *));
+  return p;
+}
+
+REALLY_INLINE void *FLPopAndZero(void *&head) {
+  void *p = FLPop(head);
+  VALGRIND_MAKE_MEM_DEFINED(p, sizeof(void *));
+  *(void **)p = NULL;
+  VALGRIND_MAKE_MEM_UNDEFINED(p, sizeof(void *));
+  return p;
+}
+
+REALLY_INLINE void *FLNext(void *item) {
+  void **p = (void **)item;
+  VALGRIND_MAKE_MEM_DEFINED(p, sizeof(void *));
+  void *next = p[0];
+  VALGRIND_MAKE_MEM_UNDEFINED(p, sizeof(void *));
+  return next;
+}
+
+template <typename T, int growthIncrement>
+bool BasicList<T, growthIncrement>::Add(T item) {
+  if (holes && iteratorCount == 0)
+    Compact();
+  if (count == capacity) {
+    uint32_t tryCapacity = capacity + growthIncrement;
+    T *newItems = (T *)VMPI_alloc(
+        GCHeap::CheckForCallocSizeOverflow(tryCapacity, sizeof(T)));
+
+    if (newItems == NULL)
+      return false;
+    memset(newItems, 0, sizeof(T) * tryCapacity);
+
+    capacity = tryCapacity;
+    if (items)
+      VMPI_memcpy(newItems, items, count * sizeof(T));
+    VMPI_free(items);
+    items = newItems;
+  }
+
+  uint32_t targetOffset = 0;
+  if (holes) {
+    for (uint32_t j = 0; j < capacity && !targetOffset; j++) {
+      // find the first hole to insert item:
+      if (items[j] == NULL) {
+        targetOffset = j;
+      }
+    }
+  } else {
+    targetOffset = count;
+  }
+
+  items[targetOffset] = item;
+  count++;
+  return true;
+}
+
+} // namespace MMgc
 
 #endif /* __Shared_inlines__ */

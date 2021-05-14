@@ -48,15 +48,15 @@
 #include <string>
 #include <vector>
 
-#include <pcrecpp.h>
 #include <pcre_stringpiece.h>
+#include <pcrecpp.h>
 
 namespace pcrecpp {
 
 class PCRECPP_EXP_DEFN Scanner {
- public:
+public:
   Scanner();
-  explicit Scanner(const std::string& input);
+  explicit Scanner(const std::string &input);
   ~Scanner();
 
   // Return current line number.  The returned line-number is
@@ -71,7 +71,7 @@ class PCRECPP_EXP_DEFN Scanner {
   int Offset() const;
 
   // Return true iff the start of the remaining input matches "re"
-  bool LookingAt(const RE& re) const;
+  bool LookingAt(const RE &re) const;
 
   // Return true iff all of the following are true
   //    a. the start of the remaining input matches "re",
@@ -79,12 +79,10 @@ class PCRECPP_EXP_DEFN Scanner {
   //       parsed and stored into the arguments.
   // If it returns true, it skips over the matched input and any
   // following input that matches the "skip" regular expression.
-  bool Consume(const RE& re,
-               const Arg& arg0 = no_arg,
-               const Arg& arg1 = no_arg,
-               const Arg& arg2 = no_arg
+  bool Consume(const RE &re, const Arg &arg0 = no_arg, const Arg &arg1 = no_arg,
+               const Arg &arg2 = no_arg
                // TODO: Allow more arguments?
-               );
+  );
 
   // Set the "skip" regular expression.  If after consuming some data,
   // a prefix of the input matches this RE, it is automatically
@@ -99,8 +97,8 @@ class PCRECPP_EXP_DEFN Scanner {
   // control repetition explicitly via the function call API.
   //
   // You can pass NULL for "re" if you do not want any data to be skipped.
-  void Skip(const char* re);   // DEPRECATED; does *not* repeat
-  void SetSkipExpression(const char* re);
+  void Skip(const char *re); // DEPRECATED; does *not* repeat
+  void SetSkipExpression(const char *re);
 
   // Temporarily pause "skip"ing. This
   //   Skip("Foo"); code ; DisableSkip(); code; EnableSkip()
@@ -121,17 +119,11 @@ class PCRECPP_EXP_DEFN Scanner {
   //    //.*\n                  C++ comment
   //    /[*](.|\n)*?[*]/        C comment (x*? means minimal repetitions of x)
   // We get repetition via the semantics of SetSkipExpression, not by using *
-  void SkipCXXComments() {
-    SetSkipExpression("\\s|//.*\n|/[*](?:\n|.)*?[*]/");
-  }
+  void SkipCXXComments() { SetSkipExpression("\\s|//.*\n|/[*](?:\n|.)*?[*]/"); }
 
-  void set_save_comments(bool comments) {
-    save_comments_ = comments;
-  }
+  void set_save_comments(bool comments) { save_comments_ = comments; }
 
-  bool save_comments() {
-    return save_comments_;
-  }
+  bool save_comments() { return save_comments_; }
 
   // Append to vector ranges the comments found in the
   // byte range [start,end] (inclusive) of the input data.
@@ -146,13 +138,13 @@ class PCRECPP_EXP_DEFN Scanner {
   // interleaving scanning with parsing.
   void GetNextComments(std::vector<StringPiece> *ranges);
 
- private:
-  std::string   data_;          // All the input data
-  StringPiece   input_;         // Unprocessed input
-  RE*           skip_;          // If non-NULL, RE for skipping input
-  bool          should_skip_;   // If true, use skip_
-  bool          skip_repeat_;   // If true, repeat skip_ as long as it works
-  bool          save_comments_; // If true, aggregate the skip expression
+private:
+  std::string data_;   // All the input data
+  StringPiece input_;  // Unprocessed input
+  RE *skip_;           // If non-NULL, RE for skipping input
+  bool should_skip_;   // If true, use skip_
+  bool skip_repeat_;   // If true, repeat skip_ as long as it works
+  bool save_comments_; // If true, aggregate the skip expression
 
   // the skipped comments
   // TODO: later consider requiring that the StringPieces be added
@@ -160,13 +152,13 @@ class PCRECPP_EXP_DEFN Scanner {
   std::vector<StringPiece> *comments_;
 
   // the offset into comments_ that has been returned by GetNextComments
-  int           comments_offset_;
+  int comments_offset_;
 
   // helper function to consume *skip_ and honour
   // save_comments_
   void ConsumeSkip();
 };
 
-}   // namespace pcrecpp
+} // namespace pcrecpp
 
 #endif /* _PCRE_SCANNER_H */

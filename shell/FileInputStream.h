@@ -7,44 +7,40 @@
 #ifndef __avmshell_FileInputStream__
 #define __avmshell_FileInputStream__
 
+namespace avmshell {
+class File;
 
-namespace avmshell
-{
-    class File;
+/**
+ * InputStream is an abstract base class for input streams.
+ * Concrete subclasses must implement the available and read
+ * methods to do appropriate read operations.
+ */
+class InputStream {
+public:
+  virtual ~InputStream() {}
+  virtual int64_t available() = 0;
+  virtual size_t read(void *buffer, size_t count) = 0;
+};
 
-    /**
-     * InputStream is an abstract base class for input streams.
-     * Concrete subclasses must implement the available and read
-     * methods to do appropriate read operations.
-     */
-    class InputStream
-    {
-    public:
-        virtual ~InputStream() {}
-        virtual int64_t available() = 0;
-        virtual size_t read(void *buffer, size_t count) = 0;
-    };
+/**
+ * FileInputStream is a concrete subclass of InputStream
+ * that implements file input.
+ */
+class FileInputStream : public InputStream {
+public:
+  FileInputStream(const char *filename);
 
-    /**
-     * FileInputStream is a concrete subclass of InputStream
-     * that implements file input.
-     */
-    class FileInputStream : public InputStream
-    {
-    public:
-        FileInputStream(const char *filename);
+  bool valid() const;
+  ~FileInputStream();
+  int64_t available();
+  int64_t length() const { return len; }
+  void seek(int64_t offset);
+  size_t read(void *buffer, size_t count);
 
-        bool valid() const;
-        ~FileInputStream();
-        int64_t available();
-        int64_t length() const { return len; }
-        void seek(int64_t offset);
-        size_t read(void *buffer, size_t count);
-
-    private:
-        File *file;
-        int64_t len;
-    };
-}
+private:
+  File *file;
+  int64_t len;
+};
+} // namespace avmshell
 
 #endif /* __avmshell_FileInputStream__ */

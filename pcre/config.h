@@ -5,7 +5,6 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-
 /* On Unix-like systems config.h.in is converted by "configure" into config.h.
 Some other environments also support the use of "configure". PCRE is written in
 Standard C, but there are a few non-standard things it can cope with, allowing
@@ -96,21 +95,23 @@ them both to 0; an emulation function will be used. */
 /* Define to 1 if you have the <windows.h> header file. */
 #define HAVE_WINDOWS_H 1
 
-/* cn: added constants for carriage return, unicode line seperator, and unicode paragraph seperator,
-       all of which should match the '$' metacharater.
+/* cn: added constants for carriage return, unicode line seperator, and unicode
+   paragraph seperator, all of which should match the '$' metacharater.
 */
 //#define CARRAIGE_RETURN '\r'					// <CR>
 //#define UNICODE_LINE_SEPERATOR 0x2028			// <LS>
 //#define UNICODE_PARAGRAPH_SEPERATOR 0x2029		// <PS>
 
-// cn: also added unicode whitespace characters.  
-#define UNICODE_NOBREAK_SPACE 0x00A0			// - no-break space
-#define UNICODE_ZEROWIDTH_SPACE 0x200B			// - zero width space
-#define UNICODE_WORDJOINER_SPACE 0x2060			// - word joiner
-#define UNICODE_IDEOGRAPHIC_SPACE 0x3000		// - ideographic space
-#define UNICODE_ZEROWIDTH_NOBREAK_SPACE 0xFEFF	// - zero width no-break space
+// cn: also added unicode whitespace characters.
+#define UNICODE_NOBREAK_SPACE 0x00A0           // - no-break space
+#define UNICODE_ZEROWIDTH_SPACE 0x200B         // - zero width space
+#define UNICODE_WORDJOINER_SPACE 0x2060        // - word joiner
+#define UNICODE_IDEOGRAPHIC_SPACE 0x3000       // - ideographic space
+#define UNICODE_ZEROWIDTH_NOBREAK_SPACE 0xFEFF // - zero width no-break space
 
-//inline bool isECMALineTerminator(unsigned short x) { return (((x) == NEWLINE) || ((x) == CARRAIGE_RETURN) || ((x) == UNICODE_LINE_SEPERATOR) || ((x) == UNICODE_PARAGRAPH_SEPERATOR) ); }
+// inline bool isECMALineTerminator(unsigned short x) { return (((x) == NEWLINE)
+// || ((x) == CARRAIGE_RETURN) || ((x) == UNICODE_LINE_SEPERATOR) || ((x) ==
+// UNICODE_PARAGRAPH_SEPERATOR) ); }
 bool isUnicodeWhiteSpace(unsigned short x);
 
 /* The value of LINK_SIZE determines the number of bytes used to store links
@@ -165,7 +166,7 @@ bool isUnicodeWhiteSpace(unsigned short x);
    the comments and other stuff just above the match() function. On systems
    that support it, "configure" can be used to set this in the Makefile (use
    --disable-stack-for-recursion). */
-#define NO_RECURSE 
+#define NO_RECURSE
 
 /* Name of package */
 #ifndef PACKAGE
@@ -218,7 +219,7 @@ bool isUnicodeWhiteSpace(unsigned short x);
 /* #undef SUPPORT_UCP */
 
 /* Define to enable support for the UTF-8 Unicode encoding. */
-#define SUPPORT_UTF8 
+#define SUPPORT_UTF8
 
 /* Version number of package */
 #ifndef VERSION
@@ -232,4 +233,3 @@ bool isUnicodeWhiteSpace(unsigned short x);
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 /* #undef size_t */
-

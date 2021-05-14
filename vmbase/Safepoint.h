@@ -256,13 +256,13 @@
  * The thread's current (top-most) SafepointRecord must be managed
  * by the given SafepointManager.
  */
-#define SAFEPOINT_POLL_FAST(_spManager_) \
-    assert(vmbase::SafepointRecord::hasCurrent() && \
-              vmbase::SafepointRecord::current()->manager() == &_spManager_); \
-    do { \
-        if (_spManager_.hasRequest()) \
-            vmbase::SafepointGate::gateWithRegistersSaved(); \
-    } while (0)
+#define SAFEPOINT_POLL_FAST(_spManager_)                                       \
+  assert(vmbase::SafepointRecord::hasCurrent() &&                              \
+         vmbase::SafepointRecord::current()->manager() == &_spManager_);       \
+  do {                                                                         \
+    if (_spManager_.hasRequest())                                              \
+      vmbase::SafepointGate::gateWithRegistersSaved();                         \
+  } while (0)
 
 /**
  * Explicitly marks the code location as a safepoint.
@@ -272,226 +272,229 @@
  * the stack before passing through a SafepointGate.
  * SAFEPOINT_POLL_FAST should be used in preference to SAFEPOINT_POLL.
  */
-#define SAFEPOINT_POLL() \
-    do { \
-        if (vmbase::SafepointRecord::current()->manager()->hasRequest()) \
-            vmbase::SafepointGate::gateWithRegistersSaved(); \
-    } while (0)
+#define SAFEPOINT_POLL()                                                       \
+  do {                                                                         \
+    if (vmbase::SafepointRecord::current()->manager()->hasRequest())           \
+      vmbase::SafepointGate::gateWithRegistersSaved();                         \
+  } while (0)
 
 namespace vmbase {
 
-    typedef Runnable SafepointTask;
+typedef Runnable SafepointTask;
 
-    /**
-     * Provides a safepointing context for threads to enter and exit as their
-     * context changes in the host process.
-     * Safepoint task-requests and polling are made on SafepointManager instances.
-     *
-     * See the above overview for more information.
-     */
-    class SafepointManager
-    {
-        friend class SafepointGate;
-    public:
-        SafepointManager();
-        ~SafepointManager();
+/**
+ * Provides a safepointing context for threads to enter and exit as their
+ * context changes in the host process.
+ * Safepoint task-requests and polling are made on SafepointManager instances.
+ *
+ * See the above overview for more information.
+ */
+class SafepointManager {
+  friend class SafepointGate;
 
-        /**
-         * Blocks the calling thread until all other threads are
-         * 'safe' with respect to this SafepointManager; the
-         * given SafepointTask will then be dispatched on the
-         * calling thread. All threads will remain 'safe'
-         * until the task has completed execution.
-         *
-         * For those threads with a current safepoint context of
-         * this SafepointManager, 'safe' is achieved via explicit or
-         * implicit safepoints. All other threads are by definition
-         * 'safe' with respect to this SafepointManager.
-         *
-         * The calling thread's current SafepointRecord must be
-         * managed by this SafepointManager.
-         */
-        void requestSafepointTask(SafepointTask& task);
+public:
+  SafepointManager();
+  ~SafepointManager();
 
-        /**
-         * Checks if a SafepointTask is pending on this SafepointManager.
-         */
-        bool hasRequest();
+  /**
+   * Blocks the calling thread until all other threads are
+   * 'safe' with respect to this SafepointManager; the
+   * given SafepointTask will then be dispatched on the
+   * calling thread. All threads will remain 'safe'
+   * until the task has completed execution.
+   *
+   * For those threads with a current safepoint context of
+   * this SafepointManager, 'safe' is achieved via explicit or
+   * implicit safepoints. All other threads are by definition
+   * 'safe' with respect to this SafepointManager.
+   *
+   * The calling thread's current SafepointRecord must be
+   * managed by this SafepointManager.
+   */
+  void requestSafepointTask(SafepointTask &task);
 
-        /**
-         * Tests if this thread is currently executing a SafepointTask
-         * as the requester of the task.
-         */
-        bool inSafepointTask();
+  /**
+   * Checks if a SafepointTask is pending on this SafepointManager.
+   */
+  bool hasRequest();
 
-        /**
-         * Notifies the SafepointManager that the calling thread is
-         * entering its context. The given SafepointRecord is set
-         * as the thread's current SafepointRecord.
-         * If the thread is nesting or recursing into the
-         * SafepointManager then the thread's previous
-         * SafepointRecord will be made SP_SAFE.
-         *
-         * This function will block until SafepointManager entry
-         * can be performed with no SafepointTask pending or ongoing.
-         */
-        void enter(SafepointRecord* record);
+  /**
+   * Tests if this thread is currently executing a SafepointTask
+   * as the requester of the task.
+   */
+  bool inSafepointTask();
 
-        /**
-         * Notifies the SafepointManager that the calling thread is
-         * leaving its context. The given SafepointRecord will no longer
-         * be required to be SP_SAFE before the SafepointManager allows
-         * execution of a SafepointTask.
-         *
-         * This function will block until SafepointManager exit
-         * can be performed with no SafepointTask pending or ongoing.
-         *
-         * The thread's previous (stack-wise) SafepointRecord will be set
-         * as its current SafepointRecord if this thread is unwinding into
-         * a SafepointManager context. The thread will block until
-         * it can set the previous SafepointRecord as SP_UNSAFE with no
-         * SafepointTask pending or ongoing on the SafepointManager
-         * into which it is unwinding.
-         */
-        void leave(SafepointRecord* record);
+  /**
+   * Notifies the SafepointManager that the calling thread is
+   * entering its context. The given SafepointRecord is set
+   * as the thread's current SafepointRecord.
+   * If the thread is nesting or recursing into the
+   * SafepointManager then the thread's previous
+   * SafepointRecord will be made SP_SAFE.
+   *
+   * This function will block until SafepointManager entry
+   * can be performed with no SafepointTask pending or ongoing.
+   */
+  void enter(SafepointRecord *record);
 
-    public:
-        /**
-         * Iterates over a SafepointManager's SafepointRecords.
-         * The iterator is not threadsafe outside of a safepoint
-         * task.
-         */
-        class RecordIterator
-        {
-        public:
-            RecordIterator(SafepointManager& manager);
-            ~RecordIterator();
-            const SafepointRecord* next();
-        private:
-            SafepointRecord* m_next;
-        };
+  /**
+   * Notifies the SafepointManager that the calling thread is
+   * leaving its context. The given SafepointRecord will no longer
+   * be required to be SP_SAFE before the SafepointManager allows
+   * execution of a SafepointTask.
+   *
+   * This function will block until SafepointManager exit
+   * can be performed with no SafepointTask pending or ongoing.
+   *
+   * The thread's previous (stack-wise) SafepointRecord will be set
+   * as its current SafepointRecord if this thread is unwinding into
+   * a SafepointManager context. The thread will block until
+   * it can set the previous SafepointRecord as SP_UNSAFE with no
+   * SafepointTask pending or ongoing on the SafepointManager
+   * into which it is unwinding.
+   */
+  void leave(SafepointRecord *record);
 
-    private:
-        SafepointRecord* m_records;
-        WaitNotifyMonitor m_requestMutex;
-        vmpi_thread_t volatile m_requester;
-        const int m_hardwareConcurrency;
-    };
+public:
+  /**
+   * Iterates over a SafepointManager's SafepointRecords.
+   * The iterator is not threadsafe outside of a safepoint
+   * task.
+   */
+  class RecordIterator {
+  public:
+    RecordIterator(SafepointManager &manager);
+    ~RecordIterator();
+    const SafepointRecord *next();
 
-    /**
-     * Implements a RAII pattern for setting a thread's top-most
-     * SafepointRecord (which must be SP_UNSAFE) to SP_SAFE in its
-     * ctor, and then back to SP_UNSAFE in its dtor. The dtor will
-     * block the thread until it can safely change the
-     * SafepointRecord back to SP_UNSAFE (i.e. when no SafepointTask
-     * is pending or ongoing). SafepointGate also provides any
-     * requisite memory barriers to ensure that a safepointed
-     * thread's stores to memory are visible to a SafepointTask.
-     *
-     * See the above overview for example usage.
-     */
-    class SafepointGate
-    {
-    public:
-        SafepointGate(void* stackPointer);
-        ~SafepointGate();
-        static void gateWithRegistersSaved();
-    private:
-        static void gate(void* stackPointer, void*);
-        SafepointRecord* const m_safepointRecord;
-    };
+  private:
+    SafepointRecord *m_next;
+  };
 
-    /**
-     * Holds safepointing information for a region of a thread's stack.
-     * See the above overview for more information.
-     */
-    class SafepointRecord
-    {
+private:
+  SafepointRecord *m_records;
+  WaitNotifyMonitor m_requestMutex;
+  vmpi_thread_t volatile m_requester;
+  const int m_hardwareConcurrency;
+};
 
-        friend class SafepointManager;
-        friend class SafepointGate;
-        friend class SafepointManager::RecordIterator;
-        template<BlockingMode> friend class MutexLocker;
-        template<BlockingMode> friend class MonitorLocker;
+/**
+ * Implements a RAII pattern for setting a thread's top-most
+ * SafepointRecord (which must be SP_UNSAFE) to SP_SAFE in its
+ * ctor, and then back to SP_UNSAFE in its dtor. The dtor will
+ * block the thread until it can safely change the
+ * SafepointRecord back to SP_UNSAFE (i.e. when no SafepointTask
+ * is pending or ongoing). SafepointGate also provides any
+ * requisite memory barriers to ensure that a safepointed
+ * thread's stores to memory are visible to a SafepointTask.
+ *
+ * See the above overview for example usage.
+ */
+class SafepointGate {
+public:
+  SafepointGate(void *stackPointer);
+  ~SafepointGate();
+  static void gateWithRegistersSaved();
 
-    public:
-        SafepointRecord();
-        ~SafepointRecord();
+private:
+  static void gate(void *stackPointer, void *);
+  SafepointRecord *const m_safepointRecord;
+};
 
-        /**
-         * Returns true if the calling thread has at
-         * least one SafepointRecord describing its stack.
-         */
-        static bool hasCurrent();
+/**
+ * Holds safepointing information for a region of a thread's stack.
+ * See the above overview for more information.
+ */
+class SafepointRecord {
 
-        /**
-         * Returns the calling thread's top-most
-         * SafepointRecord.
-         */
-        static SafepointRecord* current();
+  friend class SafepointManager;
+  friend class SafepointGate;
+  friend class SafepointManager::RecordIterator;
+  template <BlockingMode> friend class MutexLocker;
+  template <BlockingMode> friend class MonitorLocker;
 
-        /**
-         * Returns the stack pointer that this
-         * SafepointRecord's thread recorded as its
-         * top-of-stack before entering a safepoint.
-         *
-         * This function is not thread-safe when
-         * called outside of a SafepointTask.
-         */
-        const void* safeRegionEnd() const;
+public:
+  SafepointRecord();
+  ~SafepointRecord();
 
-        /**
-         * Returns if this SafepointRecord is safe
-         */
-        bool isSafe() const;
+  /**
+   * Returns true if the calling thread has at
+   * least one SafepointRecord describing its stack.
+   */
+  static bool hasCurrent();
 
-        /**
-         * Returns the SafepointManager with which
-         * this SafepointRecord is registered.
-         */
-        SafepointManager* manager() const;
+  /**
+   * Returns the calling thread's top-most
+   * SafepointRecord.
+   */
+  static SafepointRecord *current();
 
-		/**
-		 * Sets the interruptLocation and isolateDesc for this record.
-		 */
+  /**
+   * Returns the stack pointer that this
+   * SafepointRecord's thread recorded as its
+   * top-of-stack before entering a safepoint.
+   *
+   * This function is not thread-safe when
+   * called outside of a SafepointTask.
+   */
+  const void *safeRegionEnd() const;
 
-		void setLocationAndDesc (int32_t* location, int desc);
+  /**
+   * Returns if this SafepointRecord is safe
+   */
+  bool isSafe() const;
 
-    public:
-        /**
-         * Sets the calling thread's topmost
-         * SafepointRecord to NULL after OOM.
-         */
-		static void cleanupAfterOOM(){SafepointRecord::setCurrent(NULL);}
+  /**
+   * Returns the SafepointManager with which
+   * this SafepointRecord is registered.
+   */
+  SafepointManager *manager() const;
 
-    private:
-        /**
-         * Sets the calling thread's topmost
-         * SafepointRecord as the given record.
-         */
-        static void setCurrent(SafepointRecord* record);
+  /**
+   * Sets the interruptLocation and isolateDesc for this record.
+   */
 
-    private:
-        // Force stack allocation
-        void* operator new(size_t);
+  void setLocationAndDesc(int32_t *location, int desc);
 
-    private:
-        enum Status {SP_UNSAFE, SP_SAFE};
-        volatile Status m_status;
-        void* m_safeRegionEnd;
+public:
+  /**
+   * Sets the calling thread's topmost
+   * SafepointRecord to NULL after OOM.
+   */
+  static void cleanupAfterOOM() { SafepointRecord::setCurrent(NULL); }
 
-        SafepointRecord* m_stackPrev;     // The previous SafepointRecord on the thread's stack
-        SafepointRecord* m_managerPrev;   // The previous SafepointRecord on the SafepointManager's linked-list
-        SafepointRecord* m_managerNext;   // The next SafepointRecord on the SafepointManager's linked-list
-        SafepointManager* m_manager;      // The SafepointManager to which this SafepointRecord is registered
+private:
+  /**
+   * Sets the calling thread's topmost
+   * SafepointRecord as the given record.
+   */
+  static void setCurrent(SafepointRecord *record);
 
-        volatile int32_t*			m_interruptLocation;
-        int							m_isolateDesc;
+private:
+  // Force stack allocation
+  void *operator new(size_t);
 
-    private:
-        static VMThreadLocal<SafepointRecord*> m_current;
-    };
-}
+private:
+  enum Status { SP_UNSAFE, SP_SAFE };
+  volatile Status m_status;
+  void *m_safeRegionEnd;
+
+  SafepointRecord
+      *m_stackPrev; // The previous SafepointRecord on the thread's stack
+  SafepointRecord *m_managerPrev; // The previous SafepointRecord on the
+                                  // SafepointManager's linked-list
+  SafepointRecord *m_managerNext; // The next SafepointRecord on the
+                                  // SafepointManager's linked-list
+  SafepointManager *m_manager;    // The SafepointManager to which this
+                                  // SafepointRecord is registered
+
+  volatile int32_t *m_interruptLocation;
+  int m_isolateDesc;
+
+private:
+  static VMThreadLocal<SafepointRecord *> m_current;
+};
+} // namespace vmbase
 
 #else // VMCFG_SAFEPOINTS
 

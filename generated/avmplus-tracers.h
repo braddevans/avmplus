@@ -138,4 +138,3 @@
 #define avmplus_XMLListClass_isExactInterlock 1
 #define avmplus_XMLListObject_isExactInterlock 1
 #define avmplus_XMLObject_isExactInterlock 1
-

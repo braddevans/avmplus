@@ -44,144 +44,137 @@
 #ifndef __compileabc__
 #define __compileabc__
 
+#include "ThreadPool.h"
+#include "aotverify.h"
 #include "avmplus.h"
 #include "halfmoon/hm-main.h"
 #include "llvm-emitter.h"
 #include "poolinfo.h"
-#include "aotverify.h"
-#include "ThreadPool.h"
-namespace compile_abc
-{
-    class LLVMEmitter;
-    class LLVMModule;
-    struct StructInfo;
-    
-    // exit codes
-    enum ExitCode {
-        EXIT_CODE_SUCCESS = 0,
-        EXIT_CODE_BADFILE = 1,
-        EXIT_CODE_MISSINGDEFS = 2,
-        // internal errors
-        EXIT_CODE_OUT_OF_MEMORY = 128,
-        EXIT_CODE_ABORT = 129,
-    };
-    void emitANEMap(int argc, char** argv);
-    void parseOptions(int argc,char **argv);
-    class CompilerSettings
-    {
-    public:
-        CompilerSettings()
-        : do_log(false)
-        , do_verbose(false)
-        , as3_debugger(false)
-        {
-        }
+namespace compile_abc {
+class LLVMEmitter;
+class LLVMModule;
+struct StructInfo;
 
-        bool do_log;
-        std::string target_triple;
-        uint32_t do_verbose;           // copy to config
-        bool as3_debugger;
-        bool telemetry_sampler;
-    };
+// exit codes
+enum ExitCode {
+  EXIT_CODE_SUCCESS = 0,
+  EXIT_CODE_BADFILE = 1,
+  EXIT_CODE_MISSINGDEFS = 2,
+  // internal errors
+  EXIT_CODE_OUT_OF_MEMORY = 128,
+  EXIT_CODE_ABORT = 129,
+};
+void emitANEMap(int argc, char **argv);
+void parseOptions(int argc, char **argv);
+class CompilerSettings {
+public:
+  CompilerSettings() : do_log(false), do_verbose(false), as3_debugger(false) {}
 
-    /**
-     * Compiler driver and command line parser.
-     */
-    class Compiler: public avmplus::Aggregate {
-    public:
-        static int run(int argc, char *argv[]);
+  bool do_log;
+  std::string target_triple;
+  uint32_t do_verbose; // copy to config
+  bool as3_debugger;
+  bool telemetry_sampler;
+};
 
-    private:
-        int compile();
-        CompilerSettings settings;
-    };
+/**
+ * Compiler driver and command line parser.
+ */
+class Compiler : public avmplus::Aggregate {
+public:
+  static int run(int argc, char *argv[]);
 
+private:
+  int compile();
+  CompilerSettings settings;
+};
 
-    class CompilerToplevel: public avmplus::Toplevel
-    {
-    public:
-        CompilerToplevel(avmplus::AbcEnv* abcEnv) : Toplevel(abcEnv) {}
-        virtual MMgc::GCAPI::GCRef<avmplus::ClassClosure> workerClass() const { return NULL; }
-        virtual MMgc::GCAPI::GCRef<avmplus::ClassClosure> workerDomainClass() const { return NULL; }
-    };
-    
-    class CompilerCodeContext: public avmplus::CodeContext
-    {
-    public:
-        CompilerCodeContext(avmplus::DomainEnv* domainEnv, const avmplus::BugCompatibility* bugCompatibility)
-        : CodeContext(domainEnv, bugCompatibility)
-        {}
-    };
-    
-    /**
-     * A subclass of AcmCore for the compiler.
-     * AvmCore is a GCRoot, so this doesn't need decorations or write barriers.
-     */
-    class CompilerCore: public avmplus::AvmCore {
-    public:
-        CompilerCore(MMgc::GC* gc);
-        ~CompilerCore();
-        
-        static int run(int argc, char *argv[]);
-        
-        virtual avmplus::Toplevel* createToplevel(avmplus::AbcEnv*);
-        virtual avmplus::ApiVersion getDefaultAPI();
-        virtual void interrupt(avmplus::Toplevel*, avmplus::AvmCore::InterruptReason);
-        virtual void stackOverflow(avmplus::Toplevel*);
+class CompilerToplevel : public avmplus::Toplevel {
+public:
+  CompilerToplevel(avmplus::AbcEnv *abcEnv) : Toplevel(abcEnv) {}
+  virtual MMgc::GCAPI::GCRef<avmplus::ClassClosure> workerClass() const {
+    return NULL;
+  }
+  virtual MMgc::GCAPI::GCRef<avmplus::ClassClosure> workerDomainClass() const {
+    return NULL;
+  }
+};
 
-        virtual BaseExecMgr* createExecMgr()
-        {
-            return new (gc) AOTExecMgr(this);
-        }
+class CompilerCodeContext : public avmplus::CodeContext {
+public:
+  CompilerCodeContext(avmplus::DomainEnv *domainEnv,
+                      const avmplus::BugCompatibility *bugCompatibility)
+      : CodeContext(domainEnv, bugCompatibility) {}
+};
 
-        LLVMModule* summaryModule;
-        ThreadPool threadPool;
-        StructInfoMap structInfos;
-        StructInfoMap nativeSlotTemplates;
-        std::vector<NativeMethod> nativeMethods;
-        struct PoolInfos: std::vector<PoolInfo*>
-        {
-            // Can't have a vector of AbcInfos sice we keep pointers to them so they can't be moving
-            // around when realocating. There's no suitable auto_ptr for container usage until C++11
-            // (or in Boost) but I don't want to depend on those, so handle deletion here.
-            ~PoolInfos()
-            {
-                for(unsigned i = 0; i < size(); ++i)
-                    delete (*this)[i];
-            }
-        } poolInfos;
-        int firstUserPool;
-        PoolInfo* builtinPoolInfo;
-        PoolInfo* currentlyParsing;
-        
-        uint64_t fieldsChecksum;
-        CompilerToplevel* compilerToplevel;
-        bool parseAndVerify;
-        
-    private:
-        int compile();
-        int initialize();
-        
-        int evaluateFile(const std::string& fileName, PoolInfo& poolinfo, avmplus::CodeContext* codeContext);
-        
-        void emitPoolToModule(PoolInfo& poolInfo, LLVMModule* llvmModule);
-        void emitSummaryModule();
-        //This takes a pool and emits it. If Pool has large no of functions then
-        // it is broken into multiple llvm modules and then emits.
-        void emitPoolToSpilttedModules(PoolInfo& poolInfo);
-        void emitModule(LLVMModule* llvmModule);
-        void createModule(PoolInfo& poolInfo, LLVMModule*& llvmModule, int splitIndex);
-        CompilerSettings settings;
-        const avmplus::BugCompatibility* bugCompatibility;
-        
-        CompilerCodeContext* sdkCodeContext;     
-        CompilerCodeContext* userCodeContext;
-                
-        friend class LLVMEmitter;
-        friend class CompilationJob;
-    };
-}
+/**
+ * A subclass of AcmCore for the compiler.
+ * AvmCore is a GCRoot, so this doesn't need decorations or write barriers.
+ */
+class CompilerCore : public avmplus::AvmCore {
+public:
+  CompilerCore(MMgc::GC *gc);
+  ~CompilerCore();
+
+  static int run(int argc, char *argv[]);
+
+  virtual avmplus::Toplevel *createToplevel(avmplus::AbcEnv *);
+  virtual avmplus::ApiVersion getDefaultAPI();
+  virtual void interrupt(avmplus::Toplevel *,
+                         avmplus::AvmCore::InterruptReason);
+  virtual void stackOverflow(avmplus::Toplevel *);
+
+  virtual BaseExecMgr *createExecMgr() { return new (gc) AOTExecMgr(this); }
+
+  LLVMModule *summaryModule;
+  ThreadPool threadPool;
+  StructInfoMap structInfos;
+  StructInfoMap nativeSlotTemplates;
+  std::vector<NativeMethod> nativeMethods;
+  struct PoolInfos : std::vector<PoolInfo *> {
+    // Can't have a vector of AbcInfos sice we keep pointers to them so they
+    // can't be moving around when realocating. There's no suitable auto_ptr for
+    // container usage until C++11 (or in Boost) but I don't want to depend on
+    // those, so handle deletion here.
+    ~PoolInfos() {
+      for (unsigned i = 0; i < size(); ++i)
+        delete (*this)[i];
+    }
+  } poolInfos;
+  int firstUserPool;
+  PoolInfo *builtinPoolInfo;
+  PoolInfo *currentlyParsing;
+
+  uint64_t fieldsChecksum;
+  CompilerToplevel *compilerToplevel;
+  bool parseAndVerify;
+
+private:
+  int compile();
+  int initialize();
+
+  int evaluateFile(const std::string &fileName, PoolInfo &poolinfo,
+                   avmplus::CodeContext *codeContext);
+
+  void emitPoolToModule(PoolInfo &poolInfo, LLVMModule *llvmModule);
+  void emitSummaryModule();
+  // This takes a pool and emits it. If Pool has large no of functions then
+  // it is broken into multiple llvm modules and then emits.
+  void emitPoolToSpilttedModules(PoolInfo &poolInfo);
+  void emitModule(LLVMModule *llvmModule);
+  void createModule(PoolInfo &poolInfo, LLVMModule *&llvmModule,
+                    int splitIndex);
+  CompilerSettings settings;
+  const avmplus::BugCompatibility *bugCompatibility;
+
+  CompilerCodeContext *sdkCodeContext;
+  CompilerCodeContext *userCodeContext;
+
+  friend class LLVMEmitter;
+  friend class CompilationJob;
+};
+} // namespace compile_abc
 namespace halfmoon {
-  bool AOTIsDebugMode();
+bool AOTIsDebugMode();
 }
 #endif /* __compileabc__ */

@@ -17,10 +17,8 @@ namespace halfmoon {
  * @return return true if instr is listed amongst those instructions which
  * should be translated as calls to stub routines rather than generated code
  */
-inline bool debugStub( Instr *instr) {
-  return stub_out[kind(instr)];
-}
+inline bool debugStub(Instr *instr) { return stub_out[kind(instr)]; }
 
-} //namespace halfmoon
+} // namespace halfmoon
 
 #endif /* HM_DEBUG_INLINES_H_ */

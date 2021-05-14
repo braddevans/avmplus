@@ -7,6 +7,7 @@
 #ifndef __StaticAssert__
 #define __StaticAssert__
 
-#define MMGC_STATIC_ASSERT(condition) static_assert(condition,"MMGC_STATIC_ASSERT")
+#define MMGC_STATIC_ASSERT(condition)                                          \
+  static_assert(condition, "MMGC_STATIC_ASSERT")
 
 #endif /* __StaticAssert__ */

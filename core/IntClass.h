@@ -7,66 +7,56 @@
 #ifndef __avmplus_IntClass__
 #define __avmplus_IntClass__
 
+namespace avmplus {
+/**
+ * class int
+ */
+class GC_AS3_EXACT(IntClass, ClassClosure) {
+protected:
+  IntClass(VTable *cvtable);
 
-namespace avmplus
-{
-    /**
-     * class int
-     */
-    class GC_AS3_EXACT(IntClass, ClassClosure)
-    {
-    protected:
-        IntClass(VTable* cvtable);
-    public:
-        REALLY_INLINE static IntClass* create(MMgc::GC* gc, VTable* cvtable)
-        {
-            return new (gc, MMgc::kExact, cvtable->getExtraSize()) IntClass(cvtable);
-        }
+public:
+  REALLY_INLINE static IntClass *create(MMgc::GC *gc, VTable *cvtable) {
+    return new (gc, MMgc::kExact, cvtable->getExtraSize()) IntClass(cvtable);
+  }
 
-        // this = argv[0]
-        // arg1 = argv[1]
-        // argN = argv[argc]
-        Atom call(int argc, Atom *argv)
-        {
-            return construct(argc, argv);
-        }
+  // this = argv[0]
+  // arg1 = argv[1]
+  // argN = argv[argc]
+  Atom call(int argc, Atom *argv) { return construct(argc, argv); }
 
-    // ------------------------ DATA SECTION BEGIN
-    private:
-        GC_NO_DATA(IntClass)
+  // ------------------------ DATA SECTION BEGIN
+private:
+  GC_NO_DATA(IntClass)
 
-        DECLARE_SLOTS_IntClass;
-    // ------------------------ DATA SECTION END
-    };
+  DECLARE_SLOTS_IntClass;
+  // ------------------------ DATA SECTION END
+};
 
-    /**
-     * class uint
-     */
-    class GC_AS3_EXACT(UIntClass, ClassClosure)
-    {
-    protected:
-        UIntClass(VTable* cvtable);
-    public:
-        REALLY_INLINE static UIntClass* create(MMgc::GC* gc, VTable* cvtable)
-        {
-            return new (gc, MMgc::kExact, cvtable->getExtraSize()) UIntClass(cvtable);
-        }
-        
-        // this = argv[0]
-        // arg1 = argv[1]
-        // argN = argv[argc]
-        Atom call(int argc, Atom* argv)
-        {
-            return construct(argc,argv);
-        }
+/**
+ * class uint
+ */
+class GC_AS3_EXACT(UIntClass, ClassClosure) {
+protected:
+  UIntClass(VTable *cvtable);
 
-    // ------------------------ DATA SECTION BEGIN
-    private:
-        GC_NO_DATA(UIntClass)
+public:
+  REALLY_INLINE static UIntClass *create(MMgc::GC *gc, VTable *cvtable) {
+    return new (gc, MMgc::kExact, cvtable->getExtraSize()) UIntClass(cvtable);
+  }
 
-        DECLARE_SLOTS_UIntClass;
-    // ------------------------ DATA SECTION END
-    };
-}
+  // this = argv[0]
+  // arg1 = argv[1]
+  // argN = argv[argc]
+  Atom call(int argc, Atom *argv) { return construct(argc, argv); }
+
+  // ------------------------ DATA SECTION BEGIN
+private:
+  GC_NO_DATA(UIntClass)
+
+  DECLARE_SLOTS_UIntClass;
+  // ------------------------ DATA SECTION END
+};
+} // namespace avmplus
 
 #endif /* __avmplus_IntClass__ */

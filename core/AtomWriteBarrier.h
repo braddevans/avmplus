@@ -7,28 +7,26 @@
 #ifndef __avmplus_AtomWriteBarrier__
 #define __avmplus_AtomWriteBarrier__
 
-namespace avmplus
-{
-    // Optimized Atom write barrier
-    class AtomWB : public MMgc::AtomWBCore
-    {
-    public:
-        explicit AtomWB();
-        explicit AtomWB(Atom t);
-        ~AtomWB();
-        Atom operator=(Atom tNew);
-        // if you know the container, this saves a call to FindBeginningFast...
-        // which adds up in (e.g.) heavy E4X usage
-        void set(MMgc::GC* gc, const void* container, Atom atomNew);
-        operator const Atom&() const;
-        
-    private:
-        explicit AtomWB(const AtomWB& toCopy); // unimplemented
-        void operator=(const AtomWB& wb); // unimplemented
-        Atom set(Atom atomNew);
-    };
+namespace avmplus {
+// Optimized Atom write barrier
+class AtomWB : public MMgc::AtomWBCore {
+public:
+  explicit AtomWB();
+  explicit AtomWB(Atom t);
+  ~AtomWB();
+  Atom operator=(Atom tNew);
+  // if you know the container, this saves a call to FindBeginningFast...
+  // which adds up in (e.g.) heavy E4X usage
+  void set(MMgc::GC *gc, const void *container, Atom atomNew);
+  operator const Atom &() const;
+
+private:
+  explicit AtomWB(const AtomWB &toCopy); // unimplemented
+  void operator=(const AtomWB &wb);      // unimplemented
+  Atom set(Atom atomNew);
+};
 #define ATOM_WB AtomWB
 #define WBATOM(gc, c, a, v) AvmCore::atomWriteBarrier(gc, c, a, v)
-}
+} // namespace avmplus
 
 #endif /* __avmplus_AtomWriteBarrier__ */

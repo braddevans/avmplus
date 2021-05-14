@@ -6,36 +6,36 @@
 
 #include "avmshell.h"
 namespace avmshell {
-    ShellWorkerDomainObject::ShellWorkerDomainObject(avmplus::VTable* vtable, avmplus::ScriptObject* prototype)
-        : avmplus::ScriptObject(vtable, prototype)
-    {
-    }
-    
-    ShellWorkerObject* ShellWorkerDomainObject::createWorkerFromByteArrayInternal(avmplus::ByteArrayObject* byteArray)
-    {
-        // Note that the cast to ShellWorkerClass is needed because constructObject is not virtual!
+ShellWorkerDomainObject::ShellWorkerDomainObject(
+    avmplus::VTable *vtable, avmplus::ScriptObject *prototype)
+    : avmplus::ScriptObject(vtable, prototype) {}
 
+ShellWorkerObject *ShellWorkerDomainObject::createWorkerFromByteArrayInternal(
+    avmplus::ByteArrayObject *byteArray) {
+  // Note that the cast to ShellWorkerClass is needed because constructObject is
+  // not virtual!
 
-        ShellWorkerObject* shellWorkerObject = toplevel()->workerClass().staticCast<ShellWorkerClass>()->constructObject().staticCast<ShellWorkerObject>();
-        shellWorkerObject->setByteCode(byteArray);
-        shellWorkerObject->initialize();
-        return shellWorkerObject;
-    }
-    
-
-    avmplus::ObjectVectorObject* ShellWorkerDomainObject::listWorkers()
-    {
-        return avmplus::WorkerDomainObjectBase<ShellWorkerDomainObject>::listWorkers();
-    }
-
-
-    ShellWorkerDomainClass::ShellWorkerDomainClass(avmplus::VTable *cvtable)
-        : avmplus::ClassClosure(cvtable)
-    {
-        AvmAssert(avmplus::AvmCore::getActiveCore() == cvtable->core());
-        createVanillaPrototype();
-                
-        ShellWorkerDomainObject* current = (ShellWorkerDomainObject*)newInstance();
-        set_m_current(current);
-    }        
+  ShellWorkerObject *shellWorkerObject = toplevel()
+                                             ->workerClass()
+                                             .staticCast<ShellWorkerClass>()
+                                             ->constructObject()
+                                             .staticCast<ShellWorkerObject>();
+  shellWorkerObject->setByteCode(byteArray);
+  shellWorkerObject->initialize();
+  return shellWorkerObject;
 }
+
+avmplus::ObjectVectorObject *ShellWorkerDomainObject::listWorkers() {
+  return avmplus::WorkerDomainObjectBase<
+      ShellWorkerDomainObject>::listWorkers();
+}
+
+ShellWorkerDomainClass::ShellWorkerDomainClass(avmplus::VTable *cvtable)
+    : avmplus::ClassClosure(cvtable) {
+  AvmAssert(avmplus::AvmCore::getActiveCore() == cvtable->core());
+  createVanillaPrototype();
+
+  ShellWorkerDomainObject *current = (ShellWorkerDomainObject *)newInstance();
+  set_m_current(current);
+}
+} // namespace avmshell

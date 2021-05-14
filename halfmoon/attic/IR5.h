@@ -32,79 +32,78 @@ struct IR5 {
   struct Instr;
   struct Stmt;
   struct BlockStart;
-  struct   Start;
-  struct   Label;
-  struct   Edge;
+  struct Start;
+  struct Label;
+  struct Edge;
   struct BlockEnd;
-  struct   If;
-  struct   Goto;
-  struct   Stop;
+  struct If;
+  struct Goto;
+  struct Stop;
 
   // There can be only one.
-  Start* start;
-  Stop* stop;
+  Start *start;
+  Stop *stop;
 
   struct Instr {
     int id;
-    InstrInfo* info;
+    InstrInfo *info;
   };
 
   // A BlockStart delimits the beginning of a linear sequence of
   // executable instructions.
   //
   struct BlockStart : Instr {
-    int block_id;             // dense numbering, because instr->id is sparse
-    Def* params;              // block data inputs.
-    Instr* next;              // beginning of block's executable instruction list
-    BlockEnd* end;            // end of this block.
+    int block_id;  // dense numbering, because instr->id is sparse
+    Def *params;   // block data inputs.
+    Instr *next;   // beginning of block's executable instruction list
+    BlockEnd *end; // end of this block.
   };
 
   // A Start begins a block that is only accessed by an indirect call.
   //
-  // A Start's params are the bona fide parameters of the callable 
+  // A Start's params are the bona fide parameters of the callable
   // entity. No direct references to a Start will appear in an IR graph,
   // but indirect calls must supply a sequence of arguments which is
   // type- and shape-compatible with the start's param sequence.
-  // 
-  struct Start : BlockStart {
-  };
+  //
+  struct Start : BlockStart {};
 
   // An Edge begins a block that is owned by a Branch, a BlockEnd
-  // that represents an act of data-driven selection among several 
-  // subsequent computations (If, Switch are Branches). An Edge 
-  // has exactly one predecessor, its owner. 
+  // that represents an act of data-driven selection among several
+  // subsequent computations (If, Switch are Branches). An Edge
+  // has exactly one predecessor, its owner.
   //
-  // An edge's params are type-refined values transferred by the 
-  // owner branch to this edge upon selection. All edges of a given 
-  // branch have the same sequence of params (mod type refinements), 
+  // An edge's params are type-refined values transferred by the
+  // owner branch to this edge upon selection. All edges of a given
+  // branch have the same sequence of params (mod type refinements),
   // and these are congruent with the branch's args (thus the number
   // of params carried by each edge is given by the branch's argument
   // count).
-  // 
+  //
   struct Edge : BlockStart {
-    If* owner;                // branch that owns this edge.
+    If *owner; // branch that owns this edge.
   };
 
   // A Label begins an labeled (i.e., addressable) block. By virtue
-  // of addressability, a label may be the target of multiple 
+  // of addressability, a label may be the target of multiple
   // predecessor Gotos.
   //
-  // A label's params are values transferred to the label by a 
-  // predecessor Goto. The number of params (and hence the number 
+  // A label's params are values transferred to the label by a
+  // predecessor Goto. The number of params (and hence the number
   // of args supplied by each predecessor) is given by argc.
-  // 
+  //
   struct Label : BlockStart {
-    Goto* preds;                  // list of incoming gotos
-    int argc;                     // number of merged variables.
+    Goto *preds; // list of incoming gotos
+    int argc;    // number of merged variables.
   };
 
   // A BlockEnd delimits the end of a linear sequence of
   // executable instructions.
   //
   struct BlockEnd : Instr {
-    Instr* prev;                  // end of block's executable instruction list
-    BlockStart* start;            // start of this block.
-    Use* args;                    // output values to next block or return
+    Instr *prev;       // end of block's executable instruction list
+    BlockStart *start; // start of this block.
+    Use *args;         // output values to next block or return
   };
 
   // A Goto ends a block with a transition to a target Label,
@@ -114,34 +113,33 @@ struct IR5 {
   // The two sequences are congruent, so a goto's arg count is
   // its target's param count.
   //
-  struct Goto: BlockEnd {
-    Label* target;                // target Label for this Goto
-    Goto *next_goto, *prev_goto;  // other Gotos to same target
+  struct Goto : BlockEnd {
+    Label *target;               // target Label for this Goto
+    Goto *next_goto, *prev_goto; // other Gotos to same target
   };
 
   // An If ends a block with a transition to one of a fixed
-  // set of successor Edges. As described here, If represents 
+  // set of successor Edges. As described here, If represents
   // both if and switch statements, where the former branch over
   // two-valued selectors, and the latter branch over n-valued
   // selectors and carry a default. The choice of edge is determined
   // by the selector.
-  // 
-  struct If : BlockEnd {          // includes switch
-    Use cond;                     // conditional selector
-    int argc;                     // number of split variables.
-    Edge succs[2];                // arity based on opcode. if=2, switch=N
+  //
+  struct If : BlockEnd { // includes switch
+    Use cond;            // conditional selector
+    int argc;            // number of split variables.
+    Edge succs[2];       // arity based on opcode. if=2, switch=N
   };
 
   // A Stop instruction delimits an executable block. Its
   // arguments match the block's signature of returned values.
-  // 
-  struct Stop : BlockEnd {
-  };
+  //
+  struct Stop : BlockEnd {};
 
   // A Stmt is an executable instruction with no transition
   // semantics. Lists of Stmts denote sequential execution.
   //
-  struct Stmt: Instr {
+  struct Stmt : Instr {
     Instr *prev, *next;
   };
 
@@ -216,6 +214,6 @@ struct IR5 {
   //
 };
 
-}
+} // namespace halfmoon
 
 #endif // IR5_H_

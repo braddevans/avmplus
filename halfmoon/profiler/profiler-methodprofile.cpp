@@ -10,26 +10,20 @@
 
 namespace profiler {
 
-void finish(MethodProfile* p) {
-  p->finish();
-}
+void finish(MethodProfile *p) { p->finish(); }
 
-bool hasBailedOut(MethodProfile* p) {
-  return p->hasBailedOut();
-}
+bool hasBailedOut(MethodProfile *p) { return p->hasBailedOut(); }
 
-MethodProfileMgr::MethodProfileMgr(Allocator& alloc)
-: method_profile_allocator_(alloc),
-  input_types_allocator_(alloc),
-  method_info_map_(method_profile_allocator_) {
-}
+MethodProfileMgr::MethodProfileMgr(Allocator &alloc)
+    : method_profile_allocator_(alloc), input_types_allocator_(alloc),
+      method_info_map_(method_profile_allocator_) {}
 
-MethodProfile* MethodProfileMgr::getMethodProfile(MethodInfo* methodInfo) {
+MethodProfile *MethodProfileMgr::getMethodProfile(MethodInfo *methodInfo) {
   AvmAssert(methodInfo != NULL);
-  MethodProfile* methodProfile = method_info_map_.get(methodInfo);
+  MethodProfile *methodProfile = method_info_map_.get(methodInfo);
   if (methodProfile == NULL) {
-    methodProfile = new (method_profile_allocator_) MethodProfile(
-        method_profile_allocator_, input_types_allocator_);
+    methodProfile = new (method_profile_allocator_)
+        MethodProfile(method_profile_allocator_, input_types_allocator_);
     method_info_map_.put(methodInfo, methodProfile);
   }
 
@@ -37,25 +31,24 @@ MethodProfile* MethodProfileMgr::getMethodProfile(MethodInfo* methodInfo) {
   return methodProfile;
 }
 
-/*** 
+/***
  * MethodProfile shares the same allocator as the MethodProfileMgr
  * so we can clean all the underlying MethodProfiles when we clean
  * MethodProfileMgr. Also, if each MethodProfile has its own allocator,
  * we instantly get GC Leaks, and I'm not sure why.
  */
-MethodProfile::MethodProfile(Allocator& method_profile_mgr_allocator,
-                             Allocator& input_types_allocator)
-: branch_counter_allocator_(method_profile_mgr_allocator),
-  input_types_allocator_(input_types_allocator),
-  branch_counter_map_(branch_counter_allocator_),
-  runtime_type_map_(input_types_allocator_) {
+MethodProfile::MethodProfile(Allocator &method_profile_mgr_allocator,
+                             Allocator &input_types_allocator)
+    : branch_counter_allocator_(method_profile_mgr_allocator),
+      input_types_allocator_(input_types_allocator),
+      branch_counter_map_(branch_counter_allocator_),
+      runtime_type_map_(input_types_allocator_) {
   this->loop_iteration_count_ = 0;
   this->method_invocation_count_ = 0;
   this->current_profiler_state_ = NONE;
 }
 
-MethodProfile::~MethodProfile() {
-}
+MethodProfile::~MethodProfile() {}
 
 int32_t MethodProfile::getLoopIterationCount(int branch_pc, int target_pc) {
   int loop_count = getBranchCount(branch_pc, target_pc);
@@ -65,7 +58,7 @@ int32_t MethodProfile::getLoopIterationCount(int branch_pc, int target_pc) {
 
 double MethodProfile::getBranchProbability(int branch_abc_pc,
                                            int target_abc_pc) {
-  HashMap<int, int>* branch_targets = branch_counter_map_.get(branch_abc_pc);
+  HashMap<int, int> *branch_targets = branch_counter_map_.get(branch_abc_pc);
   AvmAssert(branch_targets != NULL && "Not a valid branch abc pc");
 
   HashMap<int, int>::Iter iter(*branch_targets);
@@ -77,7 +70,7 @@ double MethodProfile::getBranchProbability(int branch_abc_pc,
 
   int target_branch_count = branch_targets->get(target_abc_pc);
   AvmAssert(target_branch_count <= total_branch_count);
-  return (double) target_branch_count / (double) total_branch_count;
+  return (double)target_branch_count / (double)total_branch_count;
 }
 
 void MethodProfile::finish() {
@@ -88,20 +81,20 @@ void MethodProfile::finish() {
 }
 
 int MethodProfile::getBranchCount(int branch_abc_pc, int target_abc_pc) {
-  HashMap<int, int>* branch_targets = branch_counter_map_.get(branch_abc_pc);
+  HashMap<int, int> *branch_targets = branch_counter_map_.get(branch_abc_pc);
   AvmAssert(branch_targets != NULL && "Not a valid branch abc pc");
   AvmAssert(branch_targets->containsKey(target_abc_pc) &&
-         "Not a valid branch target pc");
+            "Not a valid branch target pc");
 
   return branch_targets->get(target_abc_pc);
 }
 
-HashMap<int, int>* MethodProfile::getBranchTargetCounters(int abc_branch_pc) {
-  HashMap<int, int>* branch_targets = branch_counter_map_.get(abc_branch_pc);
+HashMap<int, int> *MethodProfile::getBranchTargetCounters(int abc_branch_pc) {
+  HashMap<int, int> *branch_targets = branch_counter_map_.get(abc_branch_pc);
   if (branch_targets == NULL) {
     int default_hashmap_size = 2;
-    branch_targets = new (branch_counter_allocator_) HashMap<int, int>(
-        branch_counter_allocator_, default_hashmap_size);
+    branch_targets = new (branch_counter_allocator_)
+        HashMap<int, int>(branch_counter_allocator_, default_hashmap_size);
     branch_counter_map_.put(abc_branch_pc, branch_targets);
   }
 
@@ -110,7 +103,7 @@ HashMap<int, int>* MethodProfile::getBranchTargetCounters(int abc_branch_pc) {
 
 void MethodProfile::initializeBranchCounters(int start_pc, int true_target_pc,
                                              int false_target_pc) {
-  HashMap<int, int>* branch_target_count = getBranchTargetCounters(start_pc);
+  HashMap<int, int> *branch_target_count = getBranchTargetCounters(start_pc);
   branch_target_count->put(true_target_pc, 0);
   branch_target_count->put(false_target_pc, 0);
 }
@@ -118,7 +111,7 @@ void MethodProfile::initializeBranchCounters(int start_pc, int true_target_pc,
 void MethodProfile::incrementBranchCounters(bool took_branch, int start_pc,
                                             int true_target_pc,
                                             int false_target_pc) {
-  HashMap<int, int>* branch_target_count = getBranchTargetCounters(start_pc);
+  HashMap<int, int> *branch_target_count = getBranchTargetCounters(start_pc);
   int taken_branch = took_branch ? true_target_pc : false_target_pc;
   int updated_count = branch_target_count->get(taken_branch) + 1;
   branch_target_count->put(taken_branch, updated_count);
@@ -132,13 +125,13 @@ bool MethodProfile::hasBailedOut() {
   return current_profiler_state_ == INACCURATE;
 }
 
-ProfiledState* MethodProfile::getProfileState(int abc_pc, int input_count,
+ProfiledState *MethodProfile::getProfileState(int abc_pc, int input_count,
                                               int output_count) {
   AvmAssert(!hasBailedOut());
-  ProfiledState* profiled_state = runtime_type_map_.get(abc_pc);
+  ProfiledState *profiled_state = runtime_type_map_.get(abc_pc);
   if (profiled_state == NULL) {
-    profiled_state = new (input_types_allocator_) ProfiledState(
-        input_types_allocator_, input_count, output_count);
+    profiled_state = new (input_types_allocator_)
+        ProfiledState(input_types_allocator_, input_count, output_count);
     runtime_type_map_.put(abc_pc, profiled_state);
   }
 
@@ -146,5 +139,5 @@ ProfiledState* MethodProfile::getProfileState(int abc_pc, int input_count,
   return profiled_state;
 }
 
-} // end namespace
+} // namespace profiler
 #endif // VMCFG_HALFMOON

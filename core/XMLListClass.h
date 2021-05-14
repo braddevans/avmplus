@@ -7,31 +7,29 @@
 #ifndef __avmplus_XMLListClass__
 #define __avmplus_XMLListClass__
 
+namespace avmplus {
+/**
+ * class XMLListClass
+ */
+class GC_AS3_EXACT(XMLListClass, ClassClosure) {
+protected:
+  XMLListClass(VTable *cvtable);
 
-namespace avmplus
-{
-    /**
-     * class XMLListClass
-     */
-    class GC_AS3_EXACT(XMLListClass, ClassClosure)
-    {
-    protected:
-        XMLListClass(VTable* cvtable);
-    public:
-        // this = argv[0]
-        // arg1 = argv[1]
-        // argN = argv[argc]
-        Atom call(int argc, Atom* argv);
+public:
+  // this = argv[0]
+  // arg1 = argv[1]
+  // argN = argv[argc]
+  Atom call(int argc, Atom *argv);
 
-        Atom ToXMLList(Atom arg);
+  Atom ToXMLList(Atom arg);
 
-    // ------------------------ DATA SECTION BEGIN
-    private:
-        GC_NO_DATA(XMLListClass)
+  // ------------------------ DATA SECTION BEGIN
+private:
+  GC_NO_DATA(XMLListClass)
 
-        DECLARE_SLOTS_XMLListClass;
-    // ------------------------ DATA SECTION END
-    };
-}
+  DECLARE_SLOTS_XMLListClass;
+  // ------------------------ DATA SECTION END
+};
+} // namespace avmplus
 
 #endif /* __avmplus_XMLListClass__ */

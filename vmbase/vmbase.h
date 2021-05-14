@@ -14,13 +14,12 @@
 // It serves as the main header for the vmbase module, which contains platform
 // independent code used by both avmcore and MMgc, e.g. AvmAssert.
 
-namespace vmbase
-{
-    class SafepointRecord;
+namespace vmbase {
+class SafepointRecord;
 }
 
-#include "VMThread.h"
 #include "Safepoint.h"
+#include "VMThread.h"
 #include "vmbase-inlines.h"
 
 #endif /* __vmbase__ */

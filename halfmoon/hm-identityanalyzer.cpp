@@ -12,91 +12,91 @@ namespace halfmoon {
 /// Return the identity def for the given instruction, which will either
 /// be effect_in, or the given value_in.
 ///
-Def* IdentityAnalyzer::identity(BinaryStmt* instr, Def* value_in) {
+Def *IdentityAnalyzer::identity(BinaryStmt *instr, Def *value_in) {
   return def_ == instr->effect_out() ? def(instr->effect_in()) : value_in;
 }
 
-Def* IdentityAnalyzer::identity(UnaryStmt* instr, Def* value_in) {
+Def *IdentityAnalyzer::identity(UnaryStmt *instr, Def *value_in) {
   return def_ == instr->effect_out() ? def(instr->effect_in()) : value_in;
 }
 
 /// Return the identity def for the given instruction, which will either
 /// be effect_in, or the given value_in.
 ///
-Def* IdentityAnalyzer::identity(UnaryStmt* instr) {
-  return def(def_ == instr->effect_out() ? instr->effect_in() :
-             instr->value_in());
+Def *IdentityAnalyzer::identity(UnaryStmt *instr) {
+  return def(def_ == instr->effect_out() ? instr->effect_in()
+                                         : instr->value_in());
 }
 
-Def* IdentityAnalyzer::identity(NaryStmt3* instr, Def* value_in) {
+Def *IdentityAnalyzer::identity(NaryStmt3 *instr, Def *value_in) {
   return (def_ == instr->effect_out() ? def(instr->effect_in()) : value_in);
 }
 
-Def* IdentityAnalyzer::identity(Instr* instr) {
+Def *IdentityAnalyzer::identity(Instr *instr) {
   AvmAssert(definer(def_) == instr && "Illegal def");
   return do_instr(this, instr);
 }
 
 /// Analyze lexical lookup instructions HR_findprop and HR_findpropstrict.
 ///
-Def* IdentityAnalyzer::doFindStmt(NaryStmt3* instr) {
+Def *IdentityAnalyzer::doFindStmt(NaryStmt3 *instr) {
   int index;
   if (findScope(lattice_, instr, &index) == kScopeLocal)
     return identity(instr, def(instr->vararg(index)));
   return def_;
 }
 
-Def* IdentityAnalyzer::do_cast(BinaryStmt* instr) {
-  const Type* traits_type = type(instr->lhs_in());
+Def *IdentityAnalyzer::do_cast(BinaryStmt *instr) {
+  const Type *traits_type = type(instr->lhs_in());
   if (!isConst(traits_type))
     return def_; // Don't know the target traits.
-  const Type* to_type = lattice_->makeType(traitsVal(traits_type));
+  const Type *to_type = lattice_->makeType(traitsVal(traits_type));
   // fixme: this is copied from coerceIdentity().
-  Def* value_in = def(instr->rhs_in());
-  if (subtypeof(type(value_in), to_type))  
+  Def *value_in = def(instr->rhs_in());
+  if (subtypeof(type(value_in), to_type))
     return identity(instr, value_in);
   return def_;
 }
 
-Def* IdentityAnalyzer::do_toprimitive(UnaryStmt* instr) {
+Def *IdentityAnalyzer::do_toprimitive(UnaryStmt *instr) {
   if (isPrimitive(type(instr->value_in())))
     return identity(instr);
   return def_;
 }
 
-Def* IdentityAnalyzer::coerceIdentity(UnaryExpr* instr, const Type* to_type) {
-  Def* value_in = def(instr->value_in());
+Def *IdentityAnalyzer::coerceIdentity(UnaryExpr *instr, const Type *to_type) {
+  Def *value_in = def(instr->value_in());
   if (subtypeof(type(value_in), to_type))
     return value_in;
   return def_;
 }
 
-Def* IdentityAnalyzer::coerceIdentity(UnaryStmt* instr, const Type* to_type) {
-  Def* value_in = def(instr->value_in());
+Def *IdentityAnalyzer::coerceIdentity(UnaryStmt *instr, const Type *to_type) {
+  Def *value_in = def(instr->value_in());
   if (subtypeof(type(value_in), to_type))
     return identity(instr, value_in);
   return def_;
 }
 
-Def* IdentityAnalyzer::do_coerce(BinaryStmt* instr) {
-  const Type* traits_type = type(instr->lhs_in());
+Def *IdentityAnalyzer::do_coerce(BinaryStmt *instr) {
+  const Type *traits_type = type(instr->lhs_in());
   if (isConst(traits_type)) {
-    const Type* to_type = lattice_->makeType(traitsVal(traits_type));
-    Def* value_in = def(instr->rhs_in());
+    const Type *to_type = lattice_->makeType(traitsVal(traits_type));
+    Def *value_in = def(instr->rhs_in());
     if (subtypeof(type(value_in), to_type))
       return identity(instr, value_in);
   }
   return def_;
 }
 
-Def* IdentityAnalyzer::do_cknull(UnaryStmt* instr) {
+Def *IdentityAnalyzer::do_cknull(UnaryStmt *instr) {
   if (!isNullable(type(instr->value_in())))
     return identity(instr);
   return def_;
 }
 
-Def* IdentityAnalyzer::do_u2i(UnaryExpr* instr) {
-  Def* d2;
+Def *IdentityAnalyzer::do_u2i(UnaryExpr *instr) {
+  Def *d2;
   if (match(instr->value_in(), HR_i2u, &d2))
     return d2;
   return def_;
@@ -110,12 +110,12 @@ Def* IdentityAnalyzer::do_u2i(UnaryExpr* instr) {
 /// 2. If the only non-self value is x, return that:
 ///    z = phi(x, z, ..., z) => z = x
 ///
-Def* IdentityAnalyzer::do_label(LabelInstr* label) {
+Def *IdentityAnalyzer::do_label(LabelInstr *label) {
   AvmAssert(label->preds != NULL);
   // must have at least one predecessor.
-  Def* d = 0;
+  Def *d = 0;
   for (LabelArgRange r(label, pos(def_)); !r.empty(); r.popFront()) {
-    Def* d2 = def(r.front());
+    Def *d2 = def(r.front());
     if (d2 != def_ && d2 != d) {
       if (!d)
         d = d2;
@@ -130,39 +130,39 @@ Def* IdentityAnalyzer::do_label(LabelInstr* label) {
 /// Un-split any def on this edge, if its type is the same as the value
 /// going into the IF, except EFFECT types.
 ///
-Def* IdentityAnalyzer::do_arm(ArmInstr* arm) {
+Def *IdentityAnalyzer::do_arm(ArmInstr *arm) {
   if (isLinear(type(def_))) {
     // Do not un-split linear types, so as to avoid creating scheduling
     // headaches later by allowing uses to float out of basic blocks.
     return def_;
   }
-  Def* arg = def(arm->owner->arg(pos(def_)));
+  Def *arg = def(arm->owner->arg(pos(def_)));
   if (*type(def_) == *type(arg))
     return arg;
   return def_;
 }
 
-Def* IdentityAnalyzer::do_speculate_number(BinaryExpr* instr) {
-  //AvmAssert (type(instr->lhs_in()) != type(instr->value_out()));
-  Def* lhs_in = def(instr->lhs_in());
+Def *IdentityAnalyzer::do_speculate_number(BinaryExpr *instr) {
+  // AvmAssert (type(instr->lhs_in()) != type(instr->value_out()));
+  Def *lhs_in = def(instr->lhs_in());
   if (isNumber(type(lhs_in)))
     return lhs_in;
   return def_;
 }
 
-Def* IdentityAnalyzer::do_getlocal(GetlocalStmt* instr) {
+Def *IdentityAnalyzer::do_getlocal(GetlocalStmt *instr) {
   // This fixes up any getlocals that reference other getlocal values.
   // We only use the values (perhaps shouldn't!) for type computations
   // But we don't want getlocals to keep other getlocals alive
   while (kind(definer(instr->value_in())) == HR_getlocal) {
-    GetlocalStmt* stmt = cast<GetlocalStmt>(definer(instr->value_in()));
+    GetlocalStmt *stmt = cast<GetlocalStmt>(definer(instr->value_in()));
     instr->value_in() = def(stmt->value_in());
   }
   return def_;
 }
 
-Def* IdentityAnalyzer::doModelChange(UnaryExpr* expr, InstrKind opposite) {
-  Def* in;
+Def *IdentityAnalyzer::doModelChange(UnaryExpr *expr, InstrKind opposite) {
+  Def *in;
   if (match(expr->value_in(), opposite, &in))
     return in;
   return def_;

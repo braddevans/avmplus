@@ -8,14 +8,13 @@
 
 #include <windows.h>
 
-void VMPI_debugLog(const char* message)
-{
-	OutputDebugStringA(message);
-	VMPI_log( message ); // also log to standard output
+void VMPI_debugLog(const char *message) {
+  OutputDebugStringA(message);
+  VMPI_log(message); // also log to standard output
 }
 
-void VMPI_debugBreak()
-{
-	// As DebugBreak is not supported, trying to catch debugger's attention otherwise:
-	RaiseException(EXCEPTION_BREAKPOINT , 0,0, NULL);
+void VMPI_debugBreak() {
+  // As DebugBreak is not supported, trying to catch debugger's attention
+  // otherwise:
+  RaiseException(EXCEPTION_BREAKPOINT, 0, 0, NULL);
 }

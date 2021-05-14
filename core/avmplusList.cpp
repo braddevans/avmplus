@@ -8,27 +8,26 @@
 
 #include "avmplusList-impl.h"
 
-namespace avmplus
-{
-    VMPI_DEFINE_FAILFAST(DataListLengthValidationError)
-    VMPI_DEFINE_FAILFAST(TracedListLengthValidationError)
+namespace avmplus {
+VMPI_DEFINE_FAILFAST(DataListLengthValidationError)
+VMPI_DEFINE_FAILFAST(TracedListLengthValidationError)
 
-    // Force explicit instantiations for various non-inlined ListImpl methods;
-    // some compilers don't need this, but some do. (I'm looking at you, XCode.)
+// Force explicit instantiations for various non-inlined ListImpl methods;
+// some compilers don't need this, but some do. (I'm looking at you, XCode.)
 
-    template class ListImpl<MMgc::GCObject*, GCListHelper>;
-    template class ListImpl<MMgc::RCObject*, RCListHelper>;
-    template class ListImpl<MMgc::GCObject*, WeakRefListHelper>;
-    template class ListImpl<Atom, AtomListHelper>;
-    template class ListImpl< UnmanagedPointer, DataListHelper<UnmanagedPointer> >;
-    template class ListImpl< uint8_t, DataListHelper<uint8_t> >;
-    template class ListImpl< int32_t, DataListHelper<int32_t> >;
-    template class ListImpl< uint32_t, DataListHelper<uint32_t> >;
-    template class ListImpl< uint64_t, DataListHelper<uint64_t> >;
+template class ListImpl<MMgc::GCObject *, GCListHelper>;
+template class ListImpl<MMgc::RCObject *, RCListHelper>;
+template class ListImpl<MMgc::GCObject *, WeakRefListHelper>;
+template class ListImpl<Atom, AtomListHelper>;
+template class ListImpl<UnmanagedPointer, DataListHelper<UnmanagedPointer>>;
+template class ListImpl<uint8_t, DataListHelper<uint8_t>>;
+template class ListImpl<int32_t, DataListHelper<int32_t>>;
+template class ListImpl<uint32_t, DataListHelper<uint32_t>>;
+template class ListImpl<uint64_t, DataListHelper<uint64_t>>;
 #ifdef VMCFG_FLOAT
-    template class ListImpl< float, DataListHelper<float> >;
-    template class ListImpl< float4_t, DataListHelper<float4_t, 16> >;
-#endif    
-    template class ListImpl< double, DataListHelper<double> >;
-    template class ListImpl< char, DataListHelper<char> >;
-}
+template class ListImpl<float, DataListHelper<float>>;
+template class ListImpl<float4_t, DataListHelper<float4_t, 16>>;
+#endif
+template class ListImpl<double, DataListHelper<double>>;
+template class ListImpl<char, DataListHelper<char>>;
+} // namespace avmplus

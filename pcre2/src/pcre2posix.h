@@ -1,6 +1,6 @@
 /*************************************************
-*      Perl-Compatible Regular Expressions       *
-*************************************************/
+ *      Perl-Compatible Regular Expressions       *
+ *************************************************/
 
 /* PCRE2 is a library of functions to support regular expressions whose syntax
 and semantics are as close as possible to those of the Perl 5 language.
@@ -38,7 +38,6 @@ POSSIBILITY OF SUCH DAMAGE.
 -----------------------------------------------------------------------------
 */
 
-
 /* Have to include stdlib.h in order to ensure that size_t is defined. */
 
 #include <stdlib.h>
@@ -51,45 +50,44 @@ extern "C" {
 
 /* Options, mostly defined by POSIX, but with some extras. */
 
-#define REG_ICASE     0x0001  /* Maps to PCRE2_CASELESS */
-#define REG_NEWLINE   0x0002  /* Maps to PCRE2_MULTILINE */
-#define REG_NOTBOL    0x0004  /* Maps to PCRE2_NOTBOL */
-#define REG_NOTEOL    0x0008  /* Maps to PCRE2_NOTEOL */
-#define REG_DOTALL    0x0010  /* NOT defined by POSIX; maps to PCRE2_DOTALL */
-#define REG_NOSUB     0x0020  /* Maps to PCRE2_NO_AUTO_CAPTURE */
-#define REG_UTF       0x0040  /* NOT defined by POSIX; maps to PCRE2_UTF */
-#define REG_STARTEND  0x0080  /* BSD feature: pass subject string by so,eo */
-#define REG_NOTEMPTY  0x0100  /* NOT defined by POSIX; maps to PCRE2_NOTEMPTY */
-#define REG_UNGREEDY  0x0200  /* NOT defined by POSIX; maps to PCRE2_UNGREEDY */
-#define REG_UCP       0x0400  /* NOT defined by POSIX; maps to PCRE2_UCP */
+#define REG_ICASE 0x0001    /* Maps to PCRE2_CASELESS */
+#define REG_NEWLINE 0x0002  /* Maps to PCRE2_MULTILINE */
+#define REG_NOTBOL 0x0004   /* Maps to PCRE2_NOTBOL */
+#define REG_NOTEOL 0x0008   /* Maps to PCRE2_NOTEOL */
+#define REG_DOTALL 0x0010   /* NOT defined by POSIX; maps to PCRE2_DOTALL */
+#define REG_NOSUB 0x0020    /* Maps to PCRE2_NO_AUTO_CAPTURE */
+#define REG_UTF 0x0040      /* NOT defined by POSIX; maps to PCRE2_UTF */
+#define REG_STARTEND 0x0080 /* BSD feature: pass subject string by so,eo */
+#define REG_NOTEMPTY 0x0100 /* NOT defined by POSIX; maps to PCRE2_NOTEMPTY */
+#define REG_UNGREEDY 0x0200 /* NOT defined by POSIX; maps to PCRE2_UNGREEDY */
+#define REG_UCP 0x0400      /* NOT defined by POSIX; maps to PCRE2_UCP */
 
 /* This is not used by PCRE2, but by defining it we make it easier
 to slot PCRE2 into existing programs that make POSIX calls. */
 
-#define REG_EXTENDED  0
+#define REG_EXTENDED 0
 
 /* Error values. Not all these are relevant or used by the wrapper. */
 
 enum {
-  REG_ASSERT = 1,  /* internal error ? */
-  REG_BADBR,       /* invalid repeat counts in {} */
-  REG_BADPAT,      /* pattern error */
-  REG_BADRPT,      /* ? * + invalid */
-  REG_EBRACE,      /* unbalanced {} */
-  REG_EBRACK,      /* unbalanced [] */
-  REG_ECOLLATE,    /* collation error - not relevant */
-  REG_ECTYPE,      /* bad class */
-  REG_EESCAPE,     /* bad escape sequence */
-  REG_EMPTY,       /* empty expression */
-  REG_EPAREN,      /* unbalanced () */
-  REG_ERANGE,      /* bad range inside [] */
-  REG_ESIZE,       /* expression too big */
-  REG_ESPACE,      /* failed to get memory */
-  REG_ESUBREG,     /* bad back reference */
-  REG_INVARG,      /* bad argument */
-  REG_NOMATCH      /* match failed */
+  REG_ASSERT = 1, /* internal error ? */
+  REG_BADBR,      /* invalid repeat counts in {} */
+  REG_BADPAT,     /* pattern error */
+  REG_BADRPT,     /* ? * + invalid */
+  REG_EBRACE,     /* unbalanced {} */
+  REG_EBRACK,     /* unbalanced [] */
+  REG_ECOLLATE,   /* collation error - not relevant */
+  REG_ECTYPE,     /* bad class */
+  REG_EESCAPE,    /* bad escape sequence */
+  REG_EMPTY,      /* empty expression */
+  REG_EPAREN,     /* unbalanced () */
+  REG_ERANGE,     /* bad range inside [] */
+  REG_ESIZE,      /* expression too big */
+  REG_ESPACE,     /* failed to get memory */
+  REG_ESUBREG,    /* bad back reference */
+  REG_INVARG,     /* bad argument */
+  REG_NOMATCH     /* match failed */
 };
-
 
 /* The structure representing a compiled regular expression. */
 
@@ -115,32 +113,32 @@ export settings are needed, and are set in pcre2posix.c before including this
 file. */
 
 #if defined(_WIN32) && !defined(PCRE2_STATIC) && !defined(PCRE2POSIX_EXP_DECL)
-#  define PCRE2POSIX_EXP_DECL  extern __declspec(dllimport)
-#  define PCRE2POSIX_EXP_DEFN  __declspec(dllimport)
+#define PCRE2POSIX_EXP_DECL extern __declspec(dllimport)
+#define PCRE2POSIX_EXP_DEFN __declspec(dllimport)
 #endif
 
 /* By default, we use the standard "extern" declarations. */
 
 #ifndef PCRE2POSIX_EXP_DECL
-#  ifdef __cplusplus
-#    define PCRE2POSIX_EXP_DECL  extern "C"
-#    define PCRE2POSIX_EXP_DEFN  extern "C"
-#  else
-#    define PCRE2POSIX_EXP_DECL  extern
-#    define PCRE2POSIX_EXP_DEFN  extern
-#  endif
+#ifdef __cplusplus
+#define PCRE2POSIX_EXP_DECL extern "C"
+#define PCRE2POSIX_EXP_DEFN extern "C"
+#else
+#define PCRE2POSIX_EXP_DECL extern
+#define PCRE2POSIX_EXP_DEFN extern
+#endif
 #endif
 
 /* The functions */
 
 PCRE2POSIX_EXP_DECL int regcomp(regex_t *, const char *, int);
 PCRE2POSIX_EXP_DECL int regexec(const regex_t *, const char *, size_t,
-                     regmatch_t *, int);
+                                regmatch_t *, int);
 PCRE2POSIX_EXP_DECL size_t regerror(int, const regex_t *, char *, size_t);
 PCRE2POSIX_EXP_DECL void regfree(regex_t *);
 
 #ifdef __cplusplus
-}   /* extern "C" */
+} /* extern "C" */
 #endif
 
 /* End of pcre2posix.h */

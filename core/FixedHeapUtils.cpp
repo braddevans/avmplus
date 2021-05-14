@@ -6,38 +6,25 @@
 
 #include "avmplus.h"
 
-namespace avmplus
-{
+namespace avmplus {
 
-    
-    FixedHeapRCObject::FixedHeapRCObject()
-        : m_rcount(0)
-    {
-    }
-        
-    int32_t FixedHeapRCObject::IncrementRef() 
-    {
-        // worry about overflow?
-        return m_rcount.incAndGet();
-    }
+FixedHeapRCObject::FixedHeapRCObject() : m_rcount(0) {}
 
-    int32_t FixedHeapRCObject::DecrementRef() 
-    {
-        int32_t current = m_rcount.decAndGet();
-        AvmAssert(current >= 0);
-        if (current == 0)
-            destroy();
-        return current;
-    }
-
-    int32_t FixedHeapRCObject::RefCount()
-    {
-        return m_rcount.get();
-    }
-    
-    
-    FixedHeapRCObject::~FixedHeapRCObject()
-    {
-    }
-
+int32_t FixedHeapRCObject::IncrementRef() {
+  // worry about overflow?
+  return m_rcount.incAndGet();
 }
+
+int32_t FixedHeapRCObject::DecrementRef() {
+  int32_t current = m_rcount.decAndGet();
+  AvmAssert(current >= 0);
+  if (current == 0)
+    destroy();
+  return current;
+}
+
+int32_t FixedHeapRCObject::RefCount() { return m_rcount.get(); }
+
+FixedHeapRCObject::~FixedHeapRCObject() {}
+
+} // namespace avmplus

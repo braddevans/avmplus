@@ -28,23 +28,28 @@
 #define _USE_MATH_DEFINES // Make math.h behave like other platforms.
 #endif
 
-/* ==== Platform adaptation macros: these describe properties of the target environment. ==== */
+/* ==== Platform adaptation macros: these describe properties of the target
+ * environment. ==== */
 
-/* HAVE() - specific system features (headers, functions or similar) that are present or not */
-#define HAVE(WTF_FEATURE) (defined HAVE_##WTF_FEATURE  && HAVE_##WTF_FEATURE)
-/* OS() - underlying operating system; only to be used for mandated low-level services like
-   virtual memory, not to choose a GUI toolkit */
-#define OS(WTF_FEATURE) (defined WTF_OS_##WTF_FEATURE  && WTF_OS_##WTF_FEATURE)
+/* HAVE() - specific system features (headers, functions or similar) that are
+ * present or not */
+#define HAVE(WTF_FEATURE) (defined HAVE_##WTF_FEATURE && HAVE_##WTF_FEATURE)
+/* OS() - underlying operating system; only to be used for mandated low-level
+   services like virtual memory, not to choose a GUI toolkit */
+#define OS(WTF_FEATURE) (defined WTF_OS_##WTF_FEATURE && WTF_OS_##WTF_FEATURE)
 
-/* ==== Policy decision macros: these define policy choices for a particular port. ==== */
+/* ==== Policy decision macros: these define policy choices for a particular
+ * port. ==== */
 
 /* USE() - use a particular third-party library or optional OS service */
-#define USE(WTF_FEATURE) (defined WTF_USE_##WTF_FEATURE  && WTF_USE_##WTF_FEATURE)
+#define USE(WTF_FEATURE)                                                       \
+  (defined WTF_USE_##WTF_FEATURE && WTF_USE_##WTF_FEATURE)
 /* ENABLE() - turn on a specific feature of WebKit */
-#define ENABLE(WTF_FEATURE) (defined ENABLE_##WTF_FEATURE  && ENABLE_##WTF_FEATURE)
+#define ENABLE(WTF_FEATURE)                                                    \
+  (defined ENABLE_##WTF_FEATURE && ENABLE_##WTF_FEATURE)
 
-/* ==== OS() - underlying operating system; only to be used for mandated low-level services like
-   virtual memory, not to choose a GUI toolkit ==== */
+/* ==== OS() - underlying operating system; only to be used for mandated
+   low-level services like virtual memory, not to choose a GUI toolkit ==== */
 
 /* OS(ANDROID) - Android */
 #ifdef ANDROID
@@ -53,7 +58,8 @@
 #elif defined(__APPLE__)
 #define WTF_OS_MACOSX 1
 /* OS(FREEBSD) - FreeBSD */
-#elif defined(__FreeBSD__) || defined(__DragonFly__) || defined(__FreeBSD_kernel__)
+#elif defined(__FreeBSD__) || defined(__DragonFly__) ||                        \
+    defined(__FreeBSD_kernel__)
 #define WTF_OS_FREEBSD 1
 /* OS(LINUX) - Linux */
 #elif defined(__linux__)
@@ -67,18 +73,13 @@
 #endif
 
 /* OS(POSIX) - Any Unix-like system */
-#if OS(ANDROID)          \
-    || OS(MACOSX)           \
-    || OS(FREEBSD)          \
-    || OS(LINUX)            \
-    || OS(OPENBSD)          \
-    || defined(unix)        \
-    || defined(__unix)      \
-    || defined(__unix__)
+#if OS(ANDROID) || OS(MACOSX) || OS(FREEBSD) || OS(LINUX) || OS(OPENBSD) ||    \
+    defined(unix) || defined(__unix) || defined(__unix__)
 #define WTF_OS_POSIX 1
 #endif
 
-/* There is an assumption in the project that either OS(WIN) or OS(POSIX) is set. */
+/* There is an assumption in the project that either OS(WIN) or OS(POSIX) is
+ * set. */
 #if !OS(WIN) && !OS(POSIX)
 #error Either OS(WIN) or OS(POSIX) needs to be set.
 #endif
@@ -99,7 +100,8 @@
 #ifdef __cplusplus
 
 // These undefs match up with defines in build/mac/Prefix.h for Mac OS X.
-// Helps us catch if anyone uses new or delete by accident in code and doesn't include "config.h".
+// Helps us catch if anyone uses new or delete by accident in code and doesn't
+// include "config.h".
 #undef new
 #undef delete
 #include <ciso646>

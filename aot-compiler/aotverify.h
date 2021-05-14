@@ -47,42 +47,39 @@
 #include "avmplus.h"
 #include "halfmoon/hm-main.h"
 
-namespace compile_abc
-{
-    using namespace avmplus;
-    class CompilerCore;
-    
-    // Information captured from the initial verify pass
-    struct MethodVerifyInfo
-    {
-        MethodVerifyInfo() : method(0), verifySucceeded(false) {};
-        MethodInfo* method;
-        bool verifySucceeded;
-    };
-    
-    class AOTExecMgr: public BaseExecMgr
-    {
-    public:
-        AOTExecMgr(CompilerCore* core);
-        
-        virtual void notifyAbcPrepared(Toplevel* toplevel, AbcEnv* abcEnv);
-        virtual void verifyMethod(MethodInfo* m, Toplevel *toplevel, AbcEnv* abc_env);
-        
-        void verifyPool(Toplevel* toplevel, AbcEnv* abcEnv);
-        void verifyAot(MethodInfo* m, MethodSignaturep ms,
-                               Toplevel *toplevel, AbcEnv* abc_env, OSR *osr);
-        bool verifyOptimizeAot(MethodInfo* m, MethodSignaturep ms,
-                                           Toplevel* toplevel, AbcEnv* abc_env, OSR* /* osr_state */);
-        void propogateArgArrFlagTopToBottom();
-        void setArgArrayPropogationFlag(bool value);
-        bool getArgArrayPropogationFlag() const;
-        
-    private:
-        void propogateArgArrFlagInMethodHierarchy(MethodInfo* method);
-        const CompilerCore* core;
-        GCList<MethodInfo> propogateArgArrMethodQueue;
-        bool argArrayPropogationFlag;
-    };
-}
+namespace compile_abc {
+using namespace avmplus;
+class CompilerCore;
+
+// Information captured from the initial verify pass
+struct MethodVerifyInfo {
+  MethodVerifyInfo() : method(0), verifySucceeded(false){};
+  MethodInfo *method;
+  bool verifySucceeded;
+};
+
+class AOTExecMgr : public BaseExecMgr {
+public:
+  AOTExecMgr(CompilerCore *core);
+
+  virtual void notifyAbcPrepared(Toplevel *toplevel, AbcEnv *abcEnv);
+  virtual void verifyMethod(MethodInfo *m, Toplevel *toplevel, AbcEnv *abc_env);
+
+  void verifyPool(Toplevel *toplevel, AbcEnv *abcEnv);
+  void verifyAot(MethodInfo *m, MethodSignaturep ms, Toplevel *toplevel,
+                 AbcEnv *abc_env, OSR *osr);
+  bool verifyOptimizeAot(MethodInfo *m, MethodSignaturep ms, Toplevel *toplevel,
+                         AbcEnv *abc_env, OSR * /* osr_state */);
+  void propogateArgArrFlagTopToBottom();
+  void setArgArrayPropogationFlag(bool value);
+  bool getArgArrayPropogationFlag() const;
+
+private:
+  void propogateArgArrFlagInMethodHierarchy(MethodInfo *method);
+  const CompilerCore *core;
+  GCList<MethodInfo> propogateArgArrMethodQueue;
+  bool argArrayPropogationFlag;
+};
+} // namespace compile_abc
 
 #endif /* __compileabc_aotverify__ */

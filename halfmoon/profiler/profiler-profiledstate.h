@@ -7,7 +7,8 @@
 /***
  * Represents the profile information gathered at one specific PC in
  * the ABC program. The information is specific to ABC information, not LIR.
- * We keep track of the ABC locals, scope stack, and operand stack type information.
+ * We keep track of the ABC locals, scope stack, and operand stack type
+ * information.
  */
 
 #ifndef PROFILER_PROFILEDSTATE_H_
@@ -15,23 +16,23 @@
 
 /***
  * This represents the runtime profiled information
- * at a single ABC PC location. We only need to keep 
+ * at a single ABC PC location. We only need to keep
  * pertinent information about the current ABC opcode.
- * 
+ *
  * So we only have to track inputs -> output types.
  * Only need to track output types if we can have multiple
  * output types. eg bitand will always return an integer, so no
  * reason to track it.
  */
 namespace profiler {
-using avmplus::AvmCore;
-using avmplus::Traits;
 using avmplus::Atom;
+using avmplus::AvmCore;
 using avmplus::ScriptObject;
+using avmplus::Traits;
 
 class ProfiledState {
 public:
-  ProfiledState(Allocator& allocator, int input_count, int output_count);
+  ProfiledState(Allocator &allocator, int input_count, int output_count);
 
   RecordedType getInputType(int inputIndex);
   RecordedType getOutputType(int outputIndex);
@@ -46,11 +47,11 @@ public:
 
 private:
   void allocateInputTypes();
-  RecordedType* profiled_types_;
-  Allocator& allocator_;
+  RecordedType *profiled_types_;
+  Allocator &allocator_;
   int input_count_;
   int output_count_;
 };
-}
+} // namespace profiler
 
 #endif // PROFILER_PROFILEDSTATE_H_

@@ -9,27 +9,23 @@
 
 #include <e32std.h>
 
-class SymbianHeap
-{
+class SymbianHeap {
 public:
-
-    SymbianHeap(TInt size);
-    ~SymbianHeap();
-    bool Commit(TUint addr, TUint size);
-    bool Decommit(TUint addr, TUint size);
-    TUint GetStart();
-    TUint GetEnd();
-    static SymbianHeap* FindHeap(TUint addr, SymbianHeap* heap);
+  SymbianHeap(TInt size);
+  ~SymbianHeap();
+  bool Commit(TUint addr, TUint size);
+  bool Decommit(TUint addr, TUint size);
+  TUint GetStart();
+  TUint GetEnd();
+  static SymbianHeap *FindHeap(TUint addr, SymbianHeap *heap);
 
 private:
-
-    RChunk m_chunk;
-    TUint m_startAddr;
-    TUint m_endAddr;
+  RChunk m_chunk;
+  TUint m_startAddr;
+  TUint m_endAddr;
 
 public:
-
-    SymbianHeap* m_next;
+  SymbianHeap *m_next;
 };
 
 #endif __SymbianHeap__
