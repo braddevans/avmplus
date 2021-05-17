@@ -191,7 +191,7 @@ package c64.memory
 			}
 			var bank:uint = address >> 8;
 			var f:uint = memoryMapWrite[bank];
-//            print("MemoryBankInfo: "+getType(memoryBankInfo[f].image)+" "+address+" "+value);
+//            print("MemoryBankInfo: "+get_type(memoryBankInfo[f].image)+" "+address+" "+value);
 			
             if (getQualifiedSuperclassName(memoryBankInfo[f].image)=="core.memory.io::IOHandler")
                 MemoryBankInfo(memoryBankInfo[f]).image.setProperty(""+address,value);

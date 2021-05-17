@@ -21,52 +21,53 @@ Known Problems:
 
 <h2>Introduction</h2>
 
-<P><span class="pcounter"></span>ABC (originally for Action Block Code) is the language executed by the AVM (ActionScript 
-Virtual Machine of Tamarin). The full definition of ABC includes a specification of its 
-syntax, static semantics and runtime behavior. Within the static semantics are 
-constraints on the bytecode of each executed method (methods that are not 
-executed are not subject to these constraints.) A bytecode verifier is the mechanism 
-that enforces such static constraints on sequences of bytecode. 
+<P><span class="pcounter"></span>ABC (originally for Action Block Code) is the language executed by the AVM
+    (ActionScript
+    Virtual Machine of Tamarin). The full definition of ABC includes a specification of its
+    syntax, static semantics and runtime behavior. Within the static semantics are
+    constraints on the bytecode of each executed method (methods that are not
+    executed are not subject to these constraints.) A bytecode verifier is the mechanism
+    that enforces such static constraints on sequences of bytecode.
 
-<P><span class="pcounter"></span>This document describes the AVM bytecode verifier using an abstract machine and 
-the translation of concrete ABC instructions into operations of that abstract machine. 
-The abstract machine described here accepts the same set of programs that the AVM verifier 
-accepts. This is the set of ABC programs that is allowed to be executed by the AVM.
+<P><span class="pcounter"></span>This document describes the AVM bytecode verifier using an abstract machine and
+    the translation of concrete ABC instructions into operations of that abstract machine.
+    The abstract machine described here accepts the same set of programs that the AVM verifier
+    accepts. This is the set of ABC programs that is allowed to be executed by the AVM.
 
-<P><span class="pcounter"></span>This document does not describe the syntactic or structural constraints on ABC files 
-that do not involve ABC bytecode. Those rules are defined in the AVM2 Overview [3] and elsewhere.
+<P><span class="pcounter"></span>This document does not describe the syntactic or structural constraints on ABC files
+    that do not involve ABC bytecode. Those rules are defined in the AVM2 Overview [3] and elsewhere.
 
-<P><span class="pcounter"></span>The audience for this document includes developers who are working on and 
-compiler writers who are targeting the AVM. The reader might find helpful to think of 
-this as an alternative interpretation of ABC programs; that is, to not 
-confuse the meaning of types and control flow with that of a particular source 
-language or even the dynamic behavior of the ABC instructions. 
+<P><span class="pcounter"></span>The audience for this document includes developers who are working on and
+    compiler writers who are targeting the AVM. The reader might find helpful to think of
+    this as an alternative interpretation of ABC programs; that is, to not
+    confuse the meaning of types and control flow with that of a particular source
+    language or even the dynamic behavior of the ABC instructions.
 
 <h2>Invariants</h2>
 
 <P><span class="pcounter"></span>
-The following invariants are checked during verification:
+    The following invariants are checked during verification:
 
 <ul>
-  <li> Operand stack does not underflow or overflow
-  <li> Scope stack does not underflow or overflow
-  <li> Storage locations always have an unambiguous state
-  <li> Instruction operands are valid references and have their expected types
-  <li> Instruction pointers point to the beginning of an instruction
-  <li> Constant pool indices point to valid constant pool entries
+    <li> Operand stack does not underflow or overflow
+    <li> Scope stack does not underflow or overflow
+    <li> Storage locations always have an unambiguous state
+    <li> Instruction operands are valid references and have their expected types
+    <li> Instruction pointers point to the beginning of an instruction
+    <li> Constant pool indices point to valid constant pool entries
 </ul>
 
-<P><span class="pcounter"></span>There are many other constraints on the syntax and semantics of an ABC file. For 
-example it is essential that
+<P><span class="pcounter"></span>There are many other constraints on the syntax and semantics of an ABC file. For
+    example it is essential that
 
 <ul>
-  <li> Base classes exist and are not declared 'final'
-  <li> Class methods that are overridden are not declared 'final'
-  <li> ...more here
+    <li> Base classes exist and are not declared 'final'
+    <li> Class methods that are overridden are not declared 'final'
+    <li> ...more here
 </ul>
 
-<P><span class="pcounter"></span>Such constraints are assumed by this spec to have been checked before bytecode 
-verification.
+<P><span class="pcounter"></span>Such constraints are assumed by this spec to have been checked before bytecode
+    verification.
 
 <h2>Abstract Machine</h2>
 
@@ -75,228 +76,228 @@ verification.
 <P><span class="pcounter"></span>The abstract machine state includes the following components:
 
 <ul>
-  <li> Operand stack of a maximum size containing zero or more types
-  <li> Scope stack of a maximum size containing one or more types
-  <li> Local registers of a maximum size, each containing a type
-  <li> Index of the current instruction
+    <li> Operand stack of a maximum size containing zero or more types
+    <li> Scope stack of a maximum size containing one or more types
+    <li> Local registers of a maximum size, each containing a type
+    <li> Index of the current instruction
 </ul>
 
-<P><span class="pcounter"></span>We refer to stack elements and local registers as locations in the machine state. 
-A valid machine state is one whose stack sizes and type of each location are known 
-to be consistent when reached by all possible control flow paths. A valid bytecode 
-sequence is one with only valid machine states.
+<P><span class="pcounter"></span>We refer to stack elements and local registers as locations in the machine state.
+    A valid machine state is one whose stack sizes and type of each location are known
+    to be consistent when reached by all possible control flow paths. A valid bytecode
+    sequence is one with only valid machine states.
 
-<P><span class="pcounter"></span>Accessible locations are initialized to the type Any and so are never in an undefined 
-(or killed) state.
+<P><span class="pcounter"></span>Accessible locations are initialized to the type Any and so are never in an undefined
+    (or killed) state.
 
 <h3>Machine Context</h3>
 
 <P><span class="pcounter"></span>
-In addition to the state that is mutated in the course of method verification, there is 
-additional state that represents the context of the method. That environment 
-includes:
+    In addition to the state that is mutated in the course of method verification, there is
+    additional state that represents the context of the method. That environment
+    includes:
 
 <ul>
-  <li> Method being verfied including method body and map of machine states for that method
-  <li> Lexically visible bindings (name to type) outside the method
-  <li> Constant pool
-  <li> Script domain (contains top-level fixed definitions)
+    <li> Method being verfied including method body and map of machine states for that method
+    <li> Lexically visible bindings (name to type) outside the method
+    <li> Constant pool
+    <li> Script domain (contains top-level fixed definitions)
 </ul>
 
 <h3>Machine Types</h3>
 
 <P><span class="pcounter"></span>
-The verifier type system is factored somewhat differently than that of ActionScript or 
-any other normal object oriented language, for that matter. The key difference is 
-that there are six root types, none of which are compatible with any of the others.
-ActionScript, in contrast, has one root type Any with which all other types are
-assignment compatible. The reason for this deviation is that the verifier type system 
-reflects the compatibility rules of the underlying machine values.
+    The verifier type system is factored somewhat differently than that of ActionScript or
+    any other normal object oriented language, for that matter. The key difference is
+    that there are six root types, none of which are compatible with any of the others.
+    ActionScript, in contrast, has one root type Any with which all other types are
+    assignment compatible. The reason for this deviation is that the verifier type system
+    reflects the compatibility rules of the underlying machine values.
 
 <P><span class="pcounter"></span>
-The root types of the abstract machine are:
+    The root types of the abstract machine are:
 
 <ul>
-  <li> Atom* (consists of Any, Undefined, Object)
-  <li> Int*
-  <li> UInt*
-  <li> Boolean*
-  <li> Number*
-  <li> Reference* (consists of Null and any sub-class of Object, including String and 
-Namespace)
+    <li> Atom* (consists of Any, Undefined, Object)
+    <li> Int*
+    <li> UInt*
+    <li> Boolean*
+    <li> Number*
+    <li> Reference* (consists of Null and any sub-class of Object, including String and
+        Namespace)
 </ul>
 
-<p class="note"><b>NOTE</b>&nbsp;&nbsp;  String and Namespace are special in that there are instructions that expect 
-those types, but otherwise they are treated as all other Reference* types.
+<p class="note"><b>NOTE</b>&nbsp;&nbsp; String and Namespace are special in that there are instructions that expect
+    those types, but otherwise they are treated as all other Reference* types.
 
 <P><span class="pcounter"></span>
-Two types are considered consistent if they are the same machine type and they 
-merge to a concrete type that is the same machine type. We use the term 'type' to 
-refer to both a machine types (e.g. Atom*) and the concrete types (e.g. Any and 
-Object) without qualification unless the distinction is important and unclear.
+    Two types are considered consistent if they are the same machine type and they
+    merge to a concrete type that is the same machine type. We use the term 'type' to
+    refer to both a machine types (e.g. Atom*) and the concrete types (e.g. Any and
+    Object) without qualification unless the distinction is important and unclear.
 
 <P><span class="pcounter"></span>
-The rules for merging types are:
+    The rules for merging types are:
 
 <ul>
-  <li> Two identical types merge as the same type
-  <li> Two Atom* types merge as type Any
-  <li> Two Reference* types merge as the type that is the most derived common 
-base class. Two Reference* types are consistent only if they merge to another 
-Reference* type (i.e. not Object)
-  <li> All other type combinations result in a merge error
+    <li> Two identical types merge as the same type
+    <li> Two Atom* types merge as type Any
+    <li> Two Reference* types merge as the type that is the most derived common
+        base class. Two Reference* types are consistent only if they merge to another
+        Reference* type (i.e. not Object)
+    <li> All other type combinations result in a merge error
 </ul>
 
 <h3>Abstract Operators</h3>
 
 <P><span class="pcounter"></span>
-The following operators are the primitives that define possible state transitions of the 
-abstract machine.
+    The following operators are the primitives that define possible state transitions of the
+    abstract machine.
 
 <ul>
-  <li> Push type
-  <li> Pop [count]
-  <li> Coerce type
-  <li> Check type [index]
-  <li> Peek symbol [index]
-  <li> Swap
-  <li> Load index
-  <li> Store index
-  <li> PushScope type
-  <li> PopScope
-  <li> Jump offset
-  <li> Throws
-  <li> PopName
-  <li> FindName
-  <li> FindDefName
-  <li> GetSlot
-  <li> GetProp
-  <li> SetSlot
-  <li> SetProp
+    <li> Push type
+    <li> Pop [count]
+    <li> Coerce type
+    <li> Check type [index]
+    <li> Peek symbol [index]
+    <li> Swap
+    <li> Load index
+    <li> Store index
+    <li> PushScope type
+    <li> PopScope
+    <li> Jump offset
+    <li> Throws
+    <li> PopName
+    <li> FindName
+    <li> FindDefName
+    <li> GetSlot
+    <li> GetProp
+    <li> SetSlot
+    <li> SetProp
 </ul>
 
 <P><span class="pcounter"></span>
-<b>Push <i>type</i></b>. Push the specified type onto the operand stack. Raises an error if the 
-number of elements on the operand stack is equal to the maximum stack size.
+    <b>Push <i>type</i></b>. Push the specified type onto the operand stack. Raises an error if the
+    number of elements on the operand stack is equal to the maximum stack size.
 
 <P><span class="pcounter"></span>
-<b>Pop <i>[count]</i></b>. Pop count types from the operand stack. If unspecified count is 1. 
-Raises an error if count is greater than the number of elements on the operand 
-stack.
+    <b>Pop <i>[count]</i></b>. Pop count types from the operand stack. If unspecified count is 1.
+    Raises an error if count is greater than the number of elements on the operand
+    stack.
 
 <P><span class="pcounter"></span>
-<b>Coerce <i>type</i></b>. Change the type on the top of the stack to the given type. Raises no 
-error.
+    <b>Coerce <i>type</i></b>. Change the type on the top of the stack to the given type. Raises no
+    error.
 
 <P><span class="pcounter"></span>
-<b>Check <i>type [index]</i></b>. Check that the type at the location of index is of the given 
-type. If index is not provided, then check the type on the top of the stack. Raises an 
-error if index does not indicate a valid location or if the type at that location is not 
-compatible with the specified type.
+    <b>Check <i>type [index]</i></b>. Check that the type at the location of index is of the given
+    type. If index is not provided, then check the type on the top of the stack. Raises an
+    error if index does not indicate a valid location or if the type at that location is not
+    compatible with the specified type.
 
 <P><span class="pcounter"></span>
-<b>Peek <i>symbol [index]</i></b>. Bind meta-name symbol to the type at the location of index. 
-If index is not provided, then binds the type on the top of the operand stack. Raises an 
-error if index does not indicate a valid location.
+    <b>Peek <i>symbol [index]</i></b>. Bind meta-name symbol to the type at the location of index.
+    If index is not provided, then binds the type on the top of the operand stack. Raises an
+    error if index does not indicate a valid location.
 
 <P><span class="pcounter"></span>
-<b>Swap</b>. Swap the two values on the top of the operand stack. Raises an error if fewer 
-than two elements are on the operand stack.
+    <b>Swap</b>. Swap the two values on the top of the operand stack. Raises an error if fewer
+    than two elements are on the operand stack.
 
 <P><span class="pcounter"></span>
-<b>Load <i>index</i></b>. Load the type of local at index onto the stack. Raises an error if index 
-does not indicate a valid local register.
+    <b>Load <i>index</i></b>. Load the type of local at index onto the stack. Raises an error if index
+    does not indicate a valid local register.
 
 <P><span class="pcounter"></span>
-<b>Store <i>index</i></b>. Store the type on the top of the stack into local <i>index</i>. Raises an 
-error if index does not indicate a valid local register.
+    <b>Store <i>index</i></b>. Store the type on the top of the stack into local <i>index</i>. Raises an
+    error if index does not indicate a valid local register.
 
 
 <P><span class="pcounter"></span>
-<b>PushScope <i>type</i></b>. Push the specified type onto the scope stack. Check that it 
-matches the expected type. [<b>FIXME</b> how is the pushed type constrainted?]. Raises an error if
-the number of elements on the scope stack is equal to the maximum stack size.
+    <b>PushScope <i>type</i></b>. Push the specified type onto the scope stack. Check that it
+    matches the expected type. [<b>FIXME</b> how is the pushed type constrainted?]. Raises an error if
+    the number of elements on the scope stack is equal to the maximum stack size.
 
 <P><span class="pcounter"></span>
-<b>PopScope</b>. Pop the top type from the scope stack.
+    <b>PopScope</b>. Pop the top type from the scope stack.
 
 <P><span class="pcounter"></span>
-<b>Jump <i>offset</i></b>. Merge the current machine state with the state associated with the 
-instruction indicated by offset. The meaning of merge depends on the direction of the 
-control flow causing the merge.
+    <b>Jump <i>offset</i></b>. Merge the current machine state with the state associated with the
+    instruction indicated by offset. The meaning of merge depends on the direction of the
+    control flow causing the merge.
 
 <P><span class="pcounter"></span>
-Two machine states merge on a forward edge if each of the following conditions 
-hold:
+    Two machine states merge on a forward edge if each of the following conditions
+    hold:
 
 <ul>
-  <li> operand stack is the same size
-  <li> scope stack is the same size
-  <li> scope type at each scope stack location is consistent
-  <li> type at each value location (operand stack and locals) are consistent
+    <li> operand stack is the same size
+    <li> scope stack is the same size
+    <li> scope type at each scope stack location is consistent
+    <li> type at each value location (operand stack and locals) are consistent
 </ul>
 
 <P><span class="pcounter"></span>
-A merge of a backward edge is more constrained than a merge on a forward edge.
-On a backward edge it is a verifier error if the merged type is different than the 
-target type. This includes the notNull attribute of that type. The reason for this 
-limitation is that by the time a backward edge is verified, the state of the machine 
-may have been used by a preceding instruction and so the type state cannot safely 
-be modified.
+    A merge of a backward edge is more constrained than a merge on a forward edge.
+    On a backward edge it is a verifier error if the merged type is different than the
+    target type. This includes the notNull attribute of that type. The reason for this
+    limitation is that by the time a backward edge is verified, the state of the machine
+    may have been used by a preceding instruction and so the type state cannot safely
+    be modified.
 
 <P><span class="pcounter"></span>
-Raises an error if offset does not refer to the beginning of an instruction or if the 
-current machine and the state associated with that offset are not consistent.
+    Raises an error if offset does not refer to the beginning of an instruction or if the
+    current machine and the state associated with that offset are not consistent.
 
 <P><span class="pcounter"></span>
-<b>Throws</b>. The Throws operation saves the current abstract machine state, configures 
-the scope and operand stacks for the exception handlers, jumps (as if by the Jump 
-operator) to each of the catch handlers, and then restores the saved machine state. 
-Raises no error.
-PopName name. Pop a name from the operand stack. The structure of a name 
-value depends on the kind of name be referenced. Raise an error if the type(s) on 
-the operand stack are either too few or incompatible with the name kind specified by 
-the instruction operand.
+    <b>Throws</b>. The Throws operation saves the current abstract machine state, configures
+    the scope and operand stacks for the exception handlers, jumps (as if by the Jump
+    operator) to each of the catch handlers, and then restores the saved machine state.
+    Raises no error.
+    PopName name. Pop a name from the operand stack. The structure of a name
+    value depends on the kind of name be referenced. Raise an error if the type(s) on
+    the operand stack are either too few or incompatible with the name kind specified by
+    the instruction operand.
 
 <P><span class="pcounter"></span>
-<b>FindName <i>name</i></b>. Resolve the name constructed from the instruction operand and 
-element(s) on the operand stack to a type in the scope stack by searching the scope 
-stack for a type that contains the given name. If found push the found type onto the 
-operand stack. Otherwise push the global type onto the operand stack.
+    <b>FindName <i>name</i></b>. Resolve the name constructed from the instruction operand and
+    element(s) on the operand stack to a type in the scope stack by searching the scope
+    stack for a type that contains the given name. If found push the found type onto the
+    operand stack. Otherwise push the global type onto the operand stack.
 
 <P><span class="pcounter"></span>
-<b>FindDefName <i>name</i></b>. FIXME
+    <b>FindDefName <i>name</i></b>. FIXME
 
 <P><span class="pcounter"></span>
-<b>GetSlot <i>index</i></b>. FIXME
+    <b>GetSlot <i>index</i></b>. FIXME
 
 <P><span class="pcounter"></span>
-<b>GetName <i>name</i></b>. FIXME
+    <b>GetName <i>name</i></b>. FIXME
 
 <P><span class="pcounter"></span>
-<b>SetSlot <i>index</i></b>. FIXME
+    <b>SetSlot <i>index</i></b>. FIXME
 
 <P><span class="pcounter"></span>
-<b>SetName <i>name</i></b>. FIXME
+    <b>SetName <i>name</i></b>. FIXME
 
 <h3>Interpreter Loop</h3>
 
 <P><span class="pcounter"></span>
-The interpreter loop scans the bytecode in a single forward pass interpreting each 
-bytecode with the abstract meaning given below. After an instruction is interpreted, 
-the current machine state is merged with the input state of the next instruction as 
-though there is an implicit edge in the control flow graph to that instruction.
+    The interpreter loop scans the bytecode in a single forward pass interpreting each
+    bytecode with the abstract meaning given below. After an instruction is interpreted,
+    the current machine state is merged with the input state of the next instruction as
+    though there is an implicit edge in the control flow graph to that instruction.
 
 <P><span class="pcounter"></span>
-If an invariant is violated during execution of an operator or the subsequent merge 
-with the input state of the next instruction, the bytecode sequence is considered 
-invalid and verification terminates.
+    If an invariant is violated during execution of an operator or the subsequent merge
+    with the input state of the next instruction, the bytecode sequence is considered
+    invalid and verification terminates.
 
-<p class="note"><b>NOTE</b>&nbsp;&nbsp; Machine state is merged with the state of the next instruction even if there is 
-no direct path to that instruction. This allows the machine state to be approximated 
-without using an iterative data flow algorithm. The burden on the compiler that 
-generates the bytecode is to configure the types of live variables before entering the 
-loop through one of these imaginary edges.
+<p class="note"><b>NOTE</b>&nbsp;&nbsp; Machine state is merged with the state of the next instruction even if there is
+    no direct path to that instruction. This allows the machine state to be approximated
+    without using an iterative data flow algorithm. The burden on the compiler that
+    generates the bytecode is to configure the types of live variables before entering the
+    loop through one of these imaginary edges.
 
 <hr>
 <PRE>
@@ -313,13 +314,16 @@ L2: if &#60;condition> L1
 Example 1
 
 <P><span class="pcounter"></span>
-The machine state at 'jump L2' will be merged with the state at 'L1: label'. Any 
-intervening '<dead>' code will be ignored by the verifier and thus have no effect on 
-the interpreter state. This approximates reality where L1 is reached through the back 
-edge at L2. What is missing is an accounting of the effect that '<body>' has on the 
-machine state at L1. The code generator (or author) of this code must either insert 
-coerce and kill instructions in the region of '<fixup>', or reorganize the control flow 
-so that the condition comes before the body of the loop.
+    The machine state at 'jump L2' will be merged with the state at 'L1: label'. Any
+    intervening '
+    <dead>' code will be ignored by the verifier and thus have no effect on
+        the interpreter state. This approximates reality where L1 is reached through the back
+        edge at L2. What is missing is an accounting of the effect that '
+        <body>' has on the
+        machine state at L1. The code generator (or author) of this code must either insert
+        coerce and kill instructions in the region of '
+        <fixup>', or reorganize the control flow
+            so that the condition comes before the body of the loop.
 
 <hr>
 <PRE>
@@ -334,47 +338,51 @@ L1: label
 Example 2
 
 <P><span class="pcounter"></span>
-In this configuration every use is preceded by an actual definition of a locations 
-state. Any location that is used in <body> will have to be defined before <body> is 
-entered or inside of <body> but before it is used. A later redefinition of that location 
-will still be limited to the current restrictions on type merging on backedges.]
+    In this configuration every use is preceded by an actual definition of a locations
+    state. Any location that is used in
+    <body> will have to be defined before
+    <body> is
+    entered or inside of
+    <body> but before it is used. A later redefinition of that location
+    will still be limited to the current restrictions on type merging on backedges.]
 
 <P><span class="pcounter"></span>
-<p class="fixme"><b>FIXME</b>&nbsp;&nbsp;  the logic of dead code identification is not straightforward and needs to be 
-defined
+<p class="fixme"><b>FIXME</b>&nbsp;&nbsp; the logic of dead code identification is not straightforward and needs to be
+    defined
 
 <P><span class="pcounter"></span>
-If the interpreter reaches the end of the bytecode, then the bytecode is valid.
+    If the interpreter reaches the end of the bytecode, then the bytecode is valid.
 
 <h4>Control Flow Graphs</h4>
 
 <P><span class="pcounter"></span>
-We have already seen that an implicit edge in the control flow graph (CFG) is created 
-to each instruction from the previous instruction. Here is the complete list of rules 
-used to create the CFG for a method.
+    We have already seen that an implicit edge in the control flow graph (CFG) is created
+    to each instruction from the previous instruction. Here is the complete list of rules
+    used to create the CFG for a method.
 
 <ul>
-  <li> to every instruction from the previous instruction
-  <li> to every exception handler from every in scope instruction that can throw an 
-exception
-  <li> from every jump to every jump target (including lookupswitch)
+    <li> to every instruction from the previous instruction
+    <li> to every exception handler from every in scope instruction that can throw an
+        exception
+    <li> from every jump to every jump target (including lookupswitch)
 </ul>
 
 <h3>ABC Instructions</h3>
 
 <P><span class="pcounter"></span>
-The abstract interpretation of ABC bytecode can be expressed in the abstract 
-machine operations defined above. The following is such a mapping from ABC 
-instruction to the abstract operators.
+    The abstract interpretation of ABC bytecode can be expressed in the abstract
+    machine operations defined above. The following is such a mapping from ABC
+    instruction to the abstract operators.
 
 <P><span class="pcounter"></span>
-<p class="fixme"><b>FIXME</b>&nbsp;&nbsp;  this mapping is currently only approximate, and undoubtedly buggy. But is 
-good enough to get us started in the debugging process.]
+<p class="fixme"><b>FIXME</b>&nbsp;&nbsp; this mapping is currently only approximate, and undoubtedly buggy. But is
+    good enough to get us started in the debugging process.]
 
 <P><span class="pcounter"></span>
-For the most part the notation is self-evident. Parens following an instruction name 
-indicate the type case for that particular definition. <code>!</code> (e.g. <code>!String</code>) indicates that <code>Null</code> 
-is excluded from the reference type being named.
+    For the most part the notation is self-evident. Parens following an instruction name
+    indicate the type case for that particular definition. <code>!</code> (e.g. <code>!String</code>) indicates that
+    <code>Null</code>
+    is excluded from the reference type being named.
 
 <pre>
 <b>abs_jump</b>:
@@ -1127,8 +1135,8 @@ In this section we review some common verify errors and how to avoid them.
 
 <h3>Inconsistent Types on a Forward Edge</h3>
 
-The following is an example of an unsuccessful merge between an Int and UInt 
-resulting in a verfication error. That error will be avoided if the integer values were 
+The following is an example of an unsuccessful merge between an Int and UInt
+resulting in a verfication error. That error will be avoided if the integer values were
 both coerced to the Atom* type Any before being stored in local slot 2.
 
 <pre>
@@ -1232,8 +1240,8 @@ function f (b) {
 </pre>
 
 <P><span class="pcounter"></span>
-A naive compiler might compile the above code as below. It would do well to
-insert <code>coerce_s</code> as indicated.
+    A naive compiler might compile the above code as below. It would do well to
+    insert <code>coerce_s</code> as indicated.
 
 
 <pre>
@@ -1259,7 +1267,7 @@ B0:
                         scope: [global] 
                          locals: Object? * null 
   7:pushstring </span>
-                        stack: String
+    stack: String
                         scope: [global] 
                          locals: Object? * null 
   9:setlocal2
@@ -1317,18 +1325,18 @@ VerifyError: Error #1030: Stack depth is unbalanced. 2 != 0.
 <h2>References</h2>
 
 <P><span class="pcounter"></span>
-[1] <a href='http:<i>pauillac.inria.fr/~xleroy/publi/bytecode-verification-JAR.pdf'>
-"Java bytecode verification: algorithms and formalizations", Xavier Leroy
-</a>
+    [1] <a href='http:<i>pauillac.inria.fr/~xleroy/publi/bytecode-verification-JAR.pdf'>
+        "Java bytecode verification: algorithms and formalizations", Xavier Leroy
+    </a>
 
 <P><span class="pcounter"></span>
-[2] <a href='ftp:</i>ftp.kestrel.edu/pub/papers/coglio/ccpe03.pdf'>
-"Improving the official specification of Java bytecode verification", Alessandro Coglio
-</a>
+    [2] <a href='ftp:</i>ftp.kestrel.edu/pub/papers/coglio/ccpe03.pdf'>
+        "Improving the official specification of Java bytecode verification", Alessandro Coglio
+    </a>
 
 <P><span class="pcounter"></span>
-[3] <a href=http://www.adobe.com/devnet/actionscript/articles/avm2overview.pdf>
-"ActionScript Virtual Machine 2 Overview", Adobe Systems
-</a>
+    [3] <a href=http://www.adobe.com/devnet/actionscript/articles/avm2overview.pdf>
+        "ActionScript Virtual Machine 2 Overview", Adobe Systems
+    </a>
 
 
